@@ -104,7 +104,7 @@ export default function App() {
           navHidden ? "-translate-y-full" : "translate-y-0"
         }`}
       >
-        <div className="max-w-12xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between gap-12">
+        <div className="max-w-12xl mx-auto pl-8 md:pl-14 lg:pl-28 pr-4 lg:pr-8 py-4 flex items-center justify-between gap-12">
           <a href="/" aria-label="Lumen home" className="block shrink-0">
             <img src="/logo-navy.svg" alt="Lumen" className="h-8 w-auto" />
           </a>

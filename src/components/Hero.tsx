@@ -23,7 +23,7 @@ const SCHOLARS: Scholar[] = [
 export default function Hero() {
   return (
     <section className="bg-primary text-primary-foreground -mr-4 md:-mr-6 lg:-mr-10">
-      <div className="max-w-12xl mx-auto px-4 lg:px-8 pt-14 pb-14 md:pt-20 md:pb-20">
+      <div className="max-w-12xl mx-auto px-4 lg:px-8 pt-14 pb-14 md:pt-28 md:pb-20">
         {/* Top split: headline + paragraph on the left, image on the right */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 lg:gap-20 items-start">
           <div className="max-w-xl pt-2 pl-4 md:pl-10 lg:pl-20">
@@ -48,7 +48,7 @@ export default function Hero() {
         </div>
 
         {/* Featured Scholars: horizontal drag-scroll carousel */}
-        <div className="mt-12 md:mt-16 -mx-4 lg:-mx-8">
+        <div className="mt-16 md:mt-24 -mx-4 lg:-mx-8">
           <div
             className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-px-4 lg:scroll-px-8 px-4 lg:px-8 pb-4"
             style={{ scrollbarWidth: "none" }}
