@@ -22,15 +22,15 @@ const SCHOLARS: Scholar[] = [
 
 export default function Hero() {
   return (
-    <section className="bg-primary text-primary-foreground">
-      <div className="max-w-12xl mx-auto px-4 lg:px-8 pt-24 pb-24 md:pt-32 md:pb-32">
+    <section className="bg-primary text-primary-foreground -mr-4 md:-mr-6 lg:-mr-10">
+      <div className="max-w-12xl mx-auto px-4 lg:px-8 pt-14 pb-14 md:pt-20 md:pb-20">
         {/* Top split: headline + paragraph on the left, image on the right */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 lg:gap-24 items-start">
-          <div className="max-w-lg pt-4">
-            <h1 className="font-serif text-hero font-normal tracking-tight">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 lg:gap-20 items-start">
+          <div className="max-w-xl pt-2 pl-4 md:pl-10 lg:pl-20">
+            <h1 className="font-serif text-display font-normal tracking-tight leading-[1.05]">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit
             </h1>
-            <p className="text-2xl font-light text-primary-foreground/70 mt-10 max-w-md">
+            <p className="text-lg font-light text-primary-foreground/70 mt-8 max-w-md">
               Sed do <span className="italic">eiusmod tempor incididunt</span>{" "}
               ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
               nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
@@ -41,14 +41,14 @@ export default function Hero() {
             <img
               src="/hero-lumen.jpg"
               alt="The eleven Lumen scholars"
-              className="w-full rounded-sm object-cover object-[center_30%] aspect-[3/4] md:aspect-[4/5] lg:aspect-[3/4]"
+              className="w-full rounded-sm object-cover object-[center_25%] aspect-[4/5] md:aspect-[1/1] lg:aspect-[5/4]"
               loading="eager"
             />
           </div>
         </div>
 
         {/* Featured Scholars: horizontal drag-scroll carousel */}
-        <div className="mt-16 md:mt-24 -mx-4 lg:-mx-8">
+        <div className="mt-12 md:mt-16 -mx-4 lg:-mx-8">
           <div
             className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-px-4 lg:scroll-px-8 px-4 lg:px-8 pb-4"
             style={{ scrollbarWidth: "none" }}

@@ -1,5 +1,38 @@
+import { useEffect, useState } from "react"
 import Hero from "./components/Hero"
 import ArrowButton from "./components/primitives/ArrowButton"
+
+function useHideOnScroll(threshold = 8) {
+  const [hidden, setHidden] = useState(false)
+
+  useEffect(() => {
+    let lastY = window.scrollY
+    let ticking = false
+
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        const y = window.scrollY
+        if (y < 10) {
+          setHidden(false)
+        } else if (y > lastY + threshold) {
+          setHidden(true)
+          lastY = y
+        } else if (y < lastY - threshold) {
+          setHidden(false)
+          lastY = y
+        }
+        ticking = false
+      })
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [threshold])
+
+  return hidden
+}
 
 const NAV_LINKS = [
   { label: "Program", href: "#program" },
@@ -62,19 +95,25 @@ function Section({
 }
 
 export default function App() {
+  const navHidden = useHideOnScroll()
+
   return (
     <div className="min-h-screen bg-background text-foreground px-4 md:px-6 lg:px-10">
-      <header className="bg-background sticky top-0 z-50">
-        <div className="max-w-12xl mx-auto px-4 lg:px-8 py-7 flex items-center justify-between gap-12">
+      <header
+        className={`bg-background sticky top-0 z-50 transition-transform duration-300 ease-out ${
+          navHidden ? "-translate-y-full" : "translate-y-0"
+        }`}
+      >
+        <div className="max-w-12xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between gap-12">
           <a href="/" aria-label="Lumen home" className="block shrink-0">
-            <img src="/logo-navy.svg" alt="Lumen" className="h-10 w-auto" />
+            <img src="/logo-navy.svg" alt="Lumen" className="h-8 w-auto" />
           </a>
           <nav aria-label="Primary" className="hidden md:flex items-center gap-8 lg:gap-12">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className="text-xl font-semibold text-primary hover:text-foreground transition-colors duration-200"
+                className="text-base font-semibold text-primary hover:text-foreground transition-colors duration-200"
               >
                 {link.label}
               </a>
