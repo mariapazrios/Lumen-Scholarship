@@ -63,7 +63,7 @@ function Section({
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-white text-ink">
+    <div className="min-h-screen bg-background text-foreground px-4 md:px-6 lg:px-10">
       <header className="bg-background sticky top-0 z-50">
         <div className="max-w-12xl mx-auto px-4 lg:px-8 py-7 flex items-center justify-between gap-12">
           <a href="/" aria-label="Lumen home" className="block shrink-0">

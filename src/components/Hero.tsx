@@ -26,12 +26,11 @@ export default function Hero() {
       <div className="max-w-12xl mx-auto px-4 lg:px-8 pt-24 pb-24 md:pt-32 md:pb-32">
         {/* Top split: headline + paragraph on the left, image on the right */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 lg:gap-24 items-start">
-          <div className="max-w-xl pt-4">
+          <div className="max-w-lg pt-4">
             <h1 className="font-serif text-hero font-normal tracking-tight">
-              Lorem ipsum dolor sit amet,{" "}
-              <span className="italic">consectetur adipiscing elit</span>.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit
             </h1>
-            <p className="text-lead text-primary-foreground/70 mt-10 max-w-md">
+            <p className="text-2xl font-light text-primary-foreground/70 mt-10 max-w-md">
               Sed do <span className="italic">eiusmod tempor incididunt</span>{" "}
               ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
               nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
@@ -42,7 +41,7 @@ export default function Hero() {
             <img
               src="/hero-lumen.jpg"
               alt="The eleven Lumen scholars"
-              className="w-full rounded-sm object-cover object-[center_30%] aspect-[3/4]"
+              className="w-full rounded-sm object-cover object-[center_30%] aspect-[3/4] md:aspect-[4/5] lg:aspect-[3/4]"
               loading="eager"
             />
           </div>
