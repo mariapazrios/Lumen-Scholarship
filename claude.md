@@ -4,7 +4,7 @@
 
 ## What this is
 
-Marketing landing page for **Lumen**, Colombia's first scholar program (partnered with Universidad de Los Andes). Single page, anchor-linked nav, no router, no backend. Inspired by [oakhcft.com](https://www.oakhcft.com/).
+Marketing site for **Lumen**, Colombia's first scholar program (partnered with Universidad de Los Andes). Four pages via a tiny hash router (no react-router), no backend. Inspired by [oakhcft.com](https://www.oakhcft.com/).
 
 ## Tech stack
 
@@ -93,8 +93,16 @@ Full pattern library (P1–P10) is in [prd.md](prd.md) under *Inspiration Patter
 
 ## Project phases
 
-- **Phase 1 (shipped):** Design-system showcase page — logo lockups, color palette, typography scale, emphasis demos, button variants. Live at `/`. Lives in a single [src/App.tsx](src/App.tsx); no separate components yet.
-- **Phase 2 (next):** Replace the showcase with the 11-section landing page (Header, Hero, Stats, Andes, Mission, Differentiated, Funnel, Scholars, Board, GetInvolved, Footer). Components go under `src/components/`, with reusable primitives (`ArrowButton`, `WatermarkLogo`, `OffsetImage`, `SectionBg`) under `src/components/primitives/`. Full IA in [prd.md](prd.md).
+- **Phase 1 (retired):** Design-system showcase page. Replaced by Phase 2; the token/pattern documentation lives on in [prd.md](prd.md) and this file.
+- **Phase 2 (shipped):** Full marketing site with a dependency-free **hash router** in [src/App.tsx](src/App.tsx). Routes: `#/` (Home), `#/scholars`, `#/team`, `#/get-involved`; `#/scholars/<slug>` deep-links to a profile. Titles update per route and language.
+  - **Bilingual (EN/ES):** every user-facing string is localized. `src/lib/i18n.ts` holds `LangContext` + `useLang()` (`t()` for strings, `tl()` for lists); App owns the state (localStorage `lumen-lang`, defaults from `navigator.language`); the header has an EN|ES toggle. Data files carry `{ en, es }` objects. Never add English-only copy.
+  - **Copy rules:** NO em dashes anywhere (use commas, colons, or periods). Say "STEM", never "STEM+". Factual tone, not salesy.
+  - **Pages** in `src/pages/`: `Home` (Hero with per-generation scholar rows → Mission/Vision → Stats charts → Andes → Colombia map → Video), `Scholars` (alphabetical directory with hover bio cards + full profiles), `Team` (Lumen Board + Andes support team), `GetInvolved` (admissions funnel/steps + sponsorship tiers/affiliates).
+  - **Stats section** is chart-based (dot plot for GPA by aid program, zero-based bars for retention, dumbbell for GPA by major vs program average): emphasis form, cobalt = Lumen, muted gray = context, GPA axis 3.5–5.0 with visible ticks.
+  - **Content data** in `src/data/`: `scholars.ts` (all 11 profiles, map cities + projected coords, Colombia SVG path), `team.ts` (board + Andes team), `nav.ts`.
+  - **Primitives**: `ArrowButton`, `Reveal` (IntersectionObserver scroll-reveal), `CountUp` (animated stats). Both respect `prefers-reduced-motion` and a `?nofx` query param (used for headless screenshots — append it to render without animations).
+  - **Assets**: `public/lumen-icon.png` (transparent brand mark — watermarks, map markers, favicon), `public/team/*.jpg` (headshots extracted from the pitch deck), `public/campus-*.jpg` (Andes photos), `public/scholars/*.jpg` (scholar headshots).
+  - The program-film embed URL goes in `PROGRAM_VIDEO_EMBED_URL` ([src/components/home/VideoSection.tsx](src/components/home/VideoSection.tsx)); the public contact email goes in `CONTACT_EMAIL` ([src/pages/GetInvolved.tsx](src/pages/GetInvolved.tsx)). Both are empty placeholders pending real values.
 
 ## When in doubt
 

@@ -4,7 +4,7 @@
   --font-sans: "Kulim Park", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-serif: "Newsreader", Georgia, "Times New Roman", serif;
 
-  /* Brand palette — source of truth */
+  /* Brand palette: source of truth */
   --color-navy: #012851;
   --color-navy-soft: #1a4178;
   --color-cobalt: #1f31d2;
@@ -13,7 +13,7 @@
   --color-ink: #0a0a14;
   --color-muted: #6b6b78;
 
-  /* Semantic roles — prefer these in components */
+  /* Semantic roles: prefer these in components */
   --color-background: #ffffff;
   --color-foreground: var(--color-ink);
   --color-surface: var(--color-cream);
@@ -44,6 +44,23 @@
   --container-8xl: 96rem;
   --container-12xl: 120rem;
   --container-14xl: 140rem;
+
+  --animate-pulse-ring: pulse-ring 2.6s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(0.6);
+      opacity: 0.8;
+    }
+    70% {
+      transform: scale(2.4);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(2.4);
+      opacity: 0;
+    }
+  }
 }
 
 @layer base {
@@ -53,9 +70,52 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
   }
   body {
     margin: 0;
     background: var(--color-background);
   }
+  ::selection {
+    background: var(--color-navy);
+    color: #ffffff;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-cobalt);
+    outline-offset: 3px;
+  }
+}
+
+@layer utilities {
+  /* Scroll-reveal: elements start hidden, .is-revealed transitions them in.
+     Motion is skipped entirely for prefers-reduced-motion users. */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 0.7s ease-out,
+      transform 0.7s ease-out;
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  .reveal.is-revealed {
+    opacity: 1;
+    transform: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    html {
+      scroll-behavior: auto;
+    }
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
 }
