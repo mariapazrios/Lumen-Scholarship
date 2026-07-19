@@ -16,12 +16,15 @@ export type Scholar = {
   story: LList
   /** Campus involvement and achievements */
   highlights: LList
+  /** True when a personal clip exists at /videos/<slug>.mp4 */
+  video?: boolean
 }
 
 /** Alphabetical by last name: the order the directory and generation rows render in. */
 export const SCHOLARS: Scholar[] = [
   {
     slug: "juan-angel-aicardy",
+    video: true,
     name: "Juan Ángel Aicardy",
     generation: "2024",
     major: { en: "Systems & Computing Engineering", es: "Ingeniería de Sistemas y Computación" },
@@ -60,6 +63,7 @@ export const SCHOLARS: Scholar[] = [
   },
   {
     slug: "daniel-alzate",
+    video: true,
     name: "Daniel Álzate",
     generation: "2025",
     major: { en: "Physics", es: "Física" },
@@ -134,6 +138,7 @@ export const SCHOLARS: Scholar[] = [
   },
   {
     slug: "juan-pablo-contreras",
+    video: true,
     name: "Pablo Contreras",
     generation: "2024",
     major: { en: "Economics & Industrial Engineering", es: "Economía e Ingeniería Industrial" },
@@ -172,6 +177,7 @@ export const SCHOLARS: Scholar[] = [
   },
   {
     slug: "juan-daniel-gonzalo",
+    video: true,
     name: "Daniel Gonzalo",
     generation: "2025",
     major: { en: "Systems & Computing Engineering", es: "Ingeniería de Sistemas y Computación" },
@@ -208,6 +214,7 @@ export const SCHOLARS: Scholar[] = [
   },
   {
     slug: "sebastian-martinez",
+    video: true,
     name: "Sebastián Martínez",
     generation: "2024",
     major: { en: "Systems & Computing Engineering", es: "Ingeniería de Sistemas y Computación" },
@@ -282,6 +289,7 @@ export const SCHOLARS: Scholar[] = [
   },
   {
     slug: "julian-rodriguez",
+    video: true,
     name: "Julián Rodríguez",
     generation: "2024",
     major: { en: "Electronic Engineering", es: "Ingeniería Electrónica" },
@@ -320,6 +328,7 @@ export const SCHOLARS: Scholar[] = [
   },
   {
     slug: "santiago-rubiano",
+    video: true,
     name: "Santiago Rubiano",
     generation: "2025",
     major: { en: "Biomedical Engineering", es: "Ingeniería Biomédica" },
@@ -356,6 +365,7 @@ export const SCHOLARS: Scholar[] = [
   },
   {
     slug: "valentina-salgado",
+    video: true,
     name: "Valentina Salgado",
     generation: "2025",
     major: { en: "Systems & Computing Engineering", es: "Ingeniería de Sistemas y Computación" },

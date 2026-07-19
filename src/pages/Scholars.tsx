@@ -33,6 +33,21 @@ function Profile({ scholar, index }: { scholar: Scholar; index: number }) {
                 loading="lazy"
               />
             </div>
+            {scholar.video && (
+              <div className="max-w-sm mt-8">
+                <video
+                  controls
+                  preload="none"
+                  playsInline
+                  poster={`/videos/${scholar.slug}.jpg`}
+                  src={`/videos/${scholar.slug}.mp4`}
+                  className="w-full rounded-sm bg-ink aspect-video object-cover"
+                />
+                <div className="text-meta uppercase tracking-widest text-muted mt-2.5">
+                  {lang === "es" ? "En sus propias palabras" : "In their own words"}
+                </div>
+              </div>
+            )}
           </Reveal>
 
           <Reveal delay={120} className={`md:col-span-3 ${reversed ? "md:order-1" : ""}`}>
