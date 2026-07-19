@@ -71,6 +71,17 @@ function Profile({ scholar, index }: { scholar: Scholar; index: number }) {
                 ))}
               </div>
 
+              {scholar.essay && (
+                <div className="mt-8 bg-surface rounded-sm px-6 py-5">
+                  <div className="text-meta uppercase tracking-widest text-muted mb-2">
+                    {lang === "es" ? "De su ensayo de admisión" : "From their admissions essay"}
+                  </div>
+                  <p className="text-body italic text-primary">
+                    &ldquo;{t(scholar.essay)}&rdquo;
+                  </p>
+                </div>
+              )}
+
               <div className="mt-8">
                 <div className="text-meta uppercase tracking-widest text-muted mb-3">
                   {lang === "es" ? "En el campus" : "On campus"}

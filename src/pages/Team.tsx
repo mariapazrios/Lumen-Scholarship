@@ -4,7 +4,7 @@ import { BOARD, type TeamMember } from "../data/team"
 import { useLang } from "../lib/i18n"
 
 function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
-  const { t } = useLang()
+  const { lang, t } = useLang()
   return (
     <Reveal delay={delay}>
       <div className="group h-full">
@@ -26,14 +26,21 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
         <div className="text-meta font-semibold text-ink/80 mt-1 md:min-h-[2.6em]">
           {t(member.org)}
         </div>
-        <div className="text-meta uppercase tracking-widest text-muted mt-1.5">
+        <div className="text-meta uppercase tracking-widest text-muted mt-1.5 md:min-h-[2.8em]">
           {t(member.role)} · {member.city}
         </div>
+        {/* Reserved height keeps the interview-style block aligned across cards */}
         {member.credentials.length > 0 && (
-          <div className="text-meta text-muted mt-2.5 leading-relaxed">
+          <div className="text-meta text-muted mt-2.5 leading-relaxed md:min-h-[5em] lg:min-h-[6.5em]">
             {member.credentials.join(" · ")}
           </div>
         )}
+        <div className="mt-3 pt-3 border-t border-ink/10">
+          <div className="text-[11px] uppercase tracking-widest text-muted">
+            {lang === "es" ? "Estilo de entrevista" : "Interview style"}
+          </div>
+          <p className="text-meta text-ink/70 mt-1.5 leading-relaxed">{t(member.interviewStyle)}</p>
+        </div>
       </div>
     </Reveal>
   )
