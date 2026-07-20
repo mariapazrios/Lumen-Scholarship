@@ -21,13 +21,18 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
             {t(member.industry)}
           </span>
         </div>
-        <h3 className="text-body font-semibold text-primary mt-3 leading-snug">{member.name}</h3>
-        {/* Reserved heights keep the role and location line aligned across cards */}
+        {/* Reserved height keeps names (with or without the founder badge) aligned */}
+        <h3 className="text-body font-semibold text-primary mt-3 leading-snug md:min-h-[2.6em]">
+          {member.name}
+          {member.founder && (
+            <span className="ml-2 inline-block align-middle text-[10px] leading-none uppercase tracking-widest font-semibold text-white bg-accent rounded-full px-2 py-1">
+              {lang === "es" ? "Fundadora" : "Founder"}
+            </span>
+          )}
+        </h3>
+        {/* Reserved height keeps the org line aligned across cards */}
         <div className="text-meta font-semibold text-ink/80 mt-1 md:min-h-[2.6em]">
           {t(member.org)}
-        </div>
-        <div className="text-meta uppercase tracking-widest text-muted mt-1.5 md:min-h-[2.8em]">
-          {t(member.role)} · {member.city}
         </div>
         {/* Reserved height keeps the interview-style block aligned across cards */}
         {member.credentials.length > 0 && (

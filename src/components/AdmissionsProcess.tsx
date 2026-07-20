@@ -66,8 +66,8 @@ const STEPS: Array<{ n: string; title: L; body: L }> = [
     n: "04",
     title: { en: "Interview with the Board", es: "Entrevístate con la Junta" },
     body: {
-      en: "A series of one-on-one conversations with the founder and the donors who will become your mentors.",
-      es: "Una serie de conversaciones, una a una, con la fundadora y los donantes que luego serán tus mentores.",
+      en: "A series of one-on-one conversations with the members of the Lumen Board, who will become your mentors.",
+      es: "Una serie de conversaciones individuales con los miembros de la Junta Lumen, que luego serán tus mentores.",
     },
   },
   {

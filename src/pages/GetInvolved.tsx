@@ -1,69 +1,67 @@
 import ArrowButton from "../components/primitives/ArrowButton"
+import CountUp from "../components/primitives/CountUp"
 import Reveal from "../components/primitives/Reveal"
-import AdmissionsProcess from "../components/AdmissionsProcess"
 import { useLang, type L } from "../lib/i18n"
 
 /** Drop the program's public contact email here when confirmed (e.g. "hello@..."). */
 const CONTACT_EMAIL = ""
 
 const INDIVIDUAL_GIVES: L[] = [
-  {
-    en: "Join 60-minute industry and mentorship speaker series",
-    es: "Participa en charlas de industria y mentoría de 60 minutos",
-  },
-  {
-    en: "Connect with Lumens for 15-30 minute networking calls",
-    es: "Conéctate con los Lumens en llamadas de networking de 15 a 30 minutos",
-  },
-  {
-    en: "Participate in brief interview and resume workshops",
-    es: "Participa en talleres breves de entrevistas y hoja de vida",
-  },
-  {
-    en: "Share Lumen with potential donors",
-    es: "Comparte Lumen con donantes potenciales",
-  },
+  { en: "Speak at a mentorship session", es: "Da una charla de mentoría" },
+  { en: "Take a 15-minute networking call with a Lumen", es: "Toma una llamada de networking de 15 minutos con un Lumen" },
+  { en: "Run an interview or resume workshop", es: "Dirige un taller de entrevistas u hoja de vida" },
+  { en: "Share Lumen with potential donors", es: "Comparte Lumen con donantes potenciales" },
 ]
 
 const CORPORATE_GIVES: L[] = [
-  {
-    en: "Provide access to relevant internships and early-career opportunities",
-    es: "Ofrece acceso a prácticas y oportunidades de inicio de carrera",
-  },
-  {
-    en: "Fast-track application processes for Lumens",
-    es: "Agiliza los procesos de selección para los Lumens",
-  },
-  {
-    en: "Host Lumen networking sessions with your firm's recruiting team",
-    es: "Organiza sesiones de networking con el equipo de selección de tu empresa",
-  },
+  { en: "Open internships and early-career roles", es: "Abre prácticas y vacantes de inicio de carrera" },
+  { en: "Fast-track Lumen applications", es: "Agiliza los procesos de selección para los Lumens" },
+  { en: "Host a session with your recruiting team", es: "Organiza una sesión con tu equipo de selección" },
 ]
 
 const RECEIVE: L[] = [
+  { en: "Real impact on social mobility in Colombia", es: "Impacto real en la movilidad social de Colombia" },
+  { en: "A program with a track record of top performance", es: "Un programa con historial de alto desempeño" },
+  { en: "Privileged access to hyper-curated talent", es: "Acceso privilegiado a talento altamente seleccionado" },
+  { en: "A yearly report on every Lumen", es: "Un informe anual sobre cada Lumen" },
+  { en: "Social responsibility your team can see", es: "Responsabilidad social visible para tu equipo" },
+  { en: "U.S. or Colombian tax deductions", es: "Deducciones tributarias en Estados Unidos o Colombia" },
+]
+
+const TIERS: Array<{
+  label: L
+  amount: number
+  note: L
+  detail: L
+  featured?: boolean
+}> = [
   {
-    en: "Actively combat inequity and the lack of social mobility in Colombia by empowering talented, underprivileged youth",
-    es: "Combate activamente la inequidad y la falta de movilidad social en Colombia empoderando a jóvenes talentosos de bajos recursos",
+    label: { en: "Full scholarship", es: "Beca completa" },
+    amount: 40,
+    note: { en: "$160M COP upfront", es: "$160M COP de contado" },
+    detail: {
+      en: "Or in installments over 4 years at 0% interest, before tax deductions.",
+      es: "O en cuotas durante 4 años al 0% de interés, antes de deducciones tributarias.",
+    },
+    featured: true,
   },
   {
-    en: "Maximize your philanthropic impact through a program with a track record of top performance",
-    es: "Maximiza tu impacto filantrópico a través de un programa con un historial de alto desempeño",
+    label: { en: "Half scholarship", es: "Media beca" },
+    amount: 25,
+    note: { en: "$95M COP", es: "$95M COP" },
+    detail: {
+      en: "Co-sponsor a Lumen with a partner, upfront or over 4 years.",
+      es: "Copatrocina un Lumen con un socio, de contado o a 4 años.",
+    },
   },
   {
-    en: "Unlock privileged corporate access to a pool of hyper-curated, top talent",
-    es: "Accede de manera privilegiada a un grupo de talento altamente seleccionado",
-  },
-  {
-    en: "Receive yearly reports to scope Lumen talent over time",
-    es: "Recibe informes anuales para seguir de cerca el talento Lumen",
-  },
-  {
-    en: "Strengthen values of social responsibility, diversity, and inclusion at your firm",
-    es: "Fortalece los valores de responsabilidad social, diversidad e inclusión en tu empresa",
-  },
-  {
-    en: "Claim U.S. or Colombian tax deductions",
-    es: "Accede a deducciones tributarias en Estados Unidos o Colombia",
+    label: { en: "Partial scholarship", es: "Beca parcial" },
+    amount: 10,
+    note: { en: "From one-fifth of a scholarship", es: "Desde una quinta parte de una beca" },
+    detail: {
+      en: "Shares from one-third to one-fifth, from roughly $208 a month.",
+      es: "Participaciones desde un tercio hasta una quinta parte, desde unos $208 al mes.",
+    },
   },
 ]
 
@@ -95,54 +93,47 @@ function SponsorsSection() {
 
         {/* Donor tiers */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-14">
-          <Reveal>
-            <div className="bg-primary text-primary-foreground rounded-sm p-8 md:p-10 h-full flex flex-col">
-              <div className="text-meta uppercase tracking-widest text-primary-foreground/60">
-                {lang === "es" ? "Beca completa" : "Full scholarship"}
+          {TIERS.map((tier, i) => (
+            <Reveal key={tier.label.en} delay={i * 120}>
+              <div
+                className={`rounded-sm p-8 md:p-10 h-full flex flex-col transition-transform duration-300 hover:-translate-y-1 ${
+                  tier.featured
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-white border border-ink/10"
+                }`}
+              >
+                <div
+                  className={`text-meta uppercase tracking-widest ${
+                    tier.featured ? "text-primary-foreground/60" : "text-muted"
+                  }`}
+                >
+                  {t(tier.label)}
+                </div>
+                <div
+                  className={`text-stat font-bold mt-4 tabular-nums ${
+                    tier.featured ? "" : "text-primary"
+                  }`}
+                >
+                  ~US$
+                  <CountUp value={tier.amount} duration={900 + i * 150} />K
+                </div>
+                <div
+                  className={`text-body mt-1 ${
+                    tier.featured ? "text-primary-foreground/75" : "text-muted"
+                  }`}
+                >
+                  {t(tier.note)}
+                </div>
+                <p
+                  className={`text-body mt-4 flex-1 ${
+                    tier.featured ? "text-primary-foreground/75" : "text-ink/75"
+                  }`}
+                >
+                  {t(tier.detail)}
+                </p>
               </div>
-              <div className="text-stat font-bold mt-4">~US$40K</div>
-              <div className="text-body text-primary-foreground/75 mt-1">
-                {lang === "es" ? "$160M COP de contado" : "$160M COP upfront"}
-              </div>
-              <p className="text-body text-primary-foreground/75 mt-4 flex-1">
-                {lang === "es"
-                  ? "O ~US$50K ($190M COP) en cuotas durante 4 años al 0% de interés, alrededor de $1,042 al mes antes de deducciones tributarias."
-                  : "Or ~US$50K ($190M COP) in installments over 4 years at 0% interest, about $1,042 a month before tax deductions."}
-              </p>
-            </div>
-          </Reveal>
-          <Reveal delay={120}>
-            <div className="bg-white border border-ink/10 rounded-sm p-8 md:p-10 h-full flex flex-col">
-              <div className="text-meta uppercase tracking-widest text-muted">
-                {lang === "es" ? "Media beca" : "Half scholarship"}
-              </div>
-              <div className="text-stat font-bold text-primary mt-4">~US$25K</div>
-              <div className="text-body text-muted mt-1">$95M COP</div>
-              <p className="text-body text-ink/75 mt-4 flex-1">
-                {lang === "es"
-                  ? "Copatrocina un Lumen con un socio, de contado o diferido a 4 años."
-                  : "Co-sponsor a Lumen with a partner, upfront or deferred over 4 years."}
-              </p>
-            </div>
-          </Reveal>
-          <Reveal delay={240}>
-            <div className="bg-white border border-ink/10 rounded-sm p-8 md:p-10 h-full flex flex-col">
-              <div className="text-meta uppercase tracking-widest text-muted">
-                {lang === "es" ? "Beca parcial" : "Partial scholarship"}
-              </div>
-              <div className="text-stat font-bold text-primary mt-4">
-                {lang === "es" ? "desde ~US$10K" : "from ~US$10K"}
-              </div>
-              <div className="text-body text-muted mt-1">
-                {lang === "es" ? "Una quinta parte, a 4 años" : "One-fifth share, over 4 years"}
-              </div>
-              <p className="text-body text-ink/75 mt-4 flex-1">
-                {lang === "es"
-                  ? "Participaciones desde un tercio hasta una quinta parte de una beca, desde aproximadamente $208 al mes."
-                  : "Shares from one-third to one-fifth of a scholarship, from roughly $208 a month."}
-              </p>
-            </div>
-          </Reveal>
+            </Reveal>
+          ))}
         </div>
 
         {/* Tax + process */}
@@ -150,23 +141,21 @@ function SponsorsSection() {
           <Reveal>
             <div className="bg-white border border-ink/10 rounded-sm p-8 h-full">
               <h3 className="text-h3 font-semibold text-primary">
-                {lang === "es" ? "Donar desde Estados Unidos" : "Donating from the U.S."}
+                {lang === "es" ? "Desde Estados Unidos" : "From the U.S."}
               </h3>
               <p className="text-body text-ink/75 mt-3">
                 {lang === "es" ? (
                   <>
-                    Las donaciones son totalmente deducibles de impuestos a través de la{" "}
-                    <strong>University of the Andes Foundation</strong>, una organización
-                    501(c)(3) del IRS con calificación 4/4 en Charity Navigator. Pago en
-                    línea, transferencia o cheque. Y pregunta en tu empresa: muchas duplican
-                    la donación de sus empleados.
+                    Deducible de impuestos vía la{" "}
+                    <strong>University of the Andes Foundation</strong>, una 501(c)(3) con
+                    calificación 4/4 en Charity Navigator. En línea, transferencia o cheque.
+                    Muchas empresas duplican la donación.
                   </>
                 ) : (
                   <>
-                    Donations are fully tax-deductible via the{" "}
-                    <strong>University of the Andes Foundation</strong>, a 501(c)(3) IRS
-                    organization rated 4/4 stars on Charity Navigator. Online payment, wire
-                    transfer, or check. Check your employer's matching program.
+                    Tax-deductible via the <strong>University of the Andes Foundation</strong>,
+                    a 501(c)(3) rated 4/4 on Charity Navigator. Online, wire, or check. Many
+                    employers match.
                   </>
                 )}
               </p>
@@ -175,23 +164,20 @@ function SponsorsSection() {
           <Reveal delay={120}>
             <div className="bg-white border border-ink/10 rounded-sm p-8 h-full">
               <h3 className="text-h3 font-semibold text-primary">
-                {lang === "es" ? "Donar desde Colombia" : "Donating from Colombia"}
+                {lang === "es" ? "Desde Colombia" : "From Colombia"}
               </h3>
               <p className="text-body text-ink/75 mt-3">
                 {lang === "es" ? (
                   <>
-                    Dona directamente a través de la{" "}
-                    <strong>Universidad de los Andes</strong>: transferencia bancaria, PSE,
-                    tarjeta de crédito o débito, o cheque. Las donaciones ofrecen un
-                    beneficio tributario del 25% sobre la renta líquida, y la universidad
-                    suma una contrapartida a cada beca.
+                    Directamente a la <strong>Universidad de los Andes</strong>: transferencia,
+                    PSE, tarjeta o cheque. Beneficio tributario del 25%, y la universidad suma
+                    una contrapartida a cada beca.
                   </>
                 ) : (
                   <>
-                    Give directly through <strong>Universidad de los Andes</strong>: bank
-                    transfer, PSE, credit/debit card, or check. Donations provide a 25% tax
-                    shield from renta líquida, and the university adds counterpart funding
-                    on top of every scholarship.
+                    Directly through <strong>Universidad de los Andes</strong>: transfer, PSE,
+                    card, or check. A 25% tax benefit, and the university adds counterpart
+                    funding to every scholarship.
                   </>
                 )}
               </p>
@@ -215,11 +201,13 @@ function SponsorsSection() {
                 )}
               </h3>
               <ul className="mt-5 space-y-3">
-                {INDIVIDUAL_GIVES.map((g) => (
-                  <li key={g.en.slice(0, 24)} className="text-body text-ink/80 flex gap-3">
-                    <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-accent mt-2.5 shrink-0" />
-                    {t(g)}
-                  </li>
+                {INDIVIDUAL_GIVES.map((g, i) => (
+                  <Reveal key={g.en.slice(0, 24)} delay={i * 90} as="li">
+                    <span className="text-body text-ink/80 flex gap-3">
+                      <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-accent mt-2.5 shrink-0" />
+                      {t(g)}
+                    </span>
+                  </Reveal>
                 ))}
               </ul>
             </div>
@@ -238,11 +226,13 @@ function SponsorsSection() {
                 )}
               </h3>
               <ul className="mt-5 space-y-3">
-                {CORPORATE_GIVES.map((g) => (
-                  <li key={g.en.slice(0, 24)} className="text-body text-ink/80 flex gap-3">
-                    <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-accent mt-2.5 shrink-0" />
-                    {t(g)}
-                  </li>
+                {CORPORATE_GIVES.map((g, i) => (
+                  <Reveal key={g.en.slice(0, 24)} delay={i * 90} as="li">
+                    <span className="text-body text-ink/80 flex gap-3">
+                      <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-accent mt-2.5 shrink-0" />
+                      {t(g)}
+                    </span>
+                  </Reveal>
                 ))}
               </ul>
             </div>
@@ -250,8 +240,8 @@ function SponsorsSection() {
         </div>
 
         {/* What sponsors receive */}
-        <Reveal delay={120}>
-          <div className="mt-20">
+        <div className="mt-20">
+          <Reveal>
             <h3 className="text-h3 font-semibold text-primary mb-8">
               {lang === "es" ? (
                 <>
@@ -263,18 +253,20 @@ function SponsorsSection() {
                 </>
               )}
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-6">
-              {RECEIVE.map((r, i) => (
-                <div key={r.en.slice(0, 24)} className="flex gap-4">
+          </Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-6">
+            {RECEIVE.map((r, i) => (
+              <Reveal key={r.en.slice(0, 24)} delay={i * 80}>
+                <div className="flex gap-4">
                   <span className="text-meta font-bold text-accent tabular-nums mt-1">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <p className="text-body text-ink/80">{t(r)}</p>
                 </div>
-              ))}
-            </div>
+              </Reveal>
+            ))}
           </div>
-        </Reveal>
+        </div>
       </div>
     </section>
   )
@@ -300,40 +292,39 @@ export default function GetInvolved() {
             <h1 className="text-display font-light">
               {lang === "es" ? (
                 <>
-                  Cada Lumen comienza con
+                  Impulsa a la
                   <br />
-                  <em className="italic font-semibold">alguien que dijo sí.</em>
+                  <em className="italic font-semibold">próxima generación.</em>
                 </>
               ) : (
                 <>
-                  Every Lumen starts with
+                  Back the
                   <br />
-                  <em className="italic font-semibold">someone who said yes.</em>
+                  <em className="italic font-semibold">next generation.</em>
                 </>
               )}
             </h1>
             <p className="text-lead font-light text-primary-foreground/75 mt-6">
               {lang === "es"
-                ? "Si eres un estudiante listo para desafiar límites, una persona que quiere abrir puertas o una empresa que busca talento excepcional, hay un lugar para ti en el ecosistema."
-                : "Whether you're a student ready to defy limits, an individual who wants to open doors, or a company looking for exceptional talent, there's a place for you in the ecosystem."}
+                ? "Aporta tiempo, abre puertas o financia una beca. Así funciona."
+                : "Give time, open doors, or fund a scholarship. Here's how."}
             </p>
             <div className="mt-10 flex flex-wrap gap-x-10 gap-y-4">
-              <ArrowButton
-                label={lang === "es" ? "Para estudiantes" : "For students"}
-                tone="white"
-                href="#students"
-              />
               <ArrowButton
                 label={lang === "es" ? "Para patrocinadores" : "For sponsors"}
                 tone="white"
                 href="#sponsors"
+              />
+              <ArrowButton
+                label={lang === "es" ? "Para estudiantes" : "For students"}
+                tone="white"
+                href="#/apply"
               />
             </div>
           </Reveal>
         </div>
       </section>
 
-      <AdmissionsProcess />
       <SponsorsSection />
 
       {/* Closing CTA */}

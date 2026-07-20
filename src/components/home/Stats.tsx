@@ -95,8 +95,8 @@ function GpaByMajor() {
         </div>
       </div>
 
-      {/* Axis on top */}
-      <div className="grid grid-cols-[minmax(8rem,2fr)_4fr_2.4rem_3.2rem] gap-3 mb-1">
+      {/* Axis on top (hidden on phones, where the chart moves to its own row) */}
+      <div className="hidden sm:grid grid-cols-[minmax(8rem,2fr)_4fr_2.4rem_3.2rem] gap-3 mb-1">
         <div />
         <GpaAxis />
         <div />
@@ -110,15 +110,19 @@ function GpaByMajor() {
           return (
             <div
               key={m.name.en}
-              className={`grid grid-cols-[minmax(8rem,2fr)_4fr_2.4rem_3.2rem] items-center gap-3 py-1.5 ${
+              className={`grid grid-cols-[1fr_2.4rem_3.2rem] sm:grid-cols-[minmax(8rem,2fr)_4fr_2.4rem_3.2rem] items-center gap-x-3 gap-y-1 py-2 sm:py-1.5 ${
                 m.total ? "border-t border-ink/15 mt-2 pt-3" : ""
               }`}
             >
-              <div className={`text-body ${m.total ? "font-bold text-primary" : "text-muted"}`}>
+              <div
+                className={`order-1 sm:order-none text-body ${
+                  m.total ? "font-bold text-primary" : "text-muted"
+                }`}
+              >
                 {t(m.name)}
               </div>
               <div
-                className="relative h-6"
+                className="order-4 col-span-full sm:order-none sm:col-span-1 relative h-6"
                 title={`${t(m.name)}: Lumen ${m.lumen.toFixed(1)} · ${
                   lang === "es" ? "promedio" : "average"
                 } ${m.avg.toFixed(1)}`}
@@ -174,14 +178,14 @@ function GpaByMajor() {
                 </span>
               </div>
               <div
-                className={`text-meta tabular-nums text-right ${
+                className={`order-2 sm:order-none text-meta tabular-nums text-right ${
                   m.total ? "font-bold text-foreground" : delta > 0 ? "text-foreground" : "text-muted"
                 }`}
               >
                 {delta > 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1)}
               </div>
               <div
-                className={`text-meta tabular-nums text-right ${
+                className={`order-3 sm:order-none text-meta tabular-nums text-right ${
                   m.total ? "font-bold text-accent" : pct > 0 ? "font-semibold text-accent" : "text-muted"
                 }`}
               >
@@ -206,8 +210,8 @@ function ProgramComparison() {
           : "GPA and retention by financial aid program"}
       </h3>
 
-      {/* Column tags */}
-      <div className="grid grid-cols-[minmax(7rem,1.4fr)_2fr_2fr] gap-x-10 lg:gap-x-16 mb-3">
+      {/* Column tags (md+; phones get inline labels per row) */}
+      <div className="hidden md:grid grid-cols-[minmax(7rem,1.4fr)_2fr_2fr] gap-x-10 lg:gap-x-16 mb-3">
         <div />
         <div>
           <Tag>{lang === "es" ? "Desempeño" : "Performance"}</Tag>
@@ -218,7 +222,7 @@ function ProgramComparison() {
       </div>
 
       {/* GPA axis on top of its column */}
-      <div className="grid grid-cols-[minmax(7rem,1.4fr)_2fr_2fr] gap-x-10 lg:gap-x-16 mb-1">
+      <div className="hidden md:grid grid-cols-[minmax(7rem,1.4fr)_2fr_2fr] gap-x-10 lg:gap-x-16 mb-1">
         <div />
         <GpaAxis />
         <div />
@@ -228,48 +232,56 @@ function ProgramComparison() {
         {PROGRAMS.map((p) => (
           <div
             key={p.name.en}
-            className="grid grid-cols-[minmax(7rem,1.4fr)_2fr_2fr] items-center gap-x-10 lg:gap-x-16 py-2"
+            className="grid grid-cols-1 md:grid-cols-[minmax(7rem,1.4fr)_2fr_2fr] md:items-center gap-y-1.5 md:gap-x-10 lg:gap-x-16 py-3 md:py-2 border-b border-ink/5 last:border-0 md:border-0"
           >
             <div className={`text-body ${p.lumen ? "font-semibold text-primary" : "text-muted"}`}>
               {t(p.name)}
             </div>
-            <div className="relative h-6" title={`${t(p.name)}: ${p.gpa.toFixed(1)} / 5.0`}>
-              <GridLines />
-              <span
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full"
-                style={{
-                  left: `${gpaX(p.gpa)}%`,
-                  width: p.lumen ? 14 : 11,
-                  height: p.lumen ? 14 : 11,
-                  background: p.lumen ? ACCENT : CONTEXT,
-                  boxShadow: "0 0 0 2px #ffffff",
-                }}
-              />
-              <span
-                className={`absolute top-1/2 -translate-y-1/2 text-meta tabular-nums ${
-                  p.lumen ? "font-bold text-foreground" : "text-muted"
-                }`}
-                style={{ left: `calc(${gpaX(p.gpa)}% + 12px)` }}
-              >
-                {p.gpa.toFixed(1)}
+            <div className="grid grid-cols-[4.5rem_1fr] items-center gap-x-2 md:contents">
+              <span className="text-meta uppercase tracking-widest text-muted md:hidden">
+                {lang === "es" ? "Promedio" : "GPA"}
               </span>
-            </div>
-            <div className="relative h-6 flex items-center" title={`${t(p.name)}: ${p.retention}%`}>
-              <div
-                className="h-3.5 rounded-r-sm"
-                style={{
-                  width: `${p.retention * 0.8}%`,
-                  background: p.lumen ? ACCENT : CONTEXT,
-                  opacity: p.lumen ? 1 : 0.55,
-                }}
-              />
-              <span
-                className={`ml-2 text-meta tabular-nums ${
-                  p.lumen ? "font-bold text-foreground" : "text-muted"
-                }`}
-              >
-                {p.retention}%
+              <div className="relative h-6" title={`${t(p.name)}: ${p.gpa.toFixed(1)} / 5.0`}>
+                <GridLines />
+                <span
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full"
+                  style={{
+                    left: `${gpaX(p.gpa)}%`,
+                    width: p.lumen ? 14 : 11,
+                    height: p.lumen ? 14 : 11,
+                    background: p.lumen ? ACCENT : CONTEXT,
+                    boxShadow: "0 0 0 2px #ffffff",
+                  }}
+                />
+                <span
+                  className={`absolute top-1/2 -translate-y-1/2 text-meta tabular-nums ${
+                    p.lumen ? "font-bold text-foreground" : "text-muted"
+                  }`}
+                  style={{ left: `calc(${gpaX(p.gpa)}% + 12px)` }}
+                >
+                  {p.gpa.toFixed(1)}
+                </span>
+              </div>
+              <span className="text-meta uppercase tracking-widest text-muted md:hidden">
+                {lang === "es" ? "Retención" : "Retention"}
               </span>
+              <div className="relative h-6 flex items-center" title={`${t(p.name)}: ${p.retention}%`}>
+                <div
+                  className="h-3.5 rounded-r-sm"
+                  style={{
+                    width: `${p.retention * 0.8}%`,
+                    background: p.lumen ? ACCENT : CONTEXT,
+                    opacity: p.lumen ? 1 : 0.55,
+                  }}
+                />
+                <span
+                  className={`ml-2 text-meta tabular-nums ${
+                    p.lumen ? "font-bold text-foreground" : "text-muted"
+                  }`}
+                >
+                  {p.retention}%
+                </span>
+              </div>
             </div>
           </div>
         ))}

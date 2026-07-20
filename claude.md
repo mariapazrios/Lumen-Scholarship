@@ -94,7 +94,7 @@ Full pattern library (P1–P10) is in [prd.md](prd.md) under *Inspiration Patter
 ## Project phases
 
 - **Phase 1 (retired):** Design-system showcase page. Replaced by Phase 2; the token/pattern documentation lives on in [prd.md](prd.md) and this file.
-- **Phase 2 (shipped):** Full marketing site with a dependency-free **hash router** in [src/App.tsx](src/App.tsx). Routes: `#/` (Home), `#/scholars`, `#/team`, `#/get-involved`; `#/scholars/<slug>` deep-links to a profile. Titles update per route and language.
+- **Phase 2 (shipped):** Full marketing site with a dependency-free **hash router** in [src/App.tsx](src/App.tsx). Routes: `#/` (Home), `#/scholars`, `#/team`, `#/get-involved`, `#/apply` (passcode-gated essay prompts; code lives in [src/pages/Apply.tsx](src/pages/Apply.tsx), stored in sessionStorage — client-side soft gate only); `#/scholars/<slug>` deep-links to a profile. Titles update per route and language.
   - **Bilingual (EN/ES):** every user-facing string is localized. `src/lib/i18n.ts` holds `LangContext` + `useLang()` (`t()` for strings, `tl()` for lists); App owns the state (localStorage `lumen-lang`, defaults from `navigator.language`); the header has an EN|ES toggle. Data files carry `{ en, es }` objects. Never add English-only copy.
   - **Copy rules:** NO em dashes anywhere (use commas, colons, or periods). Say "STEM", never "STEM+". Factual tone, not salesy.
   - **Pages** in `src/pages/`: `Home` (Hero with per-generation scholar rows → Mission/Vision → Stats charts → Andes → Colombia map → Video), `Scholars` (alphabetical directory with hover bio cards + full profiles), `Team` (Lumen Board + Andes support team), `GetInvolved` (admissions funnel/steps + sponsorship tiers/affiliates).

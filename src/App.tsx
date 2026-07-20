@@ -5,6 +5,7 @@ import Home from "./pages/Home"
 import Scholars from "./pages/Scholars"
 import Team from "./pages/Team"
 import GetInvolved from "./pages/GetInvolved"
+import Apply from "./pages/Apply"
 import { initialLang, LANG_STORAGE_KEY, LangContext, type Lang } from "./lib/i18n"
 
 /**
@@ -24,12 +25,14 @@ const TITLES: Record<Lang, Record<string, string>> = {
     scholars: "Meet the Students · Lumen",
     team: "Team and Process · Lumen",
     "get-involved": "Get Involved · Lumen",
+    apply: "Apply · Lumen",
   },
   es: {
     "": "Lumen · Movilidad Social Basada en Educación",
     scholars: "Conoce a los Estudiantes · Lumen",
     team: "Equipo y Proceso · Lumen",
     "get-involved": "Vincúlate · Lumen",
+    apply: "Postúlate · Lumen",
   },
 }
 
@@ -72,6 +75,7 @@ export default function App() {
     scholars: <Scholars />,
     team: <Team />,
     "get-involved": <GetInvolved />,
+    apply: <Apply />,
   }
 
   return (

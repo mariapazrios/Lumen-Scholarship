@@ -98,16 +98,16 @@ export default function Differentiated() {
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-28 relative">
         <Reveal>
           <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
-            {lang === "es" ? "Qué hace diferente a Lumen" : "How Lumen is different"}
+            {lang === "es" ? "Diferenciación" : "Differentiated"}
           </div>
           <h2 className="text-h2 font-semibold">
             {lang === "es" ? (
               <>
-                Más que <em className="italic font-light">solo matrícula.</em>
+                Buscamos ser más que <em className="italic font-light">solo matrícula.</em>
               </>
             ) : (
               <>
-                More than <em className="italic font-light">just tuition.</em>
+                We strive to be more than <em className="italic font-light">just tuition.</em>
               </>
             )}
           </h2>

@@ -81,7 +81,7 @@ export const SCHOLARS: Scholar[] = [
     },
     quote: {
       en: "Lumen is the opportunity I needed to fulfill my dreams, one I know will carry me toward what I aspire to as a human being, so I can support others in need.",
-      es: "Lumen es la oportunidad que necesitaba para cumplir mis sueños y que sé que me llevará a lo que aspiro como ser humano, para apoyar a otros que lo necesiten.",
+      es: "Lumen es la oportunidad que necesitaba para cumplir mis sueños y que sé que me llevará a lo que aspiro como ser humano para apoyar a otros que lo necesiten.",
     },
     essay: {
       en: "The adversities we face day to day do not define our future or who we are. We ourselves decide what our lives will be.",
@@ -163,8 +163,8 @@ export const SCHOLARS: Scholar[] = [
       es: "El colegio de Pablo tenía camino a una sola universidad, así que él trazó el suyo hacia Los Andes. Estudia economía por su impacto social, y sumó ingeniería industrial porque una sola mirada no le bastaba.",
     },
     quote: {
-      en: "I'm the first in my family to go to university. My parents couldn't do it, so with Lumen I am in a process of discovery and building my life project. Thank you for believing in me.",
-      es: "Soy el primero de mi familia en ir a la universidad. Mis papás no pudieron hacerlo, así que con Lumen estoy en un proceso de descubrimiento y de construcción de mi proyecto de vida. Gracias por creer en mí.",
+      en: "I'm the first in my family to go to university. My parents couldn't do it, so with Lumen we are in a process of discovery and of building my life project. Thank you for believing in me.",
+      es: "Soy el primero de mi familia en ir a la universidad. Mis papás no pudieron hacerlo, así que con Lumen estamos en un proceso de descubrimiento y de construcción de mi proyecto de vida. Gracias por creer en mí.",
     },
     essay: {
       en: "The future is built by those of us who believe in the power of dreams.",
@@ -247,8 +247,8 @@ export const SCHOLARS: Scholar[] = [
       es: "Sebastián aprendió por su cuenta a construir software desde Duitama mucho antes de llegar al campus. Dale un problema difícil y una fecha límite, y encontrará un equipo y construirá algo que importe.",
     },
     quote: {
-      en: "My parents dreamed of going to college but were unable to. Being the first professional is a huge milestone for my whole family.",
-      es: "Mis papás soñaban con ir a la universidad, pero no pudieron. Ser el primer profesional es un logro enorme para toda mi familia.",
+      en: "To the Sebastián of three years ago, I give thanks for everything he did, because all his efforts and sacrifices were worth it. Today I am fulfilling my dreams.",
+      es: "Al Sebastián de hace tres años le doy las gracias por todo lo que hizo, porque todos sus esfuerzos y sacrificios valieron la pena. Hoy estoy cumpliendo mis sueños.",
     },
     essay: {
       en: "I firmly believe in the power of science to save people's lives and improve their circumstances.",
@@ -260,7 +260,7 @@ export const SCHOLARS: Scholar[] = [
         "With two classmates he developed Audicia, an AI prototype built on Google Cloud that detects anomalies in public contracts to fight corruption. From more than 500 teams worldwide, theirs, SiliCO, reached the 25-team final of the Intelligent Planet Hackathon in Dhahran, Saudi Arabia: the only team from Latin America.",
       ],
       es: [
-        "Sebastián construye desde 2020: proyectos de programación, IoT y computación en la nube desde su casa en Duitama. Cuando Lumen lo llamó para decirle que había quedado, no lo podía creer: \"económicamente era muy difícil para nosotros pagar la matrícula en una universidad privada, incluso una que costara menos\". Su ensayo de admisión, titulado \"Mi razón de ciencia\", remonta esa convicción a un capítulo difícil en la vida de su familia y a los años que dedicó a entender la ciencia detrás del tratamiento que los sacó adelante.",
+        "Sebastián construye desde 2020: proyectos de programación, IoT y computación en la nube desde su casa en Duitama. Cuando Lumen lo llamó para decirle que había quedado, no lo podía creer: \"económicamente era muy difícil para nosotros pagar la matrícula en una universidad privada, que incluso costara menos\". Su ensayo de admisión, titulado \"Mi razón de ciencia\", remonta esa convicción a un capítulo difícil en la vida de su familia y a los años que dedicó a entender la ciencia detrás del tratamiento que los sacó adelante.",
         "Con dos compañeros desarrolló Audicia, un prototipo de IA construido sobre Google Cloud que detecta anomalías en contratos públicos para combatir la corrupción. Entre más de 500 equipos del mundo, el suyo, SiliCO, llegó a la final de 25 equipos del Intelligent Planet Hackathon en Dhahran, Arabia Saudita: el único equipo de América Latina.",
       ],
     },
@@ -285,12 +285,12 @@ export const SCHOLARS: Scholar[] = [
     hometown: "Cartagena",
     department: "Bolívar",
     short: {
-      en: "José loves the corner where engineering meets business, an instinct that carried him to a Math Olympiad final in high school. At ExpoAndes, Los Andes's engineering entrepreneurship fair, his wine made from exotic Colombian fruits earned an honorable mention.",
-      es: "A José le encanta la esquina donde la ingeniería se encuentra con los negocios, un instinto que lo llevó a una final de Olimpiadas de Matemáticas en el colegio. En ExpoAndes, la feria de emprendimiento e ingeniería de Los Andes, su vino de frutas exóticas colombianas se ganó una mención de honor.",
+      en: "A scout, a student-body president, and the author of ten science-fiction stories before he finished school, José came to Los Andes to study the place where engineering meets business.",
+      es: "Scout, presidente estudiantil y autor de diez historias de ciencia ficción antes de terminar el colegio, José llegó a Los Andes a estudiar el punto donde la ingeniería se encuentra con los negocios.",
     },
     quote: {
-      en: "Lumen is not just a scholarship. It's a program that pushes you professionally and supports you in every aspect of life.",
-      es: "Lumen no es solo una beca, sino un programa que busca impulsarte a nivel profesional y apoyarte en diferentes aspectos de la vida.",
+      en: "Lumen seemed really cool to me, because it's not just a scholarship: it's a program that pushes you professionally and supports you in different aspects of life.",
+      es: "Lumen me pareció muy chévere ya que no solo es una beca, sino también un programa que busca impulsarte a nivel profesional y apoyarte en diferentes aspectos de la vida.",
     },
     essay: {
       en: "I consider myself an individual under construction, driven by curiosity, a passion for learning, and the desire to make a difference in the world.",
@@ -298,12 +298,12 @@ export const SCHOLARS: Scholar[] = [
     },
     story: {
       en: [
-        "José reached the final round of the Math Olympiads at Universidad Tecnológica de Bolívar in 11th grade, and always wanted a career where engineering meets mathematics, finance, and business. Before university, in Cartagena, he was a scout, president of the winning party in his school's student elections, and the author of at least ten science-fiction and fantasy works for its literary fairs. The day after missing another scholarship, an email invited him to apply to Lumen. He learned of his acceptance on his grandmother's birthday, \"a gift for the whole family.\"",
-        "Now in Bogotá, the academic rigor has him weighing a double major in business. For ExpoAndes, he created a wine made from exotic Colombian fruits, a nod to the biodiversity of the country he wants his work to serve.",
+        "José grew up in Cartagena, where, as he wrote in his admissions essay, joy is part of the essence. He filled his school years to the brim: scouting, a week as a naval cadet, his church's media team, the winning campaign in the student-body elections, and at least ten science-fiction and fantasy works written for the school's literary fairs. When he reached the final of the Math Olympiads at Universidad Tecnológica de Bolívar, it confirmed what he already suspected: he wanted a career where engineering meets mathematics, finance, and business.",
+        "The day after missing another scholarship, an email invited him to apply to Lumen. He learned he was in on his grandmother's birthday, \"a gift for the whole family.\" Now in Bogotá he is weighing a double major in business, and at ExpoAndes his wine made from exotic Colombian fruits earned an honorable mention: a nod to the biodiversity of the country he wants his work to serve.",
       ],
       es: [
-        "José llegó a la ronda final de las Olimpiadas de Matemáticas de la Universidad Tecnológica de Bolívar en grado 11 y siempre quiso una carrera donde la ingeniería se encontrara con las matemáticas, las finanzas y los negocios. Antes de la universidad, en Cartagena, fue scout, presidente del partido ganador en las elecciones estudiantiles de su colegio y autor de al menos diez obras de ciencia ficción y fantasía para sus ferias literarias. Un día después de no quedar en otra beca, un correo lo invitó a aplicar a Lumen. Conoció su aceptación el día del cumpleaños de su abuela, \"un regalo para toda la familia\".",
-        "Ya en Bogotá, el rigor académico lo tiene considerando una doble titulación con Administración. Para ExpoAndes creó un vino de frutas exóticas colombianas, un homenaje a la biodiversidad del país al que quiere servir con su trabajo.",
+        "José creció en Cartagena, donde, como escribió en su ensayo de admisión, la alegría es parte de la esencia. Llenó sus años de colegio hasta el borde: el escultismo, una semana como cadete naval, el equipo de medios de su iglesia, la campaña ganadora en las elecciones estudiantiles y al menos diez obras de ciencia ficción y fantasía escritas para las ferias literarias. Cuando llegó a la final de las Olimpiadas de Matemáticas de la Universidad Tecnológica de Bolívar, se confirmó lo que ya intuía: quería una carrera donde la ingeniería se encontrara con las matemáticas, las finanzas y los negocios.",
+        "Un día después de no quedar en otra beca, un correo lo invitó a aplicar a Lumen. Supo que había quedado el día del cumpleaños de su abuela, \"un regalo para toda la familia\". Hoy, en Bogotá, considera una doble titulación con Administración, y en ExpoAndes su vino de frutas exóticas colombianas ganó una mención de honor: un homenaje a la biodiversidad del país al que quiere servir con su trabajo.",
       ],
     },
     highlights: {
@@ -330,8 +330,8 @@ export const SCHOLARS: Scholar[] = [
       es: "Julián encontró la ingeniería en un semillero de robótica del colegio, y Los Andes siempre fue la meta, incluso cuando parecía imposible. Sus padres no terminaron el colegio; él está escribiendo un nuevo capítulo para su familia.",
     },
     quote: {
-      en: "Living these experiences marks a before and after in our stories. In my case, in my family's story, since my parents didn't even graduate from high school. I feel deeply grateful to everyone who gives us this opportunity.",
-      es: "Poder vivir estas experiencias marca un antes y un después en nuestras historias, en mi caso en la historia de mi familia, ya que mis padres no llegaron ni siquiera a graduarse del colegio. Me siento muy agradecido con todos aquellos que nos brindan esta oportunidad.",
+      en: "Living these experiences marks a before and after in our stories. In my case, in my family's story, since my parents didn't even graduate from high school. I feel deeply grateful to everyone who gives us the opportunity to be part of the Lumen program.",
+      es: "Poder vivir estas experiencias marca un antes y un después en nuestras historias, en mi caso en la historia de mi familia, ya que mis padres no llegaron ni siquiera a graduarse del colegio. Me siento muy agradecido con todos aquellos que nos brindan la oportunidad de ser parte del programa Lumen.",
     },
     essay: {
       en: "One person can go far, but with a good team you can reach unimaginable places.",
@@ -444,6 +444,7 @@ export const SCHOLARS: Scholar[] = [
   },
   {
     slug: "valerie-suarez",
+    video: true,
     name: "Valerie Suárez",
     generation: "2024",
     major: { en: "Chemistry", es: "Química" },
@@ -454,8 +455,8 @@ export const SCHOLARS: Scholar[] = [
       es: "Valerie decía que nunca entraría a Los Andes; una visita al campus la hizo cambiar de opinión, y no miró atrás. Su amor por la química nació en la pandemia, gracias a una profesora que hacía sentir vivas las moléculas.",
     },
     quote: {
-      en: "Pursuing my passions inspires me to support the youngest in my family to build their dreams, and to believe this is a country with opportunities for us.",
-      es: "Poder hacer lo que me gusta me inspira a apoyar a los más pequeños de la familia para que crean en sus sueños y sepan que este sí es un país de oportunidades para nosotros.",
+      en: "Pursuing my passions inspires me to support the youngest in my family to believe in their dreams, and to know this truly is a country of opportunities.",
+      es: "Poder hacer lo que me gusta me inspira a apoyar a los más pequeños de la familia para que crean en sus sueños y sepan que este sí es un país de oportunidades.",
     },
     essay: {
       en: "She fell in love with chemistry, with the life inside it; and then with an opportunity: a world where knowledge becomes universal.",
