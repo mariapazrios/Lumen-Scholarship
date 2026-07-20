@@ -34,8 +34,8 @@ export const BOARD: TeamMember[] = [
     industry: { en: "Technology", es: "Tecnología" },
     credentials: ["Duke University", "Morgan Stanley", "Y Combinator", "Forbes 30 Under 30"],
     interviewStyle: {
-      en: "Fast-moving and curious. He digs into what candidates have built or taught themselves, looking for initiative and a builder's instinct.",
-      es: "Ágil y curioso. Indaga en lo que los candidatos han construido o aprendido por su cuenta, buscando iniciativa e instinto de constructor.",
+      en: "Fast-moving and curious. He digs into what candidates have built or taught themselves, looking for initiative and rigor in analytical thinking.",
+      es: "Ágil y curioso. Indaga en lo que los candidatos han construido o aprendido por su cuenta, buscando iniciativa y rigor en el pensamiento analítico.",
     },
   },
   {
@@ -66,7 +66,7 @@ export const BOARD: TeamMember[] = [
     name: "Lola Sanchez",
     org: { en: "Associate Principal, Bold Charter School", es: "Subdirectora, Bold Charter School" },
     industry: { en: "Education", es: "Educación" },
-    credentials: ["Duke University", "Teach For America", "Regis High School", "Bold Charter School"],
+    credentials: ["Duke University", "Teach For America", "Bold Charter School", "Regis High School"],
     interviewStyle: {
       en: "Warm and reflective. She asks about moments of failure and feedback, looking for self-awareness and a genuine love of learning.",
       es: "Cálida y reflexiva. Pregunta por momentos de fracaso y retroalimentación, buscando autoconocimiento y un amor genuino por aprender.",
@@ -79,8 +79,8 @@ export const BOARD: TeamMember[] = [
     industry: { en: "Technology / Consulting", es: "Tecnología / Consultoría" },
     credentials: ["Georgetown University", "Boston Consulting Group"],
     interviewStyle: {
-      en: "Big-picture. He explores how candidates connect their goals to the world around them, looking for adaptability and teamwork.",
-      es: "De visión amplia. Explora cómo los candidatos conectan sus metas con el mundo que los rodea, buscando adaptabilidad y trabajo en equipo.",
+      en: "Big-picture. He explores how candidates connect their goals to the world around them, looking for adaptability and rigor in analytical thinking.",
+      es: "De visión amplia. Explora cómo los candidatos conectan sus metas con el mundo que los rodea, buscando adaptabilidad y rigor en el pensamiento analítico.",
     },
   },
 ]

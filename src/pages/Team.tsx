@@ -37,7 +37,16 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
         {/* Reserved height keeps the interview-style block aligned across cards */}
         {member.credentials.length > 0 && (
           <div className="text-meta text-muted mt-2.5 leading-relaxed md:min-h-[5em] lg:min-h-[6.5em]">
-            {member.credentials.join(" · ")}
+            {member.credentials.map((c, i) => (
+              <span key={c}>
+                {i > 0 && (
+                  <span aria-hidden="true" className="text-accent font-bold text-[1.3em] leading-none align-middle mx-1">
+                    ·
+                  </span>
+                )}
+                {c}
+              </span>
+            ))}
           </div>
         )}
         <div className="mt-3 pt-3 border-t border-ink/10">
@@ -71,19 +80,14 @@ export default function Team() {
             <h1 className="text-display font-light">
               {lang === "es" ? (
                 <>
-                  Las personas <em className="italic font-semibold">detrás de Lumen.</em>
+                  El <em className="italic font-semibold">equipo Lumen.</em>
                 </>
               ) : (
                 <>
-                  The people <em className="italic font-semibold">behind Lumen.</em>
+                  The <em className="italic font-semibold">Lumen team.</em>
                 </>
               )}
             </h1>
-            <p className="text-lead font-light text-primary-foreground/75 mt-6">
-              {lang === "es"
-                ? "Trayectorias en finanzas, derecho corporativo, consultoría, innovación y educación. Los miembros de la junta entrevistan a cada candidato y acompañan a cada estudiante."
-                : "Backgrounds in finance, corporate law, consulting, innovation, and education. Board members interview every candidate and mentor every scholar."}
-            </p>
           </Reveal>
         </div>
       </section>

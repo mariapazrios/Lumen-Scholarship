@@ -11,23 +11,16 @@ const FUNNEL: Array<{ value: number; label: L; width: string; accent?: boolean }
   {
     value: 2534,
     label: { en: "Financial aid applications", es: "Solicitudes de apoyo financiero" },
-    width: "60%",
-  },
-  {
-    value: 483,
-    label: {
-      en: "After socioeconomic & academic filters",
-      es: "Tras filtros socioeconómicos y académicos",
-    },
-    width: "36%",
+    width: "58%",
   },
   {
     value: 82,
     label: {
-      en: "Final-round candidates: the Lumen pool",
-      es: "Candidatos de ronda final: el grupo Lumen",
+      en: "The Lumen pool of applicants",
+      es: "El grupo Lumen de aspirantes",
     },
-    width: "20%",
+    width: "26%",
+    accent: true,
   },
   {
     value: 11,
@@ -48,18 +41,18 @@ const STEPS: Array<{ n: string; title: L; body: L }> = [
   },
   {
     n: "02",
-    title: { en: "Apply to Quiero Estudiar", es: "Postúlate a Quiero Estudiar" },
+    title: { en: "Get into Quiero Estudiar", es: "Entra a Quiero Estudiar" },
     body: {
-      en: "Go through the university's flagship financial aid program and reach its final round. Lumen selects from this pool.",
-      es: "Recorre el programa insignia de apoyo financiero de la universidad y llega a la ronda final: de ese grupo salen los Lumens.",
+      en: "Reach the final round of the university's flagship financial aid program. Lumen selects from this pool.",
+      es: "Llega a la ronda final del programa insignia de apoyo financiero de la universidad: de ese grupo salen los Lumens.",
     },
   },
   {
     n: "03",
     title: { en: "Write your essay", es: "Escribe tu ensayo" },
     body: {
-      en: "Tell Lumen your personal story and academic trajectory, and choose the one phrase that represents you.",
-      es: "Cuéntale a Lumen tu historia y tu camino académico, y elige la frase que mejor te describe.",
+      en: "One essay, 650 words, on the prompt you choose from the ones we provide.",
+      es: "Un ensayo de 650 palabras sobre el tema que elijas entre los que proponemos.",
     },
   },
   {
@@ -122,8 +115,8 @@ export default function AdmissionsProcess({
               </h2>
               <p className="text-body text-ink/75 mt-6 max-w-lg">
                 {lang === "es"
-                  ? "Lumen elige entre los finalistas del riguroso proceso de apoyo financiero de la Universidad de los Andes, y añade un ensayo y entrevistas con la Junta. Los criterios: resiliencia, excelencia, integridad e impacto."
-                  : "Lumen selects from the final round of Universidad de los Andes's rigorous financial aid funnel, then adds an essay and interviews with the Lumen Board. Selection values: resilience, excellence, integrity, and impact."}
+                  ? "Lumen elige selectivamente de un grupo ya altamente curado: los finalistas de Quiero Estudiar."
+                  : "Lumen cherry-picks from an already highly curated pool: the finalists of Quiero Estudiar."}
               </p>
             </Reveal>
 
