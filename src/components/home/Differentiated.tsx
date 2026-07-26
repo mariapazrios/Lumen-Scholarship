@@ -36,8 +36,8 @@ const GROUPS: Array<{ label: L; pillars: Pillar[] }> = [
         n: "03",
         title: { en: "Identity", es: "Identidad" },
         challenge: {
-          en: "Financial aid students can face isolation and a strained sense of belonging, or financial aid-driven discrimination.",
-          es: "Los estudiantes becados pueden sentirse aislados, con un sentido de pertenencia frágil, o vivir discriminación por su condición de becarios.",
+          en: "Scholarship students can feel like guests on their own campus: isolated, and sometimes treated as if they don't belong.",
+          es: "Un estudiante becado puede sentirse un invitado en su propio campus: aislado y, a veces, tratado como si no perteneciera.",
         },
         solution: {
           en: "Lumen sponsors social and community-building activities every semester.",
