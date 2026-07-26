@@ -12,9 +12,9 @@ export default function Home() {
     <>
       <Hero />
       <Mission />
-      <Differentiated />
-      <MapSection />
       <Stats />
+      <MapSection />
+      <Differentiated />
       <Andes />
       <VideoSection />
       <CtaLink

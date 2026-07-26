@@ -98,7 +98,7 @@ export default function Differentiated() {
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-28 relative">
         <Reveal>
           <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
-            {lang === "es" ? "Diferenciación" : "Differentiated"}
+            {lang === "es" ? "Programa diferenciado" : "Differentiated program"}
           </div>
           <h2 className="text-h2 font-semibold">
             {lang === "es" ? (

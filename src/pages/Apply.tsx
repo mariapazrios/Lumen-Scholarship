@@ -19,8 +19,8 @@ const PROMPTS: Array<{ es: string; en: string; isNew?: boolean }> = [
     en: "Reflect on a time you questioned or challenged a belief or idea. What prompted your thinking? What was the outcome?",
   },
   {
-    es: "La inteligencia artificial está cambiando cómo aprendemos, trabajamos y creamos. Cuenta una experiencia real en la que la IA cambió tu forma de pensar o de hacer algo. ¿Qué lugar quieres que tenga en tu futuro, y qué crees que nunca debería reemplazar?",
-    en: "Artificial intelligence is changing how we learn, work, and create. Tell us about a real experience where AI changed how you think or how you do something. What role do you want it to play in your future, and what do you believe it should never replace?",
+    es: "Elige una fuerza de consecuencias profundas para la sociedad, sea tecnológica, ambiental, política o económica, y escribe sobre ella. ¿Cómo esperas navegarla en tu vida y en tu carrera?",
+    en: "Choose a force with profound consequences for society, whether technological, environmental, political, or economic, and write about it. How do you hope to navigate it in your life and your career?",
     isNew: true,
   },
 ]

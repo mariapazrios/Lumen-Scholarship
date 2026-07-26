@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import FlagCO from "./primitives/FlagCO"
 import { NAV_LINKS } from "../data/nav"
 import { useLang, type Lang } from "../lib/i18n"
 
@@ -41,26 +42,29 @@ function LangToggle({ className = "" }: { className?: string }) {
     { value: "es", label: "ES" },
   ]
   return (
-    <div
-      role="group"
-      aria-label="Language"
-      className={`flex items-center border border-primary/25 rounded-sm overflow-hidden ${className}`}
-    >
-      {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          onClick={() => setLang(o.value)}
-          aria-pressed={lang === o.value}
-          className={`px-3 py-1.5 text-meta font-semibold tracking-widest transition-colors duration-200 cursor-pointer ${
-            lang === o.value
-              ? "bg-primary text-primary-foreground"
-              : "text-primary hover:text-foreground"
-          }`}
-        >
-          {o.label}
-        </button>
-      ))}
+    <div className={`flex items-center gap-2.5 ${className}`}>
+      <FlagCO className="w-5 h-auto" />
+      <div
+        role="group"
+        aria-label="Language"
+        className="flex items-center border border-primary/25 rounded-sm overflow-hidden"
+      >
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => setLang(o.value)}
+            aria-pressed={lang === o.value}
+            className={`px-3 py-1.5 text-meta font-semibold tracking-widest transition-colors duration-200 cursor-pointer ${
+              lang === o.value
+                ? "bg-primary text-primary-foreground"
+                : "text-primary hover:text-foreground"
+            }`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

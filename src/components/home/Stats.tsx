@@ -307,6 +307,9 @@ export default function Stats() {
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-28 relative">
         <Reveal>
           <div className="mb-14">
+            <div className="text-meta uppercase tracking-widest text-muted mb-4">
+              {lang === "es" ? "Quiénes somos" : "Who we are"}
+            </div>
             <h2 className="text-h2 font-semibold text-primary">
               {lang === "es" ? (
                 <>
