@@ -3,9 +3,14 @@ import Watermark from "../primitives/Watermark"
 import { useLang, type L } from "../../lib/i18n"
 
 /** GPA and retention across financial aid programs (Lumen annual report 2025). */
-const PROGRAMS: Array<{ name: L; gpa: number; retention: number; lumen?: boolean }> = [
+const PROGRAMS: Array<{ name: L; sub?: L; gpa: number; retention: number; lumen?: boolean }> = [
   { name: { en: "Lumen", es: "Lumen" }, gpa: 4.3, retention: 100, lumen: true },
-  { name: { en: "Quiero Estudiar (Andes Flagship Aid)", es: "Quiero Estudiar (programa insignia)" }, gpa: 4.1, retention: 82 },
+  {
+    name: { en: "Quiero Estudiar", es: "Quiero Estudiar" },
+    sub: { en: "(Andes flagship financial aid)", es: "(programa insignia de Los Andes)" },
+    gpa: 4.1,
+    retention: 82,
+  },
   { name: { en: "Other", es: "Otros" }, gpa: 3.9, retention: 80 },
   { name: { en: "Government", es: "Gobierno" }, gpa: 3.8, retention: 78 },
 ]
@@ -236,6 +241,9 @@ function ProgramComparison() {
           >
             <div className={`text-body ${p.lumen ? "font-semibold text-primary" : "text-muted"}`}>
               {t(p.name)}
+              {p.sub && (
+                <span className="text-meta text-muted whitespace-nowrap"> {t(p.sub)}</span>
+              )}
             </div>
             <div className="grid grid-cols-[4.5rem_1fr] items-center gap-x-2 md:contents">
               <span className="text-meta uppercase tracking-widest text-muted md:hidden">

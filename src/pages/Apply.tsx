@@ -25,21 +25,9 @@ const PROMPTS: Array<{ es: string; en: string; isNew?: boolean }> = [
   },
 ]
 
-const SHORTS: Array<{ q: L; hint: L }> = [
-  {
-    q: { en: "Who am I?", es: "¿Quién soy?" },
-    hint: {
-      en: "In your own voice, 280 characters max: the length of a tweet.",
-      es: "Con tu propia voz, máximo 280 caracteres: lo que cabe en un tweet.",
-    },
-  },
-  {
-    q: { en: "Who do I want to be?", es: "¿Quién quiero ser?" },
-    hint: {
-      en: "Where you are headed, and why. Also 280 characters max.",
-      es: "Hacia dónde vas, y por qué. También máximo 280 caracteres.",
-    },
-  },
+const SHORTS: L[] = [
+  { en: "Who am I?", es: "¿Quién soy?" },
+  { en: "Who do I want to be?", es: "¿Quién quiero ser?" },
 ]
 
 function Gate({ onUnlock }: { onUnlock: () => void }) {
@@ -151,10 +139,8 @@ function Prompts() {
                 </>
               )}
             </h2>
-            <p className="text-body text-ink/75 mt-4 max-w-2xl">
-              {lang === "es"
-                ? "Máximo 650 palabras, en español. No buscamos el ensayo perfecto: buscamos tu historia, contada con honestidad."
-                : "650 words maximum, in Spanish. We aren't looking for the perfect essay: we're looking for your story, told honestly."}
+            <p className="text-body text-ink/75 mt-4">
+              {lang === "es" ? "Máximo 650 palabras." : "650 words maximum."}
             </p>
           </Reveal>
 
@@ -186,25 +172,17 @@ function Prompts() {
             <div className="text-meta uppercase tracking-widest text-muted mb-4">
               {lang === "es" ? "Dos preguntas cortas" : "Two short questions"}
             </div>
-            <h2 className="text-h2 font-semibold text-primary">
-              {lang === "es" ? (
-                <>
-                  Y en pocas palabras,{" "}
-                  <em className="italic font-light">preséntate.</em>
-                </>
-              ) : (
-                <>
-                  And in a few words, <em className="italic font-light">introduce yourself.</em>
-                </>
-              )}
-            </h2>
+            <p className="text-body text-ink/75">
+              {lang === "es"
+                ? "Incluye las respuestas a las dos preguntas de abajo, cada una de máximo un tweet (280 caracteres)."
+                : "Include answers to the two questions below, each no longer than a tweet (280 characters)."}
+            </p>
           </Reveal>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10 max-w-3xl">
             {SHORTS.map((s, i) => (
-              <Reveal key={s.q.en} delay={i * 120}>
+              <Reveal key={s.en} delay={i * 120}>
                 <div className="bg-white border border-ink/10 rounded-sm p-8 h-full">
-                  <h3 className="text-h3 font-semibold text-primary">{t(s.q)}</h3>
-                  <p className="text-body text-muted mt-2">{t(s.hint)}</p>
+                  <h3 className="text-h3 font-semibold text-primary">{t(s)}</h3>
                 </div>
               </Reveal>
             ))}
@@ -217,8 +195,8 @@ function Prompts() {
               </div>
               <p className="text-body text-ink/80">
                 {lang === "es"
-                  ? "Después del ensayo vienen las entrevistas: una serie de conversaciones individuales de 30 minutos con los miembros de la Junta Lumen. Los criterios de selección son los de siempre: resiliencia, excelencia, integridad e impacto."
-                  : "After the essay come the interviews: a series of 30-minute one-on-one conversations with the members of the Lumen Board. The selection values are the same as always: resilience, excellence, integrity, and impact."}
+                  ? "Lumen HQ te confirmará si avanzas a la siguiente ronda: una serie de entrevistas individuales de 30 minutos con los miembros de la Junta Lumen."
+                  : "Lumen HQ will get back to you on whether you've advanced to the next round: a series of 30-minute one-on-one interviews with the members of the Lumen Board."}
               </p>
             </div>
           </Reveal>

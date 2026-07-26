@@ -36,8 +36,8 @@ const GROUPS: Array<{ label: L; pillars: Pillar[] }> = [
         n: "03",
         title: { en: "Identity", es: "Identidad" },
         challenge: {
-          en: "Scholarship students can feel like guests on their own campus: isolated, and sometimes treated as if they don't belong.",
-          es: "Un estudiante becado puede sentirse un invitado en su propio campus: aislado y, a veces, tratado como si no perteneciera.",
+          en: "Financial aid students can be prone to marginalization from non-financial aid students.",
+          es: "Los estudiantes con apoyo financiero pueden verse marginados por los estudiantes que no lo reciben.",
         },
         solution: {
           en: "Lumen sponsors social and community-building activities every semester.",
