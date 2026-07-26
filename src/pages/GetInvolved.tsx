@@ -21,46 +21,55 @@ const CORPORATE_GIVES: L[] = [
 
 const RECEIVE: L[] = [
   { en: "Real impact on social mobility in Colombia", es: "Impacto real en la movilidad social de Colombia" },
-  { en: "A program with a track record of top performance", es: "Un programa con historial de alto desempeño" },
-  { en: "Privileged access to hyper-curated talent", es: "Acceso privilegiado a talento altamente seleccionado" },
+  {
+    en: "Privileged access to hyper-curated talent with a track record of top performance",
+    es: "Acceso privilegiado a talento altamente seleccionado y con historial de alto desempeño",
+  },
   { en: "A yearly report on every Lumen", es: "Un informe anual sobre cada Lumen" },
-  { en: "Social responsibility your team can see", es: "Responsabilidad social visible para tu equipo" },
   { en: "U.S. or Colombian tax deductions", es: "Deducciones tributarias en Estados Unidos o Colombia" },
 ]
 
 const TIERS: Array<{
   label: L
-  amount: number
-  note: L
+  amount?: number
+  monthly: L
   detail: L
   featured?: boolean
 }> = [
   {
     label: { en: "Full scholarship", es: "Beca completa" },
     amount: 40,
-    note: { en: "$160M COP upfront", es: "$160M COP de contado" },
+    monthly: { en: "≈ $1,042 a month over 4 years", es: "≈ $1,042 al mes durante 4 años" },
     detail: {
-      en: "Or in installments over 4 years at 0% interest, before tax deductions.",
-      es: "O en cuotas durante 4 años al 0% de interés, antes de deducciones tributarias.",
+      en: "$160M COP, upfront or in installments at 0% interest.",
+      es: "$160M COP, de contado o en cuotas al 0% de interés.",
     },
     featured: true,
   },
   {
     label: { en: "Half scholarship", es: "Media beca" },
     amount: 25,
-    note: { en: "$95M COP", es: "$95M COP" },
+    monthly: { en: "Co-sponsor a Lumen with a partner", es: "Copatrocina un Lumen con un socio" },
     detail: {
-      en: "Co-sponsor a Lumen with a partner, upfront or over 4 years.",
-      es: "Copatrocina un Lumen con un socio, de contado o a 4 años.",
+      en: "$95M COP, upfront or over 4 years.",
+      es: "$95M COP, de contado o a 4 años.",
     },
   },
   {
     label: { en: "Partial scholarship", es: "Beca parcial" },
     amount: 10,
-    note: { en: "From one-fifth of a scholarship", es: "Desde una quinta parte de una beca" },
+    monthly: { en: "≈ $208 a month", es: "≈ $208 al mes" },
     detail: {
-      en: "Shares from one-third to one-fifth, from roughly $208 a month.",
-      es: "Participaciones desde un tercio hasta una quinta parte, desde unos $208 al mes.",
+      en: "Shares from one-third to one-fifth of a scholarship.",
+      es: "Participaciones desde un tercio hasta una quinta parte de una beca.",
+    },
+  },
+  {
+    label: { en: "Ad hoc", es: "Monto libre" },
+    monthly: { en: "Every peso counts", es: "Cada peso cuenta" },
+    detail: {
+      en: "Donations under $5K fund the living stipend every Lumen receives each semester.",
+      es: "Las donaciones de menos de $5K financian el apoyo de sostenimiento que cada Lumen recibe cada semestre.",
     },
   },
 ]
@@ -70,33 +79,12 @@ function SponsorsSection() {
   return (
     <section id="sponsors" className="bg-surface-soft scroll-mt-24">
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-28">
-        <Reveal>
-          <div className="text-meta uppercase tracking-widest text-muted mb-4">
-            {lang === "es" ? "Para patrocinadores" : "For sponsors"}
-          </div>
-          <h2 className="text-h2 font-semibold text-primary max-w-3xl">
-            {lang === "es" ? (
-              <>
-                Aporta recursos, aporta tiempo,
-                <br />
-                <em className="italic font-light">o ambos.</em>
-              </>
-            ) : (
-              <>
-                Give money, give time,
-                <br />
-                <em className="italic font-light">or both.</em>
-              </>
-            )}
-          </h2>
-        </Reveal>
-
         {/* Donor tiers */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-14">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {TIERS.map((tier, i) => (
             <Reveal key={tier.label.en} delay={i * 120}>
               <div
-                className={`rounded-sm p-8 md:p-10 h-full flex flex-col transition-transform duration-300 hover:-translate-y-1 ${
+                className={`rounded-sm p-8 h-full flex flex-col transition-transform duration-300 hover:-translate-y-1 ${
                   tier.featured
                     ? "bg-primary text-primary-foreground"
                     : "bg-white border border-ink/10"
@@ -110,22 +98,31 @@ function SponsorsSection() {
                   {t(tier.label)}
                 </div>
                 <div
-                  className={`text-stat font-bold mt-4 tabular-nums ${
+                  className={`text-h2 font-bold mt-4 tabular-nums ${
                     tier.featured ? "" : "text-primary"
                   }`}
                 >
-                  ~US$
-                  <CountUp value={tier.amount} duration={900 + i * 150} />K
+                  {tier.amount ? (
+                    <>
+                      {tier.amount === 10 && (
+                        <span className="text-h3 font-light">{lang === "es" ? "desde " : "from "}</span>
+                      )}
+                      ~US$
+                      <CountUp value={tier.amount} duration={900 + i * 150} />K
+                    </>
+                  ) : (
+                    <span>{lang === "es" ? "Tú eliges" : "Any amount"}</span>
+                  )}
                 </div>
                 <div
-                  className={`text-body mt-1 ${
-                    tier.featured ? "text-primary-foreground/75" : "text-muted"
+                  className={`text-body font-semibold mt-2 ${
+                    tier.featured ? "text-primary-foreground/90" : "text-accent"
                   }`}
                 >
-                  {t(tier.note)}
+                  {t(tier.monthly)}
                 </div>
                 <p
-                  className={`text-body mt-4 flex-1 ${
+                  className={`text-body mt-3 flex-1 ${
                     tier.featured ? "text-primary-foreground/75" : "text-ink/75"
                   }`}
                 >
@@ -239,7 +236,7 @@ function SponsorsSection() {
           </Reveal>
         </div>
 
-        {/* What sponsors receive */}
+        {/* What sponsors receive: four points, two per column */}
         <div className="mt-20">
           <Reveal>
             <h3 className="text-h3 font-semibold text-primary mb-8">
@@ -254,7 +251,7 @@ function SponsorsSection() {
               )}
             </h3>
           </Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-16 gap-y-6">
             {RECEIVE.map((r, i) => (
               <Reveal key={r.en.slice(0, 24)} delay={i * 80}>
                 <div className="flex gap-4">
@@ -292,15 +289,11 @@ export default function GetInvolved() {
             <h1 className="text-display font-light">
               {lang === "es" ? (
                 <>
-                  Impulsa a la
-                  <br />
-                  <em className="italic font-semibold">próxima generación.</em>
+                  Impulsa a la <em className="italic font-semibold">próxima generación.</em>
                 </>
               ) : (
                 <>
-                  Back the
-                  <br />
-                  <em className="italic font-semibold">next generation.</em>
+                  Back the <em className="italic font-semibold">next generation.</em>
                 </>
               )}
             </h1>
@@ -309,18 +302,6 @@ export default function GetInvolved() {
                 ? "Aporta tiempo, abre puertas o financia una beca. Así funciona."
                 : "Give time, open doors, or fund a scholarship. Here's how."}
             </p>
-            <div className="mt-10 flex flex-wrap gap-x-10 gap-y-4">
-              <ArrowButton
-                label={lang === "es" ? "Para patrocinadores" : "For sponsors"}
-                tone="white"
-                href="#sponsors"
-              />
-              <ArrowButton
-                label={lang === "es" ? "Para estudiantes" : "For students"}
-                tone="white"
-                href="#/apply"
-              />
-            </div>
           </Reveal>
         </div>
       </section>

@@ -444,7 +444,6 @@ export const SCHOLARS: Scholar[] = [
   },
   {
     slug: "valerie-suarez",
-    video: true,
     name: "Valerie Suárez",
     generation: "2024",
     major: { en: "Chemistry", es: "Química" },

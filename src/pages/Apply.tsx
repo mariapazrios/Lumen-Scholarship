@@ -29,15 +29,15 @@ const SHORTS: Array<{ q: L; hint: L }> = [
   {
     q: { en: "Who am I?", es: "¿Quién soy?" },
     hint: {
-      en: "A few sentences, in your own voice.",
-      es: "Unas pocas frases, con tu propia voz.",
+      en: "In your own voice, 280 characters max: the length of a tweet.",
+      es: "Con tu propia voz, máximo 280 caracteres: lo que cabe en un tweet.",
     },
   },
   {
     q: { en: "Who do I want to be?", es: "¿Quién quiero ser?" },
     hint: {
-      en: "Where you are headed, and why.",
-      es: "Hacia dónde vas, y por qué.",
+      en: "Where you are headed, and why. Also 280 characters max.",
+      es: "Hacia dónde vas, y por qué. También máximo 280 caracteres.",
     },
   },
 ]
@@ -107,6 +107,33 @@ function Prompts() {
   const { lang, t } = useLang()
   return (
     <>
+      {/* How to submit */}
+      <div className="bg-accent text-white">
+        <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-4">
+          <p className="text-body">
+            {lang === "es" ? (
+              <>
+                <strong>Para aplicar:</strong> envía tu ensayo (PDF o Word) y tus dos
+                respuestas cortas a{" "}
+                <a href="mailto:hq@lumenedu.org" className="underline underline-offset-2 font-semibold">
+                  hq@lumenedu.org
+                </a>
+                .
+              </>
+            ) : (
+              <>
+                <strong>To apply:</strong> send your essay (PDF or Word) and your two short
+                answers to{" "}
+                <a href="mailto:hq@lumenedu.org" className="underline underline-offset-2 font-semibold">
+                  hq@lumenedu.org
+                </a>
+                .
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+
       <section className="bg-background">
         <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-24">
           <Reveal>
@@ -222,19 +249,15 @@ export default function Apply() {
             <h1 className="text-display font-light">
               {lang === "es" ? (
                 <>
-                  Tu historia
-                  <br />
-                  <em className="italic font-semibold">empieza aquí.</em>
+                  Tu historia <em className="italic font-semibold">empieza aquí.</em>
                 </>
               ) : (
                 <>
-                  Your story
-                  <br />
-                  <em className="italic font-semibold">starts here.</em>
+                  Your story <em className="italic font-semibold">starts here.</em>
                 </>
               )}
             </h1>
-            <p className="text-lead font-light text-primary-foreground/75 mt-6 max-w-2xl">
+            <p className="text-lead font-light text-primary-foreground/75 mt-6">
               {lang === "es"
                 ? "Si llegaste a la ronda final de Quiero Estudiar y recibiste nuestra invitación, este es el siguiente paso."
                 : "If you reached the final round of Quiero Estudiar and received our invitation, this is the next step."}

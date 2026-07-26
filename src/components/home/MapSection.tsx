@@ -18,7 +18,8 @@ const COHORT_STATS: Array<{ value: string; label: L }> = [
   { value: "7", label: { en: "Hometowns", es: "Ciudades de origen" } },
   { value: "6", label: { en: "Departments", es: "Departamentos" } },
   { value: "7", label: { en: "Majors", es: "Carreras" } },
-  { value: "9 · 2", label: { en: "Men · Women", es: "Hombres · Mujeres" } },
+  { value: "9", label: { en: "Men", es: "Hombres" } },
+  { value: "2", label: { en: "Women", es: "Mujeres" } },
 ]
 
 export default function MapSection() {
@@ -53,7 +54,7 @@ export default function MapSection() {
 
         {/* Cohort stats */}
         <Reveal delay={100}>
-          <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-px bg-ink/10 border border-ink/10 rounded-sm overflow-hidden">
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-px bg-ink/10 border border-ink/10 rounded-sm overflow-hidden">
             {COHORT_STATS.map((s) => (
               <div key={s.label.en} className="bg-background p-6 lg:p-8">
                 <div aria-hidden="true" className="w-8 h-[3px] bg-accent mb-5" />
