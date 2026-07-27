@@ -5,7 +5,7 @@ import { useLang, type L } from "../../lib/i18n"
 const FACTS: Array<{ value: string; label: L }> = [
   { value: "1948", label: { en: "Founded in Bogotá", es: "Fundada en Bogotá" } },
   { value: "#1", label: { en: "University in Colombia", es: "Universidad de Colombia" } },
-  { value: "#6", label: { en: "University in Latin America", es: "Universidad de América Latina" } },
+  { value: "#8", label: { en: "University in Latin America", es: "Universidad de América Latina" } },
   { value: "110K+", label: { en: "Graduates since inception", es: "Graduados desde su fundación" } },
   { value: "~2,000", label: { en: "Faculty, 77% hold PhDs", es: "Profesores, 77% con doctorado" } },
   { value: "44", label: { en: "Undergraduate programs", es: "Programas de pregrado" } },

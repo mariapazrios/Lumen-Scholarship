@@ -104,8 +104,8 @@ function Prompts() {
                 respuestas cortas a{" "}
                 <a href="mailto:hq@lumenedu.org" className="underline underline-offset-2 font-semibold">
                   hq@lumenedu.org
-                </a>
-                .
+                </a>{" "}
+                antes del final del día del 2 de agosto de 2026.
               </>
             ) : (
               <>
@@ -113,8 +113,8 @@ function Prompts() {
                 answers to{" "}
                 <a href="mailto:hq@lumenedu.org" className="underline underline-offset-2 font-semibold">
                   hq@lumenedu.org
-                </a>
-                .
+                </a>{" "}
+                by end of day on August 2, 2026.
               </>
             )}
           </p>

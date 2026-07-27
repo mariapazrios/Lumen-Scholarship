@@ -112,8 +112,8 @@ function SponsorsSection() {
         <Reveal delay={120}>
           <p className="text-body text-ink/75 mt-6">
             {lang === "es"
-              ? "Cualquiera de las tres opciones se puede pagar de contado o diferida en cuotas semestrales, cada 6 meses, al 0% de interés."
-              : "Any of the three can be paid upfront or deferred in semester installments, every 6 months, at 0% interest."}
+              ? "Todos los compromisos se pueden pagar de contado o diferidos en cuotas semestrales, cada 6 meses, al 0% de interés."
+              : "All commitments can be paid upfront or deferred in semester installments, every 6 months, at 0% interest."}
           </p>
         </Reveal>
 
