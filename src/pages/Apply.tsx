@@ -5,7 +5,7 @@ import { useLang, type L } from "../lib/i18n"
 const PASSCODE = "LUMEN26!"
 const STORAGE_KEY = "lumen-apply-unlocked"
 
-const PROMPTS: Array<{ es: string; en: string; isNew?: boolean }> = [
+const PROMPTS: Array<{ es: string; en: string }> = [
   {
     es: "Algunos estudiantes tienen un interés, historia, actividad o contexto que es tan significativo que creen que su aplicación estaría incompleta sin eso. Si esto te describe, por favor comparte tu historia.",
     en: "Some students have an interest, story, activity, or context so meaningful that they believe their application would be incomplete without it. If this describes you, please share your story.",
@@ -21,7 +21,6 @@ const PROMPTS: Array<{ es: string; en: string; isNew?: boolean }> = [
   {
     es: "Elige una fuerza de consecuencias profundas para la sociedad, sea tecnológica, ambiental, política o económica, y escribe sobre ella. ¿Cómo esperas navegarla en tu vida y en tu carrera?",
     en: "Choose a force with profound consequences for society, whether technological, environmental, political, or economic, and write about it. How do you hope to navigate it in your life and your career?",
-    isNew: true,
   },
 ]
 
@@ -153,11 +152,6 @@ function Prompts() {
                   </span>
                   <div>
                     <p className="text-body text-ink/85">{lang === "es" ? p.es : p.en}</p>
-                    {p.isNew && (
-                      <span className="inline-block mt-3 text-[11px] leading-none uppercase tracking-widest font-semibold text-accent border border-accent/30 rounded-full px-2.5 py-1.5">
-                        {lang === "es" ? "Nuevo este año" : "New this year"}
-                      </span>
-                    )}
                   </div>
                 </div>
               </Reveal>

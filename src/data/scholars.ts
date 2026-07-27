@@ -299,11 +299,11 @@ export const SCHOLARS: Scholar[] = [
     story: {
       en: [
         "José grew up in Cartagena, where, as he wrote in his admissions essay, joy is part of the essence. He filled his school years to the brim: scouting, a week as a naval cadet, his church's media team, the winning campaign in the student-body elections, and at least ten science-fiction and fantasy works written for the school's literary fairs. When he reached the final of the Math Olympiads at Universidad Tecnológica de Bolívar, it confirmed what he already suspected: he wanted a career where engineering meets mathematics, finance, and business.",
-        "The day after missing another scholarship, an email invited him to apply to Lumen. He learned he was in on his grandmother's birthday, \"a gift for the whole family.\" Now in Bogotá he is weighing a double major in business, and at ExpoAndes his wine made from exotic Colombian fruits earned an honorable mention: a nod to the biodiversity of the country he wants his work to serve.",
+        "The day after missing another scholarship, an email invited him to apply to Lumen. Now in Bogotá he is weighing a double major in business, and at ExpoAndes his wine made from exotic Colombian fruits earned an honorable mention: a nod to the biodiversity of the country he wants his work to serve.",
       ],
       es: [
         "José creció en Cartagena, donde, como escribió en su ensayo de admisión, la alegría es parte de la esencia. Llenó sus años de colegio hasta el borde: el escultismo, una semana como cadete naval, el equipo de medios de su iglesia, la campaña ganadora en las elecciones estudiantiles y al menos diez obras de ciencia ficción y fantasía escritas para las ferias literarias. Cuando llegó a la final de las Olimpiadas de Matemáticas de la Universidad Tecnológica de Bolívar, se confirmó lo que ya intuía: quería una carrera donde la ingeniería se encontrara con las matemáticas, las finanzas y los negocios.",
-        "Un día después de no quedar en otra beca, un correo lo invitó a aplicar a Lumen. Supo que había quedado el día del cumpleaños de su abuela, \"un regalo para toda la familia\". Hoy, en Bogotá, considera una doble titulación con Administración, y en ExpoAndes su vino de frutas exóticas colombianas ganó una mención de honor: un homenaje a la biodiversidad del país al que quiere servir con su trabajo.",
+        "Un día después de no quedar en otra beca, un correo lo invitó a aplicar a Lumen. Hoy, en Bogotá, considera una doble titulación con Administración, y en ExpoAndes su vino de frutas exóticas colombianas ganó una mención de honor: un homenaje a la biodiversidad del país al que quiere servir con su trabajo.",
       ],
     },
     highlights: {

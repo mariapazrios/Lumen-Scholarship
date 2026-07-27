@@ -1,4 +1,5 @@
 import Reveal from "../primitives/Reveal"
+import Tricolor from "../primitives/Tricolor"
 import Watermark from "../primitives/Watermark"
 import { useLang, type L } from "../../lib/i18n"
 
@@ -41,6 +42,8 @@ export default function Mission() {
 
   return (
     <section className="bg-background relative overflow-hidden">
+      {/* Colombian tricolor, closing the hero */}
+      <Tricolor className="absolute inset-x-0 top-0 h-1" />
       <Watermark className="-right-36 top-16 w-[28rem]" />
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 pt-16 md:pt-24 pb-16 md:pb-20 relative">
         {/* Mission */}

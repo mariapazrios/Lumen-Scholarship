@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import FlagCO from "./primitives/FlagCO"
 import { NAV_LINKS } from "../data/nav"
 import { useLang, type Lang } from "../lib/i18n"
 
@@ -42,8 +41,7 @@ function LangToggle({ className = "" }: { className?: string }) {
     { value: "es", label: "ES" },
   ]
   return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
-      <FlagCO className="w-5 h-auto" />
+    <div className={`flex items-center ${className}`}>
       <div
         role="group"
         aria-label="Language"
@@ -94,7 +92,7 @@ export default function Header({ route }: { route: string }) {
                   key={link.route}
                   href={`#/${link.route}`}
                   aria-current={active ? "page" : undefined}
-                  className={`relative text-body font-semibold transition-colors duration-200 pb-1 ${
+                  className={`relative text-body font-semibold transition-colors duration-200 pb-2 ${
                     active ? "text-foreground" : "text-primary hover:text-foreground"
                   }`}
                 >

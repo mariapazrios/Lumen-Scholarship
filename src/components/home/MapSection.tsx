@@ -1,5 +1,6 @@
 import { useState } from "react"
 import Reveal from "../primitives/Reveal"
+import Tricolor from "../primitives/Tricolor"
 import Watermark from "../primitives/Watermark"
 import { COLOMBIA_PATH, MAP_CITIES, SCHOLARS } from "../../data/scholars"
 import { useLang, type L } from "../../lib/i18n"
@@ -57,7 +58,7 @@ export default function MapSection() {
           <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-px bg-ink/10 border border-ink/10 rounded-sm overflow-hidden">
             {COHORT_STATS.map((s) => (
               <div key={s.label.en} className="bg-background p-6 lg:p-8">
-                <div aria-hidden="true" className="w-8 h-[3px] bg-accent mb-5" />
+                <Tricolor className="w-8 h-[3px] mb-5" />
                 <div className="text-stat font-bold text-primary tabular-nums leading-none">
                   {s.value}
                 </div>

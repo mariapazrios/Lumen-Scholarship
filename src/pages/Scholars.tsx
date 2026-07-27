@@ -53,8 +53,10 @@ function Profile({ scholar, index }: { scholar: Scholar; index: number }) {
           <Reveal delay={120} className={`md:col-span-3 ${reversed ? "md:order-1" : ""}`}>
             <div className="max-w-2xl">
               <div className="text-meta uppercase tracking-widest text-muted">
-                {lang === "es" ? "Generación" : "Generation"} {scholar.generation} ·{" "}
-                {scholar.hometown}, {scholar.department}
+                {lang === "es"
+                  ? `Generación ${scholar.generation}`
+                  : `${scholar.generation} Generation`}{" "}
+                · {scholar.hometown}, {scholar.department}
               </div>
               <h2 className="text-h2 font-semibold text-primary mt-2">{scholar.name}</h2>
               <div className="text-lead font-light text-accent mt-1">{t(scholar.major)}</div>

@@ -6,8 +6,8 @@ import { useLang } from "../lib/i18n"
 function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
   const { lang, t } = useLang()
   return (
-    <Reveal delay={delay}>
-      <div className="group h-full">
+    <Reveal delay={delay} className="h-full">
+      <div className="group h-full flex flex-col min-w-0">
         <div className="relative overflow-hidden rounded-sm">
           <img
             src={`/team/${member.slug}.jpg`}
@@ -21,39 +21,47 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
             {t(member.industry)}
           </span>
         </div>
-        {/* Reserved height keeps names (with or without the founder badge) aligned */}
-        <h3 className="text-body font-semibold text-primary mt-3 leading-snug md:min-h-[2.6em]">
+        {/* Reserved height keeps the org line aligned across cards */}
+        <h3 className="text-body font-semibold text-primary mt-3 leading-snug break-words md:min-h-[2.6em]">
           {member.name}
-          {member.founder && (
-            <span className="ml-2 inline-block align-middle text-[10px] leading-none uppercase tracking-widest font-semibold text-white bg-accent rounded-full px-2 py-1">
+        </h3>
+        {member.founder && (
+          <div>
+            <span className="inline-block text-[10px] leading-none uppercase tracking-widest font-semibold text-white bg-accent rounded-full px-2 py-1">
               {lang === "es" ? "Fundadora" : "Founder"}
             </span>
-          )}
-        </h3>
-        {/* Reserved height keeps the org line aligned across cards */}
-        <div className="text-meta font-semibold text-ink/80 mt-1 md:min-h-[2.6em]">
+          </div>
+        )}
+        <div className="text-meta font-semibold text-ink/80 mt-1 break-words md:min-h-[2.6em]">
           {t(member.org)}
         </div>
-        {/* Reserved height keeps the interview-style block aligned across cards */}
         {member.credentials.length > 0 && (
-          <div className="text-meta text-muted mt-2.5 leading-relaxed md:min-h-[5em] lg:min-h-[6.5em]">
+          <div className="text-meta text-muted mt-2.5 leading-relaxed">
+            {/* Real spaces around the dot keep "Blackstone · Sequence" breakable */}
             {member.credentials.map((c, i) => (
               <span key={c}>
                 {i > 0 && (
-                  <span aria-hidden="true" className="text-accent font-bold text-[1.3em] leading-none align-middle mx-1">
-                    ·
-                  </span>
+                  <>
+                    {" "}
+                    <span aria-hidden="true" className="text-accent font-bold text-[1.3em] leading-none align-middle">
+                      ·
+                    </span>{" "}
+                  </>
                 )}
                 {c}
               </span>
             ))}
           </div>
         )}
-        <div className="mt-3 pt-3 border-t border-ink/10">
+        {/* mt-auto pins the divider and interview style to the same latitude on every card */}
+        <div className="mt-auto pt-3 border-t border-ink/10">
           <div className="text-[11px] uppercase tracking-widest text-muted">
             {lang === "es" ? "Estilo de entrevista" : "Interview style"}
           </div>
-          <p className="text-meta text-ink/70 mt-1.5 leading-relaxed">{t(member.interviewStyle)}</p>
+          {/* Reserved height so every divider and label sits at the same latitude */}
+          <p className="text-meta text-ink/70 mt-1.5 leading-relaxed md:min-h-[11.5em]">
+            {t(member.interviewStyle)}
+          </p>
         </div>
       </div>
     </Reveal>

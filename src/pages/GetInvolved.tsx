@@ -1,4 +1,3 @@
-import ArrowButton from "../components/primitives/ArrowButton"
 import CountUp from "../components/primitives/CountUp"
 import Reveal from "../components/primitives/Reveal"
 import { useLang, type L } from "../lib/i18n"
@@ -33,13 +32,11 @@ const TIERS: Array<{
   amount?: number
   cop?: L
   detail?: L
-  featured?: boolean
 }> = [
   {
     label: { en: "Full scholarship", es: "Beca completa" },
     amount: 50,
     cop: { en: "$190M COP", es: "$190M COP" },
-    featured: true,
   },
   {
     label: { en: "Half scholarship", es: "Media beca" },
@@ -47,15 +44,10 @@ const TIERS: Array<{
     cop: { en: "$95M COP", es: "$95M COP" },
   },
   {
-    label: { en: "Partial scholarship", es: "Beca parcial" },
-    amount: 10,
-    cop: { en: "From $38M COP", es: "Desde $38M COP" },
-  },
-  {
     label: { en: "Ad hoc", es: "Monto libre" },
     detail: {
-      en: "Donations under $5K fund the living stipend every Lumen receives each semester.",
-      es: "Las donaciones de menos de $5K financian el apoyo de sostenimiento que cada Lumen recibe cada semestre.",
+      en: "Contributions under $5K will be allocated to fund the living stipend every Lumen receives each semester.",
+      es: "Los aportes de menos de $5K se destinarán a financiar el apoyo de sostenimiento que cada Lumen recibe cada semestre.",
     },
   },
 ]
@@ -73,52 +65,34 @@ function SponsorsSection() {
           <h2 className="text-h2 font-semibold text-primary">
             {lang === "es" ? (
               <>
-                El dinero es lo que{" "}
-                <em className="italic font-light">nos permite existir.</em>
+                Cada beca empieza con{" "}
+                <em className="italic font-light">un patrocinador.</em>
               </>
             ) : (
               <>
-                Money is what <em className="italic font-light">lets us exist.</em>
+                Every scholarship starts with{" "}
+                <em className="italic font-light">a sponsor.</em>
               </>
             )}
           </h2>
           <p className="text-lead font-light text-ink/80 mt-6">
             {lang === "es"
-              ? "Cada beca se financia por completo con donaciones: matrícula, sostenimiento y los diez semestres que siguen. Sin patrocinadores no hay programa, y cada aporte se traduce directamente en un estudiante que puede estudiar."
-              : "Every scholarship is funded entirely by donations: tuition, the living stipend, and the ten semesters that follow. Without sponsors there is no program, and every contribution translates directly into a student who gets to study."}
+              ? "El programa se financia por completo con donaciones: matrícula, sostenimiento y los diez semestres que siguen. Cada aporte se traduce directamente en un estudiante que puede estudiar."
+              : "The program is funded entirely by donations: tuition, the living stipend, and the ten semesters that follow. Every contribution translates directly into a student who gets to study."}
           </p>
         </Reveal>
 
         {/* Donor tiers */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-14">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-14">
           {TIERS.map((tier, i) => (
             <Reveal key={tier.label.en} delay={i * 120}>
-              <div
-                className={`rounded-sm p-8 h-full flex flex-col transition-transform duration-300 hover:-translate-y-1 ${
-                  tier.featured
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-white border border-ink/10"
-                }`}
-              >
-                <div
-                  className={`text-meta uppercase tracking-widest ${
-                    tier.featured ? "text-primary-foreground/60" : "text-muted"
-                  }`}
-                >
+              <div className="rounded-sm p-8 h-full flex flex-col bg-white border border-ink/10 transition-transform duration-300 hover:-translate-y-1">
+                <div className="text-meta uppercase tracking-widest text-muted">
                   {t(tier.label)}
                 </div>
-                <div
-                  className={`text-h2 font-bold mt-4 tabular-nums ${
-                    tier.featured ? "" : "text-primary"
-                  }`}
-                >
+                <div className="text-h2 font-bold mt-4 tabular-nums text-primary">
                   {tier.amount ? (
                     <>
-                      {tier.amount === 10 && (
-                        <span className="text-h3 font-light">
-                          {lang === "es" ? "desde " : "from "}
-                        </span>
-                      )}
                       ~US$
                       <CountUp value={tier.amount} duration={900 + i * 150} />K
                     </>
@@ -126,15 +100,7 @@ function SponsorsSection() {
                     <span>{lang === "es" ? "Tú eliges" : "Any amount"}</span>
                   )}
                 </div>
-                {tier.cop && (
-                  <div
-                    className={`text-body mt-2 ${
-                      tier.featured ? "text-primary-foreground/75" : "text-muted"
-                    }`}
-                  >
-                    {t(tier.cop)}
-                  </div>
-                )}
+                {tier.cop && <div className="text-body mt-2 text-muted">{t(tier.cop)}</div>}
                 {tier.detail && (
                   <p className="text-body text-ink/75 mt-3 flex-1">{t(tier.detail)}</p>
                 )}
@@ -142,6 +108,14 @@ function SponsorsSection() {
             </Reveal>
           ))}
         </div>
+
+        <Reveal delay={120}>
+          <p className="text-body text-ink/75 mt-6">
+            {lang === "es"
+              ? "Cualquiera de las tres opciones se puede pagar de contado o diferida en cuotas semestrales, cada 6 meses, al 0% de interés."
+              : "Any of the three can be paid upfront or deferred in semester installments, every 6 months, at 0% interest."}
+          </p>
+        </Reveal>
 
         {/* Tax treatment */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -223,33 +197,32 @@ function SponsorsSection() {
   )
 }
 
-/** Affiliates give everything that isn't money: time, access, opportunity. */
-function AffiliatesSection() {
+/** Everything that isn't money: time, access, opportunity. */
+function OtherWaysSection() {
   const { lang, t } = useLang()
   return (
-    <section id="affiliates" className="bg-background scroll-mt-24">
+    <section id="other-ways" className="bg-background scroll-mt-24">
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-28">
         <Reveal>
           <div className="text-meta uppercase tracking-widest text-muted mb-4">
-            {lang === "es" ? "Afiliados" : "Affiliates"}
+            {lang === "es" ? "Otras formas de vincularse" : "Other ways to get involved"}
           </div>
           <h2 className="text-h2 font-semibold text-primary">
             {lang === "es" ? (
               <>
-                El tiempo y el acceso son lo que{" "}
-                <em className="italic font-light">nos hace más fuertes.</em>
+                El tiempo y el acceso{" "}
+                <em className="italic font-light">nos hacen más fuertes.</em>
               </>
             ) : (
               <>
-                Time and access are what{" "}
-                <em className="italic font-light">make us stronger.</em>
+                Time and access <em className="italic font-light">make us stronger.</em>
               </>
             )}
           </h2>
           <p className="text-lead font-light text-ink/80 mt-6">
             {lang === "es"
-              ? "Los afiliados no aportan dinero: aportan mentoría, talleres, prácticas y contactos. Es lo que convierte una beca en una carrera, y no requiere un cheque para empezar."
-              : "Affiliates give something other than money: mentorship, workshops, internships, and contacts. It's what turns a scholarship into a career, and it takes no check to begin."}
+              ? "Mentoría, talleres, prácticas y contactos."
+              : "Mentorship, workshops, internships, and contacts."}
           </p>
         </Reveal>
 
@@ -340,15 +313,15 @@ export default function GetInvolved() {
             </h1>
             <p className="text-lead font-light text-primary-foreground/75 mt-6">
               {lang === "es"
-                ? "Hay dos maneras de vincularse. Los patrocinadores aportan el dinero que sostiene el programa. Los afiliados aportan tiempo, acceso y oportunidades. Ambas cuentan, y el dinero es lo que mantiene a Lumen en pie."
-                : "There are two ways in. Sponsors give the money that sustains the program. Affiliates give time, access, and opportunity. Both matter, and money is what keeps Lumen running."}
+                ? "Hay dos maneras de vincularse. Los patrocinadores financian las becas, que es lo que mantiene el programa en pie. Otros aportan tiempo, acceso y oportunidades. Ambas cuentan."
+                : "There are two ways in. Sponsors fund the scholarships, which is what keeps the program running. Others give time, access, and opportunity. Both matter."}
             </p>
           </Reveal>
         </div>
       </section>
 
       <SponsorsSection />
-      <AffiliatesSection />
+      <OtherWaysSection />
 
       {/* Closing CTA */}
       <section className="bg-primary text-primary-foreground">
@@ -358,25 +331,15 @@ export default function GetInvolved() {
               {lang === "es" ? "¿Listo para abrir una puerta?" : "Ready to open a door?"}
             </h2>
             <p className="text-lead font-light text-primary-foreground/75 mt-4 max-w-xl mx-auto">
-              {lang === "es" ? (
-                <>
-                  Escríbenos a <strong className="font-semibold">{CONTACT_EMAIL}</strong> y
-                  nosotros nos encargamos del resto.
-                </>
-              ) : (
-                <>
-                  Reach out to <strong className="font-semibold">{CONTACT_EMAIL}</strong> and
-                  we'll take it from there.
-                </>
-              )}
-            </p>
-            <div className="mt-8 flex justify-center">
-              <ArrowButton
-                label={lang === "es" ? "Escríbenos" : "Email us"}
-                tone="white"
+              {lang === "es" ? "Escríbenos a " : "Reach out to "}
+              <a
                 href={`mailto:${CONTACT_EMAIL}`}
-              />
-            </div>
+                className="font-semibold underline underline-offset-4 decoration-primary-foreground/40 hover:decoration-primary-foreground transition-colors duration-200"
+              >
+                {CONTACT_EMAIL}
+              </a>
+              .
+            </p>
           </Reveal>
         </div>
       </section>
