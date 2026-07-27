@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Kulim Park", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-serif: "Newsreader", Georgia, "Times New Roman", serif;
+  /* Cambria ships with Windows and with Office on macOS. Caladea is the
+     metrically compatible open fallback for everyone else. */
+  --font-sans: Cambria, Caladea, Georgia, "Times New Roman", serif;
+  --font-serif: Cambria, Caladea, Georgia, "Times New Roman", serif;
 
   /* Brand palette: source of truth */
   --color-navy: #012851;

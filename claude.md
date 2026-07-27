@@ -57,7 +57,9 @@ Reference brand tokens directly only when the role isn't obvious (e.g. the desig
 
 ## Typography
 
-**Kulim Park** via Google Fonts, loaded in [index.html](index.html). Ships weights **200, 300, 400, 600, 700** in **both normal and true italic**. Do not introduce a second family — the annual report's serif was never packaged.
+**Cambria**, set in [src/index.css](src/index.css) as `Cambria, Caladea, Georgia, "Times New Roman", serif`. Cambria is a licensed Microsoft font that cannot be self-hosted; it resolves locally on Windows and on macOS with Office. **Caladea** (Google Fonts, loaded in [index.html](index.html)) is metrically compatible and covers everyone else, so line breaks hold either way.
+
+Cambria ships only **regular and bold**, both with true italics. Weight utilities below 400 (`font-light`, `font-extralight`) therefore render as regular, and 600 renders as bold. Lean on **italic** for emphasis rather than fine weight steps. Do not add a second family.
 
 Size tokens (in `@theme`):
 - `text-display` — hero headline (clamp 44→80px)
@@ -74,7 +76,7 @@ These come from accumulated decisions — don't relitigate without reason.
 
 1. **Buttons:** one style only — text + long horizontal arrow SVG, no fill, no border. Hover translates right ~4px and deepens text to `ink`. Skip filled buttons entirely. (Pattern P3)
 2. **Hover states:** use foreground (text color) shifts, never primary/blue washes.
-3. **Emphasis in headings:** italic (Kulim Park ships it) OR weight contrast (Light 300 → Bold 700). Pick whichever reads strongest. (Pattern P1)
+3. **Emphasis in headings:** italic (Cambria ships true italics). Weight contrast is limited to regular vs bold. (Pattern P1)
 4. **Section rhythm:** alternate white → cream → white → cream-soft. Full-bleed colored bands behind each section beyond the max-width container. (Pattern P9)
 5. **Imagery:** portrait-friendly only. No landscape crops that don't compose well.
 6. **Editorial line breaks:** use hard `<br>` in headings instead of relying on auto-wrap. (Pattern P10)
