@@ -16,22 +16,21 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
             loading="lazy"
           />
         </div>
-        <div className="mt-4">
-          <span className="inline-block text-[11px] leading-none uppercase tracking-wide font-semibold text-accent border border-accent/30 rounded-full px-2.5 py-1.5 whitespace-nowrap">
+        {/* Industry and the founder badge share a row, so every name starts at the same latitude */}
+        <div className="mt-4 flex flex-wrap items-center gap-1.5">
+          <span className="inline-block text-[10px] leading-none uppercase tracking-wide font-semibold text-accent border border-accent/30 rounded-full px-2 py-1.5">
             {t(member.industry)}
           </span>
+          {member.founder && (
+            <span className="inline-block text-[10px] leading-none uppercase tracking-wide font-semibold text-white bg-accent rounded-full px-2 py-1.5 whitespace-nowrap">
+              {lang === "es" ? "Fundadora" : "Founder"}
+            </span>
+          )}
         </div>
         {/* Reserved height keeps the org line aligned across cards */}
         <h3 className="text-body font-semibold text-primary mt-3 leading-snug break-words md:min-h-[2.6em]">
           {member.name}
         </h3>
-        {member.founder && (
-          <div>
-            <span className="inline-block text-[10px] leading-none uppercase tracking-widest font-semibold text-white bg-accent rounded-full px-2 py-1">
-              {lang === "es" ? "Fundadora" : "Founder"}
-            </span>
-          </div>
-        )}
         <div className="text-meta font-semibold text-ink/80 mt-1 break-words md:min-h-[2.6em]">
           {t(member.org)}
         </div>
@@ -115,7 +114,8 @@ export default function Team() {
               )}
             </h2>
           </Reveal>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-5 gap-y-10">
+          {/* Six across only once columns are wide enough for the chips to sit on one line */}
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-x-5 gap-y-10">
             {BOARD.map((m, i) => (
               <MemberCard key={m.slug} member={m} delay={i * 80} />
             ))}
