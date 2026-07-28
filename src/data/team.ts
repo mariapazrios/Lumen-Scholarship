@@ -73,7 +73,7 @@ export const BOARD: TeamMember[] = [
     org: { en: "High School Teacher, Regis High School", es: "Profesora de bachillerato, Regis High School" },
     city: "New York City",
     industry: { en: "Education", es: "Educación" },
-    credentials: ["Duke University", "Teach For America", "Bold Charter School"],
+    credentials: ["Duke University", "Teach For America", "Bold Charter School", "Regis High School"],
     interviewStyle: {
       en: "Warm and reflective. She asks about moments of failure and feedback, looking for self-awareness and a genuine love of learning.",
       es: "Cálida y reflexiva. Pregunta por momentos de fracaso y retroalimentación, buscando autoconocimiento y un amor genuino por aprender.",
