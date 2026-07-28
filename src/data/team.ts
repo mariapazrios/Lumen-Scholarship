@@ -6,6 +6,8 @@ export type TeamMember = {
   /** Shows a "Founder" badge next to the name */
   founder?: boolean
   org: L
+  /** Where they are based */
+  city: string
   /** Industry tag shown on the card */
   industry: L
   /** Career and academic credentials, shown as a meta line */
@@ -20,6 +22,7 @@ export const BOARD: TeamMember[] = [
     slug: "oscar-cabrera",
     name: "Oscar Cabrera",
     org: { en: "Former President, BBVA Colombia", es: "Expresidente, BBVA Colombia" },
+    city: "Madrid",
     industry: { en: "Finance", es: "Finanzas" },
     credentials: ["Universidad Complutense de Madrid", "BBVA"],
     interviewStyle: {
@@ -31,6 +34,7 @@ export const BOARD: TeamMember[] = [
     slug: "cipriano-echavarria",
     name: "Cipriano Echavarría",
     org: { en: "Founder & CEO, Palomma", es: "Fundador y CEO, Palomma" },
+    city: "Bogotá",
     industry: { en: "Technology", es: "Tecnología" },
     credentials: ["Duke University", "Morgan Stanley", "Y Combinator", "Forbes 30 Under 30"],
     interviewStyle: {
@@ -42,6 +46,7 @@ export const BOARD: TeamMember[] = [
     slug: "mateo-mendoza",
     name: "Mateo Mendoza",
     org: { en: "Founder & Partner, Mendoza Abogados", es: "Fundador y Socio, Mendoza Abogados" },
+    city: "Bogotá",
     industry: { en: "Law", es: "Derecho" },
     credentials: ["Universidad de los Andes", "NYU", "Allen & Overy"],
     interviewStyle: {
@@ -54,6 +59,7 @@ export const BOARD: TeamMember[] = [
     name: "Maria Paz Rios",
     founder: true,
     org: { en: "Chief of Staff, Sequence Holdings", es: "Chief of Staff, Sequence Holdings" },
+    city: "New York City",
     industry: { en: "Finance", es: "Finanzas" },
     credentials: ["Duke University", "Goldman Sachs", "Blackstone", "Sequence Holdings"],
     interviewStyle: {
@@ -64,9 +70,10 @@ export const BOARD: TeamMember[] = [
   {
     slug: "lola-sanchez",
     name: "Lola Sanchez",
-    org: { en: "Associate Principal, Bold Charter School", es: "Subdirectora, Bold Charter School" },
+    org: { en: "High School Teacher, Regis High School", es: "Profesora de bachillerato, Regis High School" },
+    city: "New York City",
     industry: { en: "Education", es: "Educación" },
-    credentials: ["Duke University", "Teach For America", "Bold Charter School", "Regis High School"],
+    credentials: ["Duke University", "Teach For America", "Bold Charter School"],
     interviewStyle: {
       en: "Warm and reflective. She asks about moments of failure and feedback, looking for self-awareness and a genuine love of learning.",
       es: "Cálida y reflexiva. Pregunta por momentos de fracaso y retroalimentación, buscando autoconocimiento y un amor genuino por aprender.",
@@ -76,6 +83,7 @@ export const BOARD: TeamMember[] = [
     slug: "christopher-weisz",
     name: "Christopher Weisz",
     org: { en: "Managing Director & Partner, BCG", es: "Managing Director y Socio, BCG" },
+    city: "Bogotá",
     industry: { en: "Technology / Consulting", es: "Tecnología / Consultoría" },
     credentials: ["Georgetown University", "Boston Consulting Group"],
     interviewStyle: {

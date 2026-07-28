@@ -34,6 +34,9 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
         <div className="text-meta font-semibold text-ink/80 mt-1 break-words md:min-h-[2.6em]">
           {t(member.org)}
         </div>
+        <div className="text-meta uppercase tracking-widest text-muted mt-1.5">
+          {member.city}
+        </div>
         {member.credentials.length > 0 && (
           <div className="text-meta text-muted mt-2.5 leading-relaxed">
             {/* Real spaces around the dot keep "Blackstone · Sequence" breakable */}
