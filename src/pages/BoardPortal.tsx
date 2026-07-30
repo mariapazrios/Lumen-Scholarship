@@ -49,12 +49,18 @@ function Portal() {
   const labelOf = (slug: string) =>
     SAMPLE_APPLICANTS.find((a) => a.slug === slug)?.label ?? slug
 
-  /** Filter options come from the applicants themselves, so they stay in sync. */
+  /**
+   * Filter options come from the applicants themselves, so they stay in sync.
+   * Majors carry a stable value with a translated label, so the dropdown follows
+   * the language toggle without changing what is being filtered on.
+   */
   const options = useMemo(() => {
     const uniq = (xs: string[]) => [...new Set(xs)].sort()
+    const majors = [...new Map(SAMPLE_APPLICANTS.map((a) => [a.major.en, a.major])).entries()]
+      .map(([value, label]) => ({ value, label }))
     return {
       departments: uniq(SAMPLE_APPLICANTS.map((a) => a.department)),
-      majors: uniq(SAMPLE_APPLICANTS.map((a) => a.major.en)),
+      majors,
       genders: uniq(SAMPLE_APPLICANTS.map((a) => a.gender)),
     }
   }, [])
@@ -98,15 +104,7 @@ function Portal() {
             {lang === "es" ? "Junta de admisiones" : "Board of admissions"}
           </div>
           <h1 className="text-h2 font-semibold">
-            {lang === "es" ? (
-              <>
-                Lee, califica, <em className="italic font-light">decide.</em>
-              </>
-            ) : (
-              <>
-                Read, score, <em className="italic font-light">decide.</em>
-              </>
-            )}
+            Centro de Admisiones <em className="italic font-light">Lumen.</em>
           </h1>
 
           {/* Who is rating */}
@@ -156,17 +154,31 @@ function Portal() {
                   {
                     key: "department" as const,
                     label: lang === "es" ? "Departamento" : "Department",
-                    opts: options.departments,
+                    opts: options.departments.map((d) => ({ value: d, text: d })),
                   },
                   {
                     key: "major" as const,
                     label: lang === "es" ? "Carrera" : "Major",
-                    opts: options.majors,
+                    // sorted by the label being shown, so the list reads alphabetically
+                    // in whichever language is active
+                    opts: options.majors
+                      .map((m) => ({ value: m.value, text: t(m.label) }))
+                      .sort((x, y) => x.text.localeCompare(y.text, lang)),
                   },
                   {
                     key: "gender" as const,
                     label: lang === "es" ? "Género" : "Gender",
-                    opts: options.genders,
+                    opts: options.genders.map((g) => ({
+                      value: g,
+                      text:
+                        g === "F"
+                          ? lang === "es"
+                            ? "Femenino"
+                            : "Female"
+                          : lang === "es"
+                            ? "Masculino"
+                            : "Male",
+                    })),
                   },
                 ].map((f) => (
                   <label key={f.key} className="block">
@@ -182,16 +194,8 @@ function Portal() {
                         {lang === "es" ? `Todo: ${f.label}` : `All: ${f.label}`}
                       </option>
                       {f.opts.map((o) => (
-                        <option key={o} value={o}>
-                          {f.key === "gender"
-                            ? o === "F"
-                              ? lang === "es"
-                                ? "Femenino"
-                                : "Female"
-                              : lang === "es"
-                                ? "Masculino"
-                                : "Male"
-                            : o}
+                        <option key={o.value} value={o.value}>
+                          {o.text}
                         </option>
                       ))}
                     </select>
@@ -255,31 +259,32 @@ function Portal() {
                 <div className="text-meta uppercase tracking-widest text-muted mb-4">
                   {lang === "es" ? "Registro académico" : "Academic record"}
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-4">
+                {/* Global score sits apart: it is out of 500, the components out of 100 */}
+                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                  <div className="text-meta uppercase tracking-widest text-muted">
+                    Saber 11
+                  </div>
+                  <div className="text-h3 font-bold text-primary tabular-nums">
+                    {applicant.academic.saber11}
+                    <span className="text-body font-normal text-muted">/500</span>
+                  </div>
+                </div>
+                {/* Components: labels reserve two lines so every number shares a baseline */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-4 mt-5">
                   {[
-                    {
-                      k: lang === "es" ? "Saber 11" : "Saber 11",
-                      v: `${applicant.academic.saber11}/500`,
-                      strong: true,
-                    },
                     { k: lang === "es" ? "Lectura crítica" : "Critical reading", v: applicant.academic.plc },
                     { k: lang === "es" ? "Matemáticas" : "Mathematics", v: applicant.academic.pma },
                     { k: lang === "es" ? "Sociales" : "Social studies", v: applicant.academic.psc },
                     { k: lang === "es" ? "Ciencias" : "Sciences", v: applicant.academic.pcn },
                     { k: lang === "es" ? "Inglés" : "English", v: applicant.academic.pin },
                   ].map((cell) => (
-                    <div key={cell.k}>
-                      <div className="text-meta uppercase tracking-widest text-muted">
+                    <div key={cell.k} className="flex flex-col">
+                      <div className="text-meta uppercase tracking-widest text-muted min-h-[2.6em]">
                         {cell.k}
                       </div>
-                      <div
-                        className={`tabular-nums mt-1 ${
-                          cell.strong
-                            ? "text-h3 font-bold text-primary"
-                            : "text-body font-semibold text-ink/80"
-                        }`}
-                      >
+                      <div className="text-body font-semibold text-ink/80 tabular-nums mt-auto">
                         {cell.v}
+                        <span className="text-meta font-normal text-muted">/100</span>
                       </div>
                     </div>
                   ))}
@@ -572,17 +577,28 @@ function Portal() {
                 </div>
                 <p className="text-body text-ink/75 mt-2">{readOfScores(row, lang)}</p>
                 {row.raters > 0 && (
-                  <ul className="mt-4 space-y-2 border-t border-ink/10 pt-4">
+                  <div className="mt-5 border-t border-ink/10 pt-5 space-y-5">
                     {Object.entries(store[row.candidate] ?? {}).map(([slug, r]) => (
-                      <li key={slug} className="text-meta text-muted">
-                        <span className="font-semibold text-ink/70">
-                          {BOARD.find((m) => m.slug === slug)?.name ?? slug}
-                        </span>{" "}
-                        · {valuesAverage(r).toFixed(1)} / {r.recommendation}
-                        {r.comments && <>: {r.comments}</>}
-                      </li>
+                      <div key={slug}>
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                          <div className="text-body font-semibold text-primary">
+                            {BOARD.find((m) => m.slug === slug)?.name ?? slug}
+                          </div>
+                          <div className="text-meta text-muted tabular-nums whitespace-nowrap">
+                            {lang === "es" ? "Valores" : "Values"}{" "}
+                            <strong className="text-ink/80">
+                              {valuesAverage(r).toFixed(1)}
+                            </strong>{" "}
+                            · {lang === "es" ? "Recomendación" : "Rec"}{" "}
+                            <strong className="text-ink/80">{r.recommendation}/5</strong>
+                          </div>
+                        </div>
+                        {r.comments && (
+                          <p className="text-body text-ink/75 mt-2">{r.comments}</p>
+                        )}
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 )}
               </div>
             ))}
