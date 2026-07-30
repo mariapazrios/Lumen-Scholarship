@@ -4,6 +4,24 @@ import Reveal from "../components/primitives/Reveal"
 import { SCHOLARS } from "../data/scholars"
 import { useLang, type L } from "../lib/i18n"
 
+type ScholarRecord = {
+  essay?: string
+  grades?: { program: string; asOf: string; cumulative: number; semesters: string[] }
+}
+
+/**
+ * Real essays and grades live in src/data/private/, which is gitignored, so they
+ * are present locally and absent from the public deploy. import.meta.glob keeps
+ * the build working either way; swap this for an authenticated fetch once the
+ * portal sits behind real auth.
+ */
+const RECORDS: Record<string, ScholarRecord> = Object.values(
+  import.meta.glob<{ SCHOLAR_RECORDS?: Record<string, ScholarRecord> }>(
+    "../data/private/scholarRecords.ts",
+    { eager: true },
+  ),
+)[0]?.SCHOLAR_RECORDS ?? {}
+
 /**
  * Annual reports. The PDFs are not committed to this repo: anything in the
  * project is fetchable by URL, and the reports carry per-scholar grades. They
@@ -33,6 +51,7 @@ const REPORTS: Array<{ year: string; title: L; note: L; pages: number }> = [
 function Portal() {
   const { lang, t, tl } = useLang()
   const [open, setOpen] = useState<string | null>(SCHOLARS[0]?.slug ?? null)
+  const [essayOpen, setEssayOpen] = useState<string | null>(null)
 
   return (
     <>
@@ -117,6 +136,7 @@ function Portal() {
           <div className="mt-8 space-y-3">
             {SCHOLARS.map((s) => {
               const isOpen = open === s.slug
+              const record = RECORDS[s.slug]
               return (
                 <div
                   key={s.slug}
@@ -175,16 +195,102 @@ function Portal() {
                             ))}
                           </ul>
 
+                          {/* Grades */}
                           <div className="mt-6 bg-surface rounded-sm p-5">
                             <div className="text-meta uppercase tracking-widest text-muted">
+                              {lang === "es" ? "Desempeño académico" : "Academic performance"}
+                            </div>
+                            {record?.grades ? (
+                              <>
+                                <div className="flex flex-wrap items-baseline gap-x-3 mt-2">
+                                  <div className="text-h3 font-bold text-primary tabular-nums">
+                                    {record.grades.cumulative.toFixed(2)}
+                                    <span className="text-body font-normal text-muted">
+                                      /5.00
+                                    </span>
+                                  </div>
+                                  <div className="text-meta uppercase tracking-widest text-muted">
+                                    {lang === "es" ? "acumulado a" : "cumulative as of"}{" "}
+                                    {record.grades.asOf}
+                                  </div>
+                                </div>
+                                <div className="text-meta text-muted mt-2">
+                                  {record.grades.program}
+                                </div>
+                                <div className="flex flex-wrap gap-1.5 mt-3">
+                                  {record.grades.semesters.map((s) => (
+                                    <span
+                                      key={s}
+                                      className="text-[11px] uppercase tracking-widest text-ink/70 border border-ink/15 rounded-full px-2 py-1 tabular-nums"
+                                    >
+                                      {s}
+                                    </span>
+                                  ))}
+                                </div>
+                              </>
+                            ) : (
+                              <p className="text-body text-ink/70 mt-2">
+                                {lang === "es"
+                                  ? "Sin registro de notas importado."
+                                  : "No grade record imported."}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Admissions essay */}
+                          <div className="mt-4 bg-surface rounded-sm p-5">
+                            <div className="text-meta uppercase tracking-widest text-muted">
                               {lang === "es"
-                                ? "Ensayo de admisión, rúbrica y notas"
-                                : "Admissions essay, rubric and notes"}
+                                ? "Ensayo de admisión, tal como fue enviado"
+                                : "Admissions essay, as submitted"}
+                            </div>
+                            {record?.essay ? (
+                              <>
+                                <div
+                                  className={`mt-3 space-y-3 ${essayOpen === s.slug ? "" : "max-h-40 overflow-hidden relative"}`}
+                                >
+                                  {record.essay.split("\n\n").map((p) => (
+                                    <p key={p.slice(0, 24)} className="text-body text-ink/80">
+                                      {p}
+                                    </p>
+                                  ))}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setEssayOpen(essayOpen === s.slug ? null : s.slug)
+                                  }
+                                  className="text-meta uppercase tracking-widest text-accent mt-3 cursor-pointer"
+                                >
+                                  {essayOpen === s.slug
+                                    ? lang === "es"
+                                      ? "Contraer"
+                                      : "Collapse"
+                                    : lang === "es"
+                                      ? "Leer completo"
+                                      : "Read in full"}
+                                </button>
+                              </>
+                            ) : (
+                              <p className="text-body text-ink/70 mt-2">
+                                {lang === "es"
+                                  ? "Ensayo no importado en este entorno."
+                                  : "Essay not imported in this environment."}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Board rubric from their own admissions round */}
+                          <div className="mt-4 bg-surface rounded-sm p-5">
+                            <div className="text-meta uppercase tracking-widest text-muted">
+                              {lang === "es"
+                                ? "Rúbrica consolidada de su proceso"
+                                : "Consolidated rubric from their round"}
                             </div>
                             <p className="text-body text-ink/70 mt-2">
                               {lang === "es"
-                                ? "Contenido restringido. Se adjunta cuando el portal esté detrás de autenticación real, para que no quede accesible por URL."
-                                : "Restricted content. It attaches once the portal sits behind real authentication, so it is never reachable by URL."}
+                                ? "Pendiente: las rúbricas diligenciadas de 2023 y 2024 no se han importado todavía."
+                                : "Pending: the completed 2023 and 2024 rubrics have not been imported yet."}
                             </p>
                           </div>
                         </div>
