@@ -4,8 +4,10 @@ import Reveal from "../components/primitives/Reveal"
 import { SCHOLARS } from "../data/scholars"
 import { useLang, type L } from "../lib/i18n"
 
+import GpaTrend from "../components/GpaTrend"
 import { SCHOLAR_ESSAYS } from "../data/scholarEssays"
 import { SCHOLAR_GRADES } from "../data/scholarGrades"
+import { SCHOLAR_TERMS } from "../data/scholarTerms"
 
 type ScholarRecord = {
   essay?: string
@@ -176,6 +178,29 @@ function Portal() {
                       {/* No overview here: the public scholars page already carries the
                           story and quote. This view is the detail sponsors cannot get
                           elsewhere. */}
+                      {/* Trend first: this is the view sponsors come here for */}
+                      {SCHOLAR_TERMS[s.slug] && (
+                        <div className="bg-surface rounded-sm p-5 mb-6">
+                          <div className="flex flex-wrap items-baseline justify-between gap-3 mb-3">
+                            <div className="text-meta uppercase tracking-widest text-muted">
+                              {lang === "es" ? "Promedio por semestre" : "Average by term"}
+                            </div>
+                            {SCHOLAR_TERMS[s.slug].officialPga && (
+                              <div className="text-meta text-muted">
+                                {lang === "es" ? "PGA acumulado oficial" : "Official cumulative PGA"}{" "}
+                                <strong className="text-primary tabular-nums">
+                                  {SCHOLAR_TERMS[s.slug].officialPga?.toFixed(2)}
+                                </strong>
+                              </div>
+                            )}
+                          </div>
+                          <GpaTrend
+                            record={SCHOLAR_TERMS[s.slug]}
+                            achievements={tl(s.highlights)}
+                          />
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div>
                           <div className="text-meta uppercase tracking-widest text-muted">
