@@ -4,6 +4,8 @@ import Reveal from "../components/primitives/Reveal"
 import { SCHOLARS } from "../data/scholars"
 import { useLang, type L } from "../lib/i18n"
 
+import { SCHOLAR_GRADES } from "../data/scholarGrades"
+
 type ScholarRecord = {
   essay?: string
   grades?: { program: string; asOf: string; cumulative: number; semesters: string[] }
@@ -136,7 +138,8 @@ function Portal() {
           <div className="mt-8 space-y-3">
             {SCHOLARS.map((s) => {
               const isOpen = open === s.slug
-              const record = RECORDS[s.slug]
+              // grades ship with the site; essays only exist locally
+              const record = { ...RECORDS[s.slug], grades: SCHOLAR_GRADES[s.slug] }
               return (
                 <div
                   key={s.slug}
