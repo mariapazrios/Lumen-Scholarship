@@ -4,6 +4,7 @@ import Reveal from "../components/primitives/Reveal"
 import { SCHOLARS } from "../data/scholars"
 import { useLang, type L } from "../lib/i18n"
 
+import { SCHOLAR_ESSAYS } from "../data/scholarEssays"
 import { SCHOLAR_GRADES } from "../data/scholarGrades"
 
 type ScholarRecord = {
@@ -138,8 +139,11 @@ function Portal() {
           <div className="mt-8 space-y-3">
             {SCHOLARS.map((s) => {
               const isOpen = open === s.slug
-              // grades ship with the site; essays only exist locally
-              const record = { ...RECORDS[s.slug], grades: SCHOLAR_GRADES[s.slug] }
+              const record = {
+                ...RECORDS[s.slug],
+                grades: SCHOLAR_GRADES[s.slug],
+                essay: SCHOLAR_ESSAYS[s.slug] ?? RECORDS[s.slug]?.essay,
+              }
               return (
                 <div
                   key={s.slug}
