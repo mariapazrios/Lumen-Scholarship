@@ -173,22 +173,13 @@ function Portal() {
 
                   {isOpen && (
                     <div className="px-6 pb-6 pt-2 border-t border-ink/10">
+                      {/* No overview here: the public scholars page already carries the
+                          story and quote. This view is the detail sponsors cannot get
+                          elsewhere. */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div>
-                          <blockquote className="text-body italic text-primary border-l-2 border-accent pl-4">
-                            &ldquo;{t(s.quote)}&rdquo;
-                          </blockquote>
-                          <div className="mt-5 space-y-3">
-                            {tl(s.story).map((p) => (
-                              <p key={p.slice(0, 24)} className="text-body text-ink/80">
-                                {p}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                        <div>
                           <div className="text-meta uppercase tracking-widest text-muted">
-                            {lang === "es" ? "En el campus" : "On campus"}
+                            {lang === "es" ? "Logros" : "Achievements"}
                           </div>
                           <ul className="mt-3 space-y-2">
                             {tl(s.highlights).map((h) => (
@@ -201,7 +192,8 @@ function Portal() {
                               </li>
                             ))}
                           </ul>
-
+                        </div>
+                        <div>
                           {/* Grades */}
                           <div className="mt-6 bg-surface rounded-sm p-5">
                             <div className="text-meta uppercase tracking-widest text-muted">
