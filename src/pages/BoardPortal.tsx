@@ -337,8 +337,8 @@ function Portal() {
                 ))}
               </div>
 
-              {/* Steps 1 and 2, side by side */}
-              <div className="mt-12 border-t border-ink/10 pt-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+              {/* Stacked: the four values, then the notes, then the 1 to 5 */}
+              <div className="mt-12 border-t border-ink/10 pt-8 space-y-10 max-w-3xl">
                 <div>
                   <div className="text-meta uppercase tracking-widest text-muted">
                     {lang === "es" ? "Paso 1 · Valores Lumen" : "Step 1 · Lumen values"}
@@ -348,14 +348,14 @@ function Portal() {
                       ? "Califica de 1 a 5, o N/A si el ensayo no da con qué juzgarlo."
                       : "Score 1 to 5, or N/A when the essay gives nothing to judge it on."}
                   </p>
-                  {/* 2x2 */}
-                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                  {/* 2x2, each quality with room for its full scale */}
+                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-7">
                     {VALUES.map((v) => (
                       <div key={v.key}>
                         <div className="text-body font-semibold text-primary">
                           {t(v.label)}
                         </div>
-                        <div className="mt-2 flex gap-1.5">
+                        <div className="mt-2.5 flex gap-2">
                           {([1, 2, 3, 4, 5, "na"] as Score[]).map((n) => {
                             const on = draft.values[v.key as ValueKey] === n
                             return (
@@ -371,8 +371,8 @@ function Portal() {
                                   }))
                                   setSaved(false)
                                 }}
-                                className={`h-10 rounded-sm border text-meta tabular-nums cursor-pointer transition-colors duration-200 ${
-                                  n === "na" ? "px-2.5" : "w-9"
+                                className={`h-11 rounded-sm border text-body tabular-nums cursor-pointer transition-colors duration-200 ${
+                                  n === "na" ? "px-3" : "w-11"
                                 } ${
                                   on
                                     ? "bg-primary text-white border-primary font-semibold"
@@ -416,8 +416,8 @@ function Portal() {
                     placeholder={t(COMMENT_PLACEHOLDER)}
                     className="mt-4 w-full bg-white border border-ink/15 rounded-sm px-4 py-3 text-body text-ink focus:outline-none focus:border-accent"
                   />
-                  <div className="mt-5">
-                    <div className="text-meta uppercase tracking-widest text-muted mb-2">
+                  <div className="mt-8">
+                    <div className="text-meta uppercase tracking-widest text-muted mb-3">
                       {lang === "es" ? "Recomendación" : "Recommendation"}
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -430,7 +430,7 @@ function Portal() {
                             setDraft((d) => ({ ...d, recommendation: r.score }))
                             setSaved(false)
                           }}
-                          className={`text-meta rounded-sm px-3 py-2 border cursor-pointer transition-colors duration-200 ${
+                          className={`text-body rounded-sm px-4 py-2.5 border cursor-pointer transition-colors duration-200 ${
                             draft.recommendation === r.score
                               ? "bg-primary text-white border-primary font-semibold"
                               : "border-ink/15 text-ink/70 hover:border-primary/50"
