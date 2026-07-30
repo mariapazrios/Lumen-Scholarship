@@ -6,6 +6,8 @@ import Scholars from "./pages/Scholars"
 import Team from "./pages/Team"
 import GetInvolved from "./pages/GetInvolved"
 import Apply from "./pages/Apply"
+import BoardPortal from "./pages/BoardPortal"
+import SponsorPortal from "./pages/SponsorPortal"
 import { initialLang, LANG_STORAGE_KEY, LangContext, type Lang } from "./lib/i18n"
 
 /**
@@ -26,6 +28,8 @@ const TITLES: Record<Lang, Record<string, string>> = {
     team: "Team and Process · Lumen",
     "get-involved": "Get Involved · Lumen",
     apply: "Apply · Lumen",
+    board: "Board Login · Lumen",
+    sponsors: "For Sponsors · Lumen",
   },
   es: {
     "": "Lumen · Movilidad Social Basada en Educación",
@@ -33,6 +37,8 @@ const TITLES: Record<Lang, Record<string, string>> = {
     team: "Equipo y Proceso · Lumen",
     "get-involved": "Vincúlate · Lumen",
     apply: "Postúlate · Lumen",
+    board: "Acceso Junta · Lumen",
+    sponsors: "Patrocinadores · Lumen",
   },
 }
 
@@ -76,6 +82,8 @@ export default function App() {
     team: <Team />,
     "get-involved": <GetInvolved />,
     apply: <Apply />,
+    board: <BoardPortal />,
+    sponsors: <SponsorPortal />,
   }
 
   return (

@@ -16,9 +16,26 @@ export default function Footer() {
                 : "Education-Based Social Mobility"}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-meta text-primary-foreground/50">© 2026 Lumen</div>
-            <FlagCO className="w-5 h-auto" />
+          <div className="flex flex-col sm:items-end gap-3">
+            {/* Internal areas, deliberately out of the main navigation */}
+            <nav className="flex items-center gap-5" aria-label={lang === "es" ? "Accesos internos" : "Internal areas"}>
+              <a
+                href="#/board"
+                className="text-meta uppercase tracking-widest text-primary-foreground/60 hover:text-primary-foreground transition-colors duration-200"
+              >
+                {lang === "es" ? "Acceso junta" : "Board login"}
+              </a>
+              <a
+                href="#/sponsors"
+                className="text-meta uppercase tracking-widest text-primary-foreground/60 hover:text-primary-foreground transition-colors duration-200"
+              >
+                {lang === "es" ? "Patrocinadores" : "For sponsors"}
+              </a>
+            </nav>
+            <div className="flex items-center gap-3">
+              <div className="text-meta text-primary-foreground/50">© 2026 Lumen</div>
+              <FlagCO className="w-5 h-auto" />
+            </div>
           </div>
         </div>
       </div>
