@@ -14,38 +14,10 @@ import type { L } from "./i18n"
  */
 
 export const VALUES = [
-  {
-    key: "resilience",
-    label: { en: "Resilience", es: "Resiliencia" },
-    prompt: {
-      en: "Will they overcome, adapt, and continue?",
-      es: "¿Superará, se adaptará y seguirá adelante?",
-    },
-  },
-  {
-    key: "excellence",
-    label: { en: "Excellence", es: "Excelencia" },
-    prompt: {
-      en: "Is excellence a lifestyle for them?",
-      es: "¿La excelencia es un estilo de vida para esta persona?",
-    },
-  },
-  {
-    key: "integrity",
-    label: { en: "Integrity", es: "Integridad" },
-    prompt: {
-      en: "Do they hold moral laws that supersede all else, even against the grain?",
-      es: "¿Sostiene principios morales por encima de todo, incluso a contracorriente?",
-    },
-  },
-  {
-    key: "impact",
-    label: { en: "Impact", es: "Impacto" },
-    prompt: {
-      en: "Will they lead, inspire, and pay it forward?",
-      es: "¿Liderará, inspirará y devolverá lo recibido?",
-    },
-  },
+  { key: "resilience", label: { en: "Resilience", es: "Resiliencia" } },
+  { key: "excellence", label: { en: "Excellence", es: "Excelencia" } },
+  { key: "integrity", label: { en: "Integrity", es: "Integridad" } },
+  { key: "impact", label: { en: "Impact", es: "Impacto" } },
 ] as const
 
 export type ValueKey = (typeof VALUES)[number]["key"]
@@ -64,22 +36,29 @@ export const COMMENT_PLACEHOLDER: L = {
   es: "Qué te gustó o no, y por qué. Fortalezas clave. Reservas. Qué querrías conocer mejor.",
 }
 
+/** A value is 1 to 5, or "na" when the essay gives nothing to judge it on. */
+export type Score = number | "na"
+
 export type Rating = {
-  values: Record<ValueKey, number>
+  values: Record<ValueKey, Score>
   recommendation: number
   comments: string
   updatedAt: string
 }
 
+/** N/A counts as a 3, per the original workbook's instruction. */
+export const NA_AS = 3
+export const scoreValue = (s: Score) => (s === "na" ? NA_AS : s)
+
 export type Weights = { values: number; freeForm: number; maybeMargin: number }
 
-export const DEFAULT_WEIGHTS: Weights = { values: 0.5, freeForm: 0.5, maybeMargin: 0.2 }
+/** Fixed: values and free form count equally, with a 20% band for "maybe". */
+export const WEIGHTS: Weights = { values: 0.5, freeForm: 0.5, maybeMargin: 0.2 }
 
 /** ratings[candidateSlug][memberSlug] */
 export type RatingStore = Record<string, Record<string, Rating>>
 
 const RATINGS_KEY = "lumen-board-ratings"
-const WEIGHTS_KEY = "lumen-board-weights"
 const MEMBER_KEY = "lumen-board-member"
 
 function read<T>(key: string, fallback: T): T {
@@ -92,7 +71,6 @@ function read<T>(key: string, fallback: T): T {
 }
 
 export const loadRatings = () => read<RatingStore>(RATINGS_KEY, {})
-export const loadWeights = () => read<Weights>(WEIGHTS_KEY, DEFAULT_WEIGHTS)
 export const loadMember = () => read<string>(MEMBER_KEY, "")
 
 export function saveRating(candidate: string, member: string, rating: Rating) {
@@ -100,10 +78,6 @@ export function saveRating(candidate: string, member: string, rating: Rating) {
   all[candidate] = { ...(all[candidate] ?? {}), [member]: rating }
   localStorage.setItem(RATINGS_KEY, JSON.stringify(all))
   return all
-}
-
-export function saveWeights(w: Weights) {
-  localStorage.setItem(WEIGHTS_KEY, JSON.stringify(w))
 }
 
 export function saveMember(member: string) {
@@ -117,9 +91,9 @@ export const emptyRating = (): Rating => ({
   updatedAt: "",
 })
 
-/** Mean of the four value scores. */
+/** Mean of the four value scores, with N/A entering as a 3. */
 export function valuesAverage(r: Rating) {
-  const v = VALUES.map((x) => r.values[x.key])
+  const v = VALUES.map((x) => scoreValue(r.values[x.key]))
   return v.reduce((a, b) => a + b, 0) / v.length
 }
 

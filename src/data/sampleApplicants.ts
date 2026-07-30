@@ -8,15 +8,53 @@ import type { L } from "../lib/i18n"
  * with no gate. Swap this list for the live feed once submissions are served
  * through authenticated routes.
  */
+/**
+ * Academic and household fields, matching the columns Uniandes sends in
+ * "Convocatoria LUMEN.xlsx". Saber 11 is the global score out of 500; the five
+ * components are out of 100 each.
+ */
+export type AcademicRecord = {
+  age: number
+  estrato: number
+  siblings: string
+  housing: L
+  sisben: string
+  school: string
+  schoolType: L
+  graduated: string
+  saber11: number
+  plc: number
+  pma: number
+  psc: number
+  pcn: number
+  pin: number
+}
+
 export type SampleApplicant = {
   slug: string
   label: string
   major: L
   city: string
+  /** Colombian department, used by the board filters */
+  department: string
+  gender: "M" | "F"
   prompt: L
+  /** Spanish is the language of submission, so it is shown verbatim */
   essay: L
   shortAnswers: Array<{ q: L; a: L }>
+  academic: AcademicRecord
 }
+
+const HOUSING = {
+  family: { en: "Family owned", es: "Familiar" },
+  rented: { en: "Rented", es: "Arrendada" },
+  owned: { en: "Owned", es: "Propia" },
+} as const
+
+const SCHOOL_TYPE = {
+  public: { en: "Public", es: "Público" },
+  private: { en: "Private", es: "Privado" },
+} as const
 
 export const SAMPLE_APPLICANTS: SampleApplicant[] = [
   {
@@ -24,6 +62,8 @@ export const SAMPLE_APPLICANTS: SampleApplicant[] = [
     label: "Applicant A",
     major: { en: "Systems Engineering", es: "Ingeniería de Sistemas" },
     city: "Sincelejo",
+    department: "Sucre",
+    gender: "M",
     prompt: { en: "Obstacles and lessons", es: "Obstáculos y lecciones" },
     essay: {
       en: "The workshop behind our house was where I learned to take things apart. My father repaired refrigerators and I passed him tools until I was old enough to hold the meter myself. When he lost that work, the tools stayed and the customers did not, and for two years the house ran on what my mother earned sewing. I kept taking things apart anyway, because it was the only thing that made the waiting bearable.\n\nSchool was where I found out that the taking apart had a name. A teacher lent me a laptop with a broken hinge and I taught myself to write small programs on it, mostly badly. By eleventh grade I was the person classmates came to when a phone stopped working, and I had started charging a little, which is how I paid for the exam fees. I want to study systems engineering because I would like to build the tools instead of only repairing them, and because I would like my father to see it.",
@@ -45,12 +85,30 @@ export const SAMPLE_APPLICANTS: SampleApplicant[] = [
         },
       },
     ],
+    academic: {
+      age: 18,
+      estrato: 2,
+      siblings: "2",
+      housing: HOUSING.rented,
+      sisben: "A5",
+      school: "I.E. Normal Superior de Sincelejo",
+      schoolType: SCHOOL_TYPE.public,
+      graduated: "2025-11-28",
+      saber11: 391,
+      plc: 78,
+      pma: 84,
+      psc: 76,
+      pcn: 79,
+      pin: 74,
+    },
   },
   {
     slug: "applicant-b",
     label: "Applicant B",
     major: { en: "Economics", es: "Economía" },
     city: "Pasto",
+    department: "Nariño",
+    gender: "F",
     prompt: { en: "A significant context", es: "Un contexto significativo" },
     essay: {
       en: "My grandmother has sold potatoes at the same market stall for thirty-one years and has never once written down a price. She holds the whole book in her head: what she paid, what the truck charged, what the woman two stalls down is asking, what a customer can be persuaded to pay on a Tuesday. When I was fourteen I started keeping her accounts in a notebook, and within a month I understood that she was losing money on the days she felt most generous.\n\nShowing her the numbers was harder than adding them. She did not want to be told that kindness had a cost, and she was not entirely wrong, because the neighbours she fed on credit are the same ones who covered her stall when she was ill. What I learned from that argument is that an economy is not only what is efficient, it is also what people owe each other and choose to honour. I want to study economics to understand that second part properly, since the first part is already well documented.",
@@ -72,12 +130,30 @@ export const SAMPLE_APPLICANTS: SampleApplicant[] = [
         },
       },
     ],
+    academic: {
+      age: 18,
+      estrato: 2,
+      siblings: "1",
+      housing: HOUSING.family,
+      sisben: "A5",
+      school: "I.E.M. Ciudad de Pasto",
+      schoolType: SCHOOL_TYPE.public,
+      graduated: "2025-11-27",
+      saber11: 398,
+      plc: 86,
+      pma: 80,
+      psc: 88,
+      pcn: 76,
+      pin: 72,
+    },
   },
   {
     slug: "applicant-c",
     label: "Applicant C",
     major: { en: "Chemistry", es: "Química" },
     city: "Quibdó",
+    department: "Chocó",
+    gender: "F",
     prompt: { en: "A societally consequential force", es: "Una fuerza de consecuencias sociales" },
     essay: {
       en: "The river that runs past my school is the colour of milky tea and has been for as long as I can remember. Upstream there is mining, and downstream there is us, and between the two there is a mercury problem that everybody discusses and nobody measures. In tenth grade a visiting teacher showed us how to test water for turbidity with a jar and a torch, and we started keeping a log. It was not laboratory work. It was enough to show that the river got worse on the days the machines ran.\n\nWhat I have come to think is that the force that will shape my region is not the mining itself but who gets to hold the evidence. Right now the people who can afford instruments are the ones being measured, and the people being poisoned are the ones with the jars. I want to study chemistry because the gap between a jar and a laboratory is a gap I can actually close, and because I would rather come back with the instruments than write about the problem from somewhere else.",
@@ -99,12 +175,30 @@ export const SAMPLE_APPLICANTS: SampleApplicant[] = [
         },
       },
     ],
+    academic: {
+      age: 17,
+      estrato: 1,
+      siblings: "4+",
+      housing: HOUSING.family,
+      sisben: "A2",
+      school: "I.E. Armando Luna Roa",
+      schoolType: SCHOOL_TYPE.public,
+      graduated: "2025-12-02",
+      saber11: 382,
+      plc: 80,
+      pma: 74,
+      psc: 78,
+      pcn: 84,
+      pin: 66,
+    },
   },
   {
     slug: "applicant-d",
     label: "Applicant D",
     major: { en: "Electronic Engineering", es: "Ingeniería Electrónica" },
     city: "Villavicencio",
+    department: "Meta",
+    gender: "M",
     prompt: { en: "Questioning a belief", es: "Cuestionar una creencia" },
     essay: {
       en: "I was raised on the idea that a man provides and does not explain himself. My uncle raised four children on that principle and it worked, in the sense that they ate. It stopped working when my cousin needed help he could not ask for, and the family found out afterwards rather than in time. I was sixteen and I decided that the rule was not strength, it was a way of not being known.\n\nSaying so out loud cost me a year of being the difficult one at family lunches. What I did not expect was that my uncle would come around, slowly, in the form of phone calls that started with nothing in particular. I learned that changing someone's mind is not an argument you win, it is a door you leave open longer than is comfortable. I am going into engineering, which is a field with its own version of that rule, where you are supposed to already know. I intend to be the one who asks.",
@@ -126,5 +220,66 @@ export const SAMPLE_APPLICANTS: SampleApplicant[] = [
         },
       },
     ],
+    academic: {
+      age: 19,
+      estrato: 3,
+      siblings: "1",
+      housing: HOUSING.owned,
+      sisben: "0",
+      school: "Col. Departamental La Esperanza",
+      schoolType: SCHOOL_TYPE.public,
+      graduated: "2024-11-30",
+      saber11: 375,
+      plc: 74,
+      pma: 76,
+      psc: 72,
+      pcn: 75,
+      pin: 70,
+    },
+  },
+  {
+    slug: "applicant-e",
+    label: "Applicant E",
+    major: { en: "Data Science", es: "Ciencia de Datos" },
+    city: "Bogotá",
+    department: "Bogotá D.C.",
+    gender: "F",
+    prompt: { en: "Obstacles and lessons", es: "Obstáculos y lecciones" },
+    essay: {
+      en: "For three years I got up at four to be at the bakery before the ovens, and then went to school smelling of bread. My mother had taken the night shift at a warehouse and one of us had to be there when the dough was ready. I do not want to describe this as a hardship, because the bakery is also where I learned to work with people twice my age who took me seriously.\n\nWhat it cost me was mathematics. I fell behind in tenth grade and decided the subject was simply not mine, which is the most expensive conclusion I have ever reached. A teacher disagreed and gave me the same problem set every week until I stopped believing it. I want to study data science because the thing I was worst at turned out to be the thing I was only untaught in, and I would like to spend my career on that difference.",
+      es: "Durante tres años me levanté a las cuatro para llegar a la panadería antes de los hornos, y después iba al colegio con olor a pan. Mi mamá había tomado el turno de la noche en una bodega y alguno de los dos tenía que estar cuando la masa estuviera lista. No quiero describir esto como una dureza, porque la panadería también fue donde aprendí a trabajar con gente que me doblaba la edad y me tomaba en serio.\n\nLo que me costó fue las matemáticas. Me atrasé en grado décimo y decidí que la materia simplemente no era para mí, que es la conclusión más cara a la que he llegado. Una profesora no estuvo de acuerdo y me dio el mismo taller cada semana hasta que dejé de creerlo. Quiero estudiar ciencia de datos porque aquello en lo que era peor resultó ser solo aquello que nadie me había enseñado, y me gustaría dedicar mi carrera a esa diferencia.",
+    },
+    shortAnswers: [
+      {
+        q: { en: "Who am I?", es: "¿Quién soy?" },
+        a: {
+          en: "The girl who smelled of bread in class and stopped apologising for it.",
+          es: "La niña que olía a pan en clase y dejó de disculparse por eso.",
+        },
+      },
+      {
+        q: { en: "Who do I want to be?", es: "¿Quién quiero ser?" },
+        a: {
+          en: "Someone who proves that being behind is not the same as being unable.",
+          es: "Alguien que demuestre que estar atrasada no es lo mismo que no poder.",
+        },
+      },
+    ],
+    academic: {
+      age: 18,
+      estrato: 2,
+      siblings: "0",
+      housing: HOUSING.rented,
+      sisben: "B1",
+      school: "Col. Nacional Nicolás Esguerra",
+      schoolType: SCHOOL_TYPE.public,
+      graduated: "2025-11-28",
+      saber11: 386,
+      plc: 82,
+      pma: 70,
+      psc: 80,
+      pcn: 78,
+      pin: 76,
+    },
   },
 ]
