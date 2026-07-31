@@ -1,0 +1,36 @@
+import { issue, json, safeEqual, type Role } from "./_session"
+
+export const config = { runtime: "edge" }
+
+/**
+ * Exchange a role passcode for a session cookie.
+ *
+ * The codes live in BOARD_PASSCODE and SPONSOR_PASSCODE on the server. Failures
+ * are deliberately slow and identical, so this cannot be used to probe which
+ * codes exist.
+ */
+export default async function handler(req: Request): Promise<Response> {
+  if (req.method !== "POST") return json({ error: "method not allowed" }, { status: 405 })
+
+  let body: { role?: string; passcode?: string }
+  try {
+    body = await req.json()
+  } catch {
+    return json({ error: "bad request" }, { status: 400 })
+  }
+
+  const role = body.role === "board" || body.role === "sponsor" ? (body.role as Role) : null
+  const supplied = (body.passcode ?? "").trim()
+  if (!role || !supplied) return json({ error: "bad request" }, { status: 400 })
+
+  const expected =
+    role === "board" ? process.env.BOARD_PASSCODE : process.env.SPONSOR_PASSCODE
+  if (!expected) return json({ error: "server not configured" }, { status: 500 })
+
+  if (!safeEqual(supplied, expected)) {
+    await new Promise((r) => setTimeout(r, 400 + Math.floor(Math.random() * 200)))
+    return json({ error: "invalid code" }, { status: 401 })
+  }
+
+  return json({ ok: true, role }, { headers: { "set-cookie": await issue(role) } })
+}
