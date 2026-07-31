@@ -202,21 +202,50 @@ function Portal() {
                       )}
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Achievements are not listed here: they appear as callouts
+                            against the terms they happened in, on the chart above. */}
                         <div>
-                          <div className="text-meta uppercase tracking-widest text-muted">
-                            {lang === "es" ? "Logros" : "Achievements"}
+                          <div className="bg-surface rounded-sm p-5">
+                            <div className="text-meta uppercase tracking-widest text-muted">
+                              {lang === "es"
+                                ? "Ensayo de admisión, tal como fue enviado"
+                                : "Admissions essay, as submitted"}
+                            </div>
+                            {record?.essay ? (
+                              <>
+                                <div
+                                  className={`mt-3 space-y-3 ${essayOpen === s.slug ? "" : "max-h-72 overflow-hidden"}`}
+                                >
+                                  {record.essay.split("\n\n").map((p) => (
+                                    <p key={p.slice(0, 24)} className="text-body text-ink/80">
+                                      {p}
+                                    </p>
+                                  ))}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setEssayOpen(essayOpen === s.slug ? null : s.slug)
+                                  }
+                                  className="text-meta uppercase tracking-widest text-accent mt-3 cursor-pointer"
+                                >
+                                  {essayOpen === s.slug
+                                    ? lang === "es"
+                                      ? "Contraer"
+                                      : "Collapse"
+                                    : lang === "es"
+                                      ? "Leer completo"
+                                      : "Read in full"}
+                                </button>
+                              </>
+                            ) : (
+                              <p className="text-body text-ink/70 mt-2">
+                                {lang === "es"
+                                  ? "Ensayo no importado en este entorno."
+                                  : "Essay not imported in this environment."}
+                              </p>
+                            )}
                           </div>
-                          <ul className="mt-3 space-y-2">
-                            {tl(s.highlights).map((h) => (
-                              <li key={h.slice(0, 24)} className="text-body text-ink/80 flex gap-3">
-                                <span
-                                  aria-hidden="true"
-                                  className="w-1.5 h-1.5 rounded-full bg-accent mt-2.5 shrink-0"
-                                />
-                                {h}
-                              </li>
-                            ))}
-                          </ul>
                         </div>
                         <div>
                           {/* Grades */}
@@ -257,49 +286,6 @@ function Portal() {
                                 {lang === "es"
                                   ? "Sin registro de notas importado."
                                   : "No grade record imported."}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Admissions essay */}
-                          <div className="mt-4 bg-surface rounded-sm p-5">
-                            <div className="text-meta uppercase tracking-widest text-muted">
-                              {lang === "es"
-                                ? "Ensayo de admisión, tal como fue enviado"
-                                : "Admissions essay, as submitted"}
-                            </div>
-                            {record?.essay ? (
-                              <>
-                                <div
-                                  className={`mt-3 space-y-3 ${essayOpen === s.slug ? "" : "max-h-40 overflow-hidden relative"}`}
-                                >
-                                  {record.essay.split("\n\n").map((p) => (
-                                    <p key={p.slice(0, 24)} className="text-body text-ink/80">
-                                      {p}
-                                    </p>
-                                  ))}
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setEssayOpen(essayOpen === s.slug ? null : s.slug)
-                                  }
-                                  className="text-meta uppercase tracking-widest text-accent mt-3 cursor-pointer"
-                                >
-                                  {essayOpen === s.slug
-                                    ? lang === "es"
-                                      ? "Contraer"
-                                      : "Collapse"
-                                    : lang === "es"
-                                      ? "Leer completo"
-                                      : "Read in full"}
-                                </button>
-                              </>
-                            ) : (
-                              <p className="text-body text-ink/70 mt-2">
-                                {lang === "es"
-                                  ? "Ensayo no importado en este entorno."
-                                  : "Essay not imported in this environment."}
                               </p>
                             )}
                           </div>

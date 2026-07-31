@@ -108,10 +108,15 @@ export const SCHOLAR_TERMS: Record<string, ScholarTermRecord> = {
         "term": "2025-1",
         "average": 4.68,
         "courses": 6
+      },
+      {
+        "term": "2025-2",
+        "average": 3.84,
+        "courses": 7
       }
     ],
     "officialPga": 4.36,
-    "complete": false
+    "complete": true
   },
   "julian-rodriguez": {
     "terms": [
