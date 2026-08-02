@@ -25,7 +25,7 @@ export default function PasscodeGate({ role, eyebrow, heading, children }: Props
   // does not flash the form
   const [state, setState] = useState<"checking" | "locked" | "unlocked">("checking")
   const [code, setCode] = useState("")
-  const [error, setError] = useState<"none" | "code" | "server">("none")
+  const [error, setError] = useState<"none" | "code" | "server" | "challenge">("none")
   const [busy, setBusy] = useState(false)
   const [reveal, setReveal] = useState(false)
 
@@ -60,8 +60,19 @@ export default function PasscodeGate({ role, eyebrow, heading, children }: Props
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ role, passcode: code.trim() }),
       })
-      if (res.ok) setState("unlocked")
-      else setError(res.status === 401 ? "code" : "server")
+      if (res.ok) {
+        setState("unlocked")
+      } else if (
+        // Vercel's DDoS mitigation answers with an HTML security checkpoint.
+        // The document can solve it, a fetch cannot, so the fix is to reload
+        // rather than to retype a code that was never the problem.
+        res.status === 403 &&
+        (res.headers.get("content-type") ?? "").includes("text/html")
+      ) {
+        setError("challenge")
+      } else {
+        setError(res.status === 401 ? "code" : "server")
+      }
     } catch {
       setError("server")
     } finally {
@@ -143,6 +154,36 @@ export default function PasscodeGate({ role, eyebrow, heading, children }: Props
                       ? "Esta página pide el código de patrocinadores, no el de la junta. Toca Ver para revisar lo que escribiste."
                       : "This page wants the sponsor code, not the board one. Tap Show to check what you typed."}
                 </span>
+              </p>
+            )}
+            {error === "challenge" && (
+              <p role="alert" className="text-body text-accent mt-4">
+                {lang === "es" ? (
+                  <>
+                    Tu código está bien. Vercel puso un chequeo de seguridad en esta
+                    red.{" "}
+                    <button
+                      type="button"
+                      onClick={() => window.location.reload()}
+                      className="underline underline-offset-2 cursor-pointer font-semibold"
+                    >
+                      Recarga la página
+                    </button>{" "}
+                    y vuelve a entrar.
+                  </>
+                ) : (
+                  <>
+                    Your code is fine. Vercel put a security check on this network.{" "}
+                    <button
+                      type="button"
+                      onClick={() => window.location.reload()}
+                      className="underline underline-offset-2 cursor-pointer font-semibold"
+                    >
+                      Reload the page
+                    </button>{" "}
+                    and sign in again.
+                  </>
+                )}
               </p>
             )}
             {error === "server" && (
