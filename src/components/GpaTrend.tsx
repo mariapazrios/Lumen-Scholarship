@@ -34,10 +34,29 @@ export default function GpaTrend({
   const y = (v: number) => PAD.t + innerH - ((v - MIN) / (MAX - MIN)) * innerH
 
   const ticks = [3.0, 3.5, 4.0, 4.5, 5.0]
-  const line = terms.map((t, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(t.average)}`).join(" ")
 
-  // one achievement pinned per term, in order, so the callouts spread across the run
-  const pinned = terms.map((_, i) => achievements[i]).map((a) => a ?? null)
+  // The line breaks across N/A terms: a semester the scholar sat out is a gap,
+  // not a point on a trend, and drawing through it would invent continuity.
+  const segments: string[] = []
+  {
+    let run: string[] = []
+    terms.forEach((t, i) => {
+      if (t.average == null) {
+        if (run.length > 1) segments.push(run.join(" "))
+        run = []
+        return
+      }
+      run.push(`${run.length === 0 ? "M" : "L"} ${x(i)} ${y(t.average)}`)
+    })
+    if (run.length > 1) segments.push(run.join(" "))
+  }
+
+  // one achievement pinned per enrolled term, in order, so the callouts spread
+  // across the run and never land on a semester the scholar sat out
+  let nextAchievement = 0
+  const pinned = terms.map((t) =>
+    t.average == null ? null : (achievements[nextAchievement++] ?? null),
+  )
 
   return (
     <div>
@@ -54,21 +73,30 @@ export default function GpaTrend({
           </g>
         ))}
 
-        {terms.length > 1 && (
-          <path d={line} fill="none" stroke={ACCENT} strokeWidth={2.5}
+        {segments.map((d) => (
+          <path key={d} d={d} fill="none" stroke={ACCENT} strokeWidth={2.5}
             strokeLinejoin="round" strokeLinecap="round" />
-        )}
+        ))}
 
         {terms.map((t, i) => (
           <g key={t.term}>
-            <circle cx={x(i)} cy={y(t.average)} r={active === i ? 7 : 5}
-              fill={ACCENT} stroke="#fff" strokeWidth={2}
-              className="cursor-pointer transition-all duration-200"
-              onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(null)} />
-            <text x={x(i)} y={y(t.average) - 12} textAnchor="middle"
-              fontSize="11" fontWeight="700" fill="var(--color-navy)" className="tabular-nums">
-              {t.average.toFixed(2)}
-            </text>
+            {t.average == null ? (
+              <text x={x(i)} y={y(4) + 4} textAnchor="middle" fontSize="10"
+                fill="var(--color-muted)" fontStyle="italic">
+                {lang === "es" ? "Sin matrícula" : "Not enrolled"}
+              </text>
+            ) : (
+              <>
+                <circle cx={x(i)} cy={y(t.average)} r={active === i ? 7 : 5}
+                  fill={ACCENT} stroke="#fff" strokeWidth={2}
+                  className="cursor-pointer transition-all duration-200"
+                  onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(null)} />
+                <text x={x(i)} y={y(t.average) - 12} textAnchor="middle"
+                  fontSize="11" fontWeight="700" fill="var(--color-navy)" className="tabular-nums">
+                  {t.average.toFixed(2)}
+                </text>
+              </>
+            )}
             <text x={x(i)} y={H - 12} textAnchor="middle" fontSize="10"
               fill="var(--color-muted)" className="tabular-nums">
               {t.term}
