@@ -27,6 +27,7 @@ export default function PasscodeGate({ role, eyebrow, heading, children }: Props
   const [code, setCode] = useState("")
   const [error, setError] = useState<"none" | "code" | "server">("none")
   const [busy, setBusy] = useState(false)
+  const [reveal, setReveal] = useState(false)
 
   useEffect(() => {
     let live = true
@@ -79,17 +80,38 @@ export default function PasscodeGate({ role, eyebrow, heading, children }: Props
             <div className="text-meta uppercase tracking-widest text-muted">{t(eyebrow)}</div>
             <h2 className="text-h3 font-semibold text-primary mt-3">{t(heading)}</h2>
             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-              <input
-                type="password"
-                value={code}
-                onChange={(e) => {
-                  setCode(e.target.value)
-                  setError("none")
-                }}
-                placeholder={lang === "es" ? "Código de acceso" : "Access code"}
-                aria-label={lang === "es" ? "Código de acceso" : "Access code"}
-                className="bg-white border border-ink/15 rounded-sm px-4 py-3 text-body text-ink w-full sm:w-64 focus:outline-none focus:border-accent"
-              />
+              <div className="relative w-full sm:w-64">
+                <input
+                  // lumenedu.org is also a Google Workspace domain, so a plain
+                  // unnamed password box invites Chrome to autofill the mailbox
+                  // password here. Naming it and turning autofill off keeps the
+                  // manager out of a field it cannot know the answer to.
+                  type={reveal ? "text" : "password"}
+                  name="lumen-access-code"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  value={code}
+                  onChange={(e) => {
+                    setCode(e.target.value)
+                    setError("none")
+                  }}
+                  placeholder={lang === "es" ? "Código de acceso" : "Access code"}
+                  aria-label={lang === "es" ? "Código de acceso" : "Access code"}
+                  className="bg-white border border-ink/15 rounded-sm pl-4 pr-16 py-3 text-body text-ink w-full focus:outline-none focus:border-accent"
+                />
+                {/* A shared code typed into a masked box gives you no way to see
+                    that something else filled it in. */}
+                <button
+                  type="button"
+                  onClick={() => setReveal((r) => !r)}
+                  aria-pressed={reveal}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-meta uppercase tracking-widest text-muted cursor-pointer hover:text-ink transition-colors duration-200"
+                >
+                  {reveal ? (lang === "es" ? "Ocultar" : "Hide") : lang === "es" ? "Ver" : "Show"}
+                </button>
+              </div>
               <button
                 type="submit"
                 // Deliberately not disabled while the session probe is in
@@ -109,7 +131,18 @@ export default function PasscodeGate({ role, eyebrow, heading, children }: Props
             </div>
             {error === "code" && (
               <p role="alert" className="text-body text-accent mt-4">
-                {lang === "es" ? "Ese código no es correcto." : "That code isn't right."}
+                {lang === "es" ? "Ese código no es correcto." : "That code isn't right."}{" "}
+                {/* The two portals take different codes and look identical, so
+                    say which one this is rather than leave them guessing. */}
+                <span className="text-muted">
+                  {role === "board"
+                    ? lang === "es"
+                      ? "Esta página pide el código de la junta, no el de patrocinadores. Toca Ver para revisar lo que escribiste."
+                      : "This page wants the board code, not the sponsor one. Tap Show to check what you typed."
+                    : lang === "es"
+                      ? "Esta página pide el código de patrocinadores, no el de la junta. Toca Ver para revisar lo que escribiste."
+                      : "This page wants the sponsor code, not the board one. Tap Show to check what you typed."}
+                </span>
               </p>
             )}
             {error === "server" && (
