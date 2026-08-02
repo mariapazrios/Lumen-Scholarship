@@ -1,31 +1,39 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import PasscodeGate, { PrototypeNotice } from "../components/PasscodeGate"
 import Reveal from "../components/primitives/Reveal"
 import { SCHOLARS } from "../data/scholars"
 import { useLang, type L } from "../lib/i18n"
 
 import GpaTrend from "../components/GpaTrend"
-import { SCHOLAR_ESSAYS } from "../data/scholarEssays"
 import { SCHOLAR_GRADES } from "../data/scholarGrades"
 import { SCHOLAR_TERMS } from "../data/scholarTerms"
 
-type ScholarRecord = {
-  essay?: string
-  grades?: { program: string; asOf: string; cumulative: number; semesters: string[] }
-}
-
 /**
- * Real essays and grades live in src/data/private/, which is gitignored, so they
- * are present locally and absent from the public deploy. import.meta.glob keeps
- * the build working either way; swap this for an authenticated fetch once the
- * portal sits behind real auth.
+ * Admissions essays, served only to an authenticated session. Fetched once for
+ * the whole page: eleven bodies is one small response, and it keeps opening a
+ * profile instant.
  */
-const RECORDS: Record<string, ScholarRecord> = Object.values(
-  import.meta.glob<{ SCHOLAR_RECORDS?: Record<string, ScholarRecord> }>(
-    "../data/private/scholarRecords.ts",
-    { eager: true },
-  ),
-)[0]?.SCHOLAR_RECORDS ?? {}
+function useScholarEssays() {
+  const [essays, setEssays] = useState<Record<string, string> | null>(null)
+
+  useEffect(() => {
+    let live = true
+    fetch("/api/documents?kind=scholar-essay")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { documents?: Array<{ subject: string; body: string }> } | null) => {
+        if (!live) return
+        setEssays(
+          Object.fromEntries((data?.documents ?? []).map((d) => [d.subject, d.body])),
+        )
+      })
+      .catch(() => live && setEssays({}))
+    return () => {
+      live = false
+    }
+  }, [])
+
+  return essays
+}
 
 /**
  * Annual reports. The PDFs are not committed to this repo: anything in the
@@ -57,6 +65,7 @@ function Portal() {
   const { lang, t, tl } = useLang()
   const [open, setOpen] = useState<string | null>(SCHOLARS[0]?.slug ?? null)
   const [essayOpen, setEssayOpen] = useState<string | null>(null)
+  const essays = useScholarEssays()
 
   return (
     <>
@@ -142,9 +151,8 @@ function Portal() {
             {SCHOLARS.map((s) => {
               const isOpen = open === s.slug
               const record = {
-                ...RECORDS[s.slug],
                 grades: SCHOLAR_GRADES[s.slug],
-                essay: SCHOLAR_ESSAYS[s.slug] ?? RECORDS[s.slug]?.essay,
+                essay: essays?.[s.slug],
               }
               return (
                 <div
@@ -238,11 +246,15 @@ function Portal() {
                                       : "Read in full"}
                                 </button>
                               </>
+                            ) : essays === null ? (
+                              <p role="status" className="text-body text-ink/70 mt-2">
+                                {lang === "es" ? "Cargando el ensayo." : "Loading the essay."}
+                              </p>
                             ) : (
                               <p className="text-body text-ink/70 mt-2">
                                 {lang === "es"
-                                  ? "Ensayo no importado en este entorno."
-                                  : "Essay not imported in this environment."}
+                                  ? "Sin ensayo registrado para este estudiante."
+                                  : "No essay on file for this scholar."}
                               </p>
                             )}
                           </div>
@@ -320,8 +332,7 @@ function Portal() {
 export default function SponsorPortal() {
   return (
     <PasscodeGate
-      passcode="LumenSponsor!"
-      storageKey="lumen-sponsor-unlocked"
+      role="sponsor"
       eyebrow={{ en: "For sponsors", es: "Para patrocinadores" }}
       heading={{
         en: "Enter the sponsor access code.",

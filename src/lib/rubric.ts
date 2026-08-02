@@ -58,30 +58,60 @@ export const WEIGHTS: Weights = { values: 0.5, freeForm: 0.5, maybeMargin: 0.2 }
 /** ratings[candidateSlug][memberSlug] */
 export type RatingStore = Record<string, Record<string, Rating>>
 
-const RATINGS_KEY = "lumen-board-ratings"
 const MEMBER_KEY = "lumen-board-member"
 
-function read<T>(key: string, fallback: T): T {
+/**
+ * Which board member you are rating as. This stays in the browser on purpose:
+ * one shared passcode means the server cannot tell members apart, so the client
+ * names itself on every save. It is a convenience, not a credential.
+ */
+export function loadMember(): string {
   try {
-    const raw = localStorage.getItem(key)
-    return raw ? (JSON.parse(raw) as T) : fallback
+    const raw = localStorage.getItem(MEMBER_KEY)
+    return raw ? (JSON.parse(raw) as string) : ""
   } catch {
-    return fallback
+    return ""
   }
-}
-
-export const loadRatings = () => read<RatingStore>(RATINGS_KEY, {})
-export const loadMember = () => read<string>(MEMBER_KEY, "")
-
-export function saveRating(candidate: string, member: string, rating: Rating) {
-  const all = loadRatings()
-  all[candidate] = { ...(all[candidate] ?? {}), [member]: rating }
-  localStorage.setItem(RATINGS_KEY, JSON.stringify(all))
-  return all
 }
 
 export function saveMember(member: string) {
   localStorage.setItem(MEMBER_KEY, JSON.stringify(member))
+}
+
+/** Thrown when the session cookie is missing or expired, so the gate can reappear. */
+export class SessionExpired extends Error {
+  constructor() {
+    super("session expired")
+  }
+}
+
+/**
+ * Every member's ratings, from the server. This is the whole reason the backend
+ * exists: a consolidated view needs scores that one browser cannot hold.
+ */
+export async function fetchRatings(): Promise<RatingStore> {
+  const res = await fetch("/api/ratings")
+  if (res.status === 401) throw new SessionExpired()
+  if (!res.ok) throw new Error(`ratings fetch failed: ${res.status}`)
+  const data = (await res.json()) as { ratings?: RatingStore }
+  return data.ratings ?? {}
+}
+
+/** Upsert one member's rating for one candidate. */
+export async function saveRating(candidate: string, member: string, rating: Rating) {
+  const res = await fetch("/api/ratings", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      candidate,
+      member,
+      values: rating.values,
+      recommendation: rating.recommendation,
+      comments: rating.comments,
+    }),
+  })
+  if (res.status === 401) throw new SessionExpired()
+  if (!res.ok) throw new Error(`rating save failed: ${res.status}`)
 }
 
 export const emptyRating = (): Rating => ({

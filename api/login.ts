@@ -1,4 +1,4 @@
-import { issue, json, safeEqual, type Role } from "./_session"
+import { issue, json, readSession, safeEqual, unauthorized, type Role } from "./_session"
 
 export const config = { runtime: "edge" }
 
@@ -8,8 +8,17 @@ export const config = { runtime: "edge" }
  * The codes live in BOARD_PASSCODE and SPONSOR_PASSCODE on the server. Failures
  * are deliberately slow and identical, so this cannot be used to probe which
  * codes exist.
+ *
+ * GET reports the role the caller's cookie carries. The gate needs this because
+ * the cookie is httpOnly: the browser cannot read it, so a reload has no other
+ * way to tell an active session from an expired one.
  */
 export default async function handler(req: Request): Promise<Response> {
+  if (req.method === "GET") {
+    const role = await readSession(req)
+    return role ? json({ role }) : unauthorized()
+  }
+
   if (req.method !== "POST") return json({ error: "method not allowed" }, { status: 405 })
 
   let body: { role?: string; passcode?: string }

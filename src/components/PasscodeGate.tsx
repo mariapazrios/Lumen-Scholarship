@@ -1,44 +1,68 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Reveal from "./primitives/Reveal"
 import { useLang, type L } from "../lib/i18n"
 
+type Role = "board" | "sponsor"
+
 type Props = {
-  /** Compared case-insensitively against the typed code */
-  passcode: string
-  storageKey: string
+  /** Which passcode the server checks the typed code against */
+  role: Role
   eyebrow: L
   heading: L
   children: React.ReactNode
 }
 
 /**
- * Client-side gate. The passcode ships in the bundle, so this keeps a page out
- * of casual sight, nothing more. Never put anything behind it that would matter
- * if it leaked.
+ * Server-side gate. The typed code goes to /api/login, which compares it against
+ * BOARD_PASSCODE or SPONSOR_PASSCODE and returns an HMAC-signed httpOnly cookie.
+ * No passcode ships in the bundle, and the routes behind this gate require the
+ * cookie themselves, so the boundary holds even if someone renders the page
+ * without going through this form.
  */
-export default function PasscodeGate({
-  passcode,
-  storageKey,
-  eyebrow,
-  heading,
-  children,
-}: Props) {
+export default function PasscodeGate({ role, eyebrow, heading, children }: Props) {
   const { lang, t } = useLang()
-  const [unlocked, setUnlocked] = useState(
-    () => sessionStorage.getItem(storageKey) === "1",
-  )
+  // "checking" until the session probe answers, so a reload with a live cookie
+  // does not flash the form
+  const [state, setState] = useState<"checking" | "locked" | "unlocked">("checking")
   const [code, setCode] = useState("")
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<"none" | "code" | "server">("none")
+  const [busy, setBusy] = useState(false)
 
-  if (unlocked) return <>{children}</>
+  useEffect(() => {
+    let live = true
+    fetch("/api/login")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { role?: Role } | null) => {
+        if (!live) return
+        // A board cookie satisfies a sponsor gate; the reverse is not true.
+        const ok = data?.role === "board" || data?.role === role
+        setState(ok ? "unlocked" : "locked")
+      })
+      .catch(() => live && setState("locked"))
+    return () => {
+      live = false
+    }
+  }, [role])
 
-  const submit = (e: React.FormEvent) => {
+  if (state === "unlocked") return <>{children}</>
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (code.trim().toUpperCase() === passcode.toUpperCase()) {
-      sessionStorage.setItem(storageKey, "1")
-      setUnlocked(true)
-    } else {
-      setError(true)
+    if (busy) return
+    setBusy(true)
+    setError("none")
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ role, passcode: code.trim() }),
+      })
+      if (res.ok) setState("unlocked")
+      else setError(res.status === 401 ? "code" : "server")
+    } catch {
+      setError("server")
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -58,7 +82,7 @@ export default function PasscodeGate({
                 value={code}
                 onChange={(e) => {
                   setCode(e.target.value)
-                  setError(false)
+                  setError("none")
                 }}
                 placeholder={lang === "es" ? "Código de acceso" : "Access code"}
                 aria-label={lang === "es" ? "Código de acceso" : "Access code"}
@@ -66,14 +90,28 @@ export default function PasscodeGate({
               />
               <button
                 type="submit"
-                className="text-body font-semibold text-primary border border-primary/25 rounded-sm px-6 py-3 cursor-pointer transition-colors duration-200 hover:bg-primary hover:text-white"
+                disabled={busy || state === "checking"}
+                className="text-body font-semibold text-primary border border-primary/25 rounded-sm px-6 py-3 cursor-pointer transition-colors duration-200 hover:bg-primary hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {lang === "es" ? "Entrar" : "Enter"}
+                {busy
+                  ? lang === "es"
+                    ? "Entrando"
+                    : "Entering"
+                  : lang === "es"
+                    ? "Entrar"
+                    : "Enter"}
               </button>
             </div>
-            {error && (
+            {error === "code" && (
               <p role="alert" className="text-body text-accent mt-4">
                 {lang === "es" ? "Ese código no es correcto." : "That code isn't right."}
+              </p>
+            )}
+            {error === "server" && (
+              <p role="alert" className="text-body text-accent mt-4">
+                {lang === "es"
+                  ? "No se pudo verificar el código. Intenta de nuevo."
+                  : "The code could not be checked. Try again."}
               </p>
             )}
           </form>
@@ -83,7 +121,7 @@ export default function PasscodeGate({
   )
 }
 
-/** States plainly what this prototype does and does not do. */
+/** States plainly what each portal reads and who can reach it. */
 export function PrototypeNotice({ scope }: { scope: "board" | "sponsor" }) {
   const { lang } = useLang()
   return (
@@ -92,19 +130,17 @@ export function PrototypeNotice({ scope }: { scope: "board" | "sponsor" }) {
         <p className="text-body">
           {lang === "es" ? (
             <>
-              <strong>Prototipo.</strong> Este código vive en el navegador, así que no
-              protege nada de verdad.{" "}
+              <strong>Acceso restringido.</strong> Tu sesión dura 12 horas.{" "}
               {scope === "board"
-                ? "Los candidatos son inventados y tus calificaciones se guardan solo en este navegador."
-                : "Los ensayos y los informes reales se adjuntan cuando exista autenticación en el servidor."}
+                ? "Los candidatos son inventados. Las calificaciones se guardan en el servidor y las ve toda la junta."
+                : "Los ensayos se sirven desde el servidor, solo con una sesión válida."}
             </>
           ) : (
             <>
-              <strong>Prototype.</strong> This code lives in the browser, so it protects
-              nothing in earnest.{" "}
+              <strong>Restricted access.</strong> Your session lasts 12 hours.{" "}
               {scope === "board"
-                ? "The candidates are invented and your ratings save to this browser only."
-                : "Real essays and reports attach once server-side authentication is in place."}
+                ? "The candidates are invented. Ratings save to the server and the whole board sees them."
+                : "Essays are served from the server, only to a valid session."}
             </>
           )}
         </p>

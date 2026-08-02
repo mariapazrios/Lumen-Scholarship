@@ -4,7 +4,9 @@
 
 ## What this is
 
-Marketing site for **Lumen**, Colombia's first scholar program (partnered with Universidad de Los Andes). Four pages via a tiny hash router (no react-router), no backend. Inspired by [oakhcft.com](https://www.oakhcft.com/).
+Marketing site for **Lumen**, Colombia's first scholar program (partnered with Universidad de Los Andes). Pages via a tiny hash router (no react-router). Inspired by [oakhcft.com](https://www.oakhcft.com/).
+
+Mostly static, plus a small backend for the two gated portals: three edge functions in [api/](api/README.md) over a Neon Postgres database (`neon-aureolin-elephant`, attached to the Vercel project as `POSTGRES_URL`). It exists so board ratings are shared between members rather than trapped in one browser, and so admissions essays are served to an authenticated session instead of shipping in the client bundle. **Never put scholar essays or grades back into `src/data/`** — they belong in `lumen_documents`.
 
 ## Tech stack
 

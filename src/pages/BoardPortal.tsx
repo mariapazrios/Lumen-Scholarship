@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import PasscodeGate, { PrototypeNotice } from "../components/PasscodeGate"
 import Reveal from "../components/primitives/Reveal"
 import { BOARD } from "../data/team"
@@ -7,18 +7,20 @@ import { useLang } from "../lib/i18n"
 import {
   COMMENT_PLACEHOLDER,
   RECOMMENDATIONS,
+  SessionExpired,
   VALUES,
   WEIGHTS,
   blended,
   consolidate,
   emptyRating,
+  fetchRatings,
   loadMember,
-  loadRatings,
   readOfScores,
   saveMember,
   saveRating,
   valuesAverage,
   type Rating,
+  type RatingStore,
   type Score,
   type ValueKey,
 } from "../lib/rubric"
@@ -30,16 +32,51 @@ const VERDICT_STYLE: Record<string, string> = {
   unrated: "bg-ink/5 text-muted",
 }
 
-function Portal() {
+function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const { lang, t } = useLang()
   const [member, setMember] = useState(loadMember)
-  const [store, setStore] = useState(loadRatings)
+  const [store, setStore] = useState<RatingStore>({})
   const [active, setActive] = useState(SAMPLE_APPLICANTS[0].slug)
-  const [draft, setDraft] = useState<Rating>(
-    () => loadRatings()[SAMPLE_APPLICANTS[0].slug]?.[loadMember()] ?? emptyRating(),
-  )
+  const [draft, setDraft] = useState<Rating>(emptyRating)
   const [saved, setSaved] = useState(false)
+  const [status, setStatus] = useState<"loading" | "ready" | "saving" | "error">("loading")
   const [filters, setFilters] = useState({ department: "", major: "", gender: "" })
+
+  /**
+   * Pull every member's ratings. Called after each save, so the consolidated
+   * table below reflects the rest of the board and not just what this browser
+   * happens to have entered.
+   */
+  const refresh = useCallback(async () => {
+    try {
+      setStore(await fetchRatings())
+      setStatus("ready")
+    } catch (e) {
+      if (e instanceof SessionExpired) onSessionLost()
+      else setStatus("error")
+    }
+  }, [onSessionLost])
+
+  // Initial load. Seeds the draft from whatever this member already saved for
+  // the first candidate, so reopening the portal resumes where they left off.
+  useEffect(() => {
+    let live = true
+    fetchRatings()
+      .then((next) => {
+        if (!live) return
+        setStore(next)
+        setDraft(next[SAMPLE_APPLICANTS[0].slug]?.[loadMember()] ?? emptyRating())
+        setStatus("ready")
+      })
+      .catch((e) => {
+        if (!live) return
+        if (e instanceof SessionExpired) onSessionLost()
+        else setStatus("error")
+      })
+    return () => {
+      live = false
+    }
+  }, [onSessionLost])
 
   const applicant = SAMPLE_APPLICANTS.find((a) => a.slug === active)!
   const rows = useMemo(
@@ -85,11 +122,19 @@ function Portal() {
     setSaved(false)
   }
 
-  const commit = () => {
-    if (!member) return
-    const rating = { ...draft, updatedAt: new Date().toISOString() }
-    setStore(saveRating(active, member, rating))
-    setSaved(true)
+  const commit = async () => {
+    if (!member || status === "saving") return
+    setStatus("saving")
+    try {
+      await saveRating(active, member, draft)
+      // Re-read rather than patching locally: the round trip is what proves the
+      // rating left this browser, and it picks up anyone who saved meanwhile.
+      await refresh()
+      setSaved(true)
+    } catch (e) {
+      if (e instanceof SessionExpired) onSessionLost()
+      else setStatus("error")
+    }
   }
 
   const myRating = store[active]?.[member]
@@ -449,10 +494,16 @@ function Portal() {
                   <button
                     type="button"
                     onClick={commit}
-                    disabled={!member}
+                    disabled={!member || status === "saving" || status === "loading"}
                     className="text-body font-semibold rounded-sm px-6 py-3 bg-primary text-white cursor-pointer transition-opacity duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    {lang === "es" ? "Guardar calificación" : "Save rating"}
+                    {status === "saving"
+                      ? lang === "es"
+                        ? "Guardando"
+                        : "Saving"
+                      : lang === "es"
+                        ? "Guardar calificación"
+                        : "Save rating"}
                   </button>
                   <span className="text-body text-muted">
                     {lang === "es" ? "Puntaje mezclado" : "Blended score"}:{" "}
@@ -460,9 +511,18 @@ function Portal() {
                       {blended(draft, WEIGHTS).toFixed(2)}
                     </strong>
                   </span>
-                  {saved && (
+                  {saved && status === "ready" && (
                     <span role="status" className="text-body text-accent">
-                      {lang === "es" ? "Guardado." : "Saved."}
+                      {lang === "es"
+                        ? "Guardado para toda la junta."
+                        : "Saved for the whole board."}
+                    </span>
+                  )}
+                  {status === "error" && (
+                    <span role="alert" className="text-body text-accent">
+                      {lang === "es"
+                        ? "No se pudo guardar. Revisa la conexión e intenta de nuevo."
+                        : "Could not save. Check the connection and try again."}
                     </span>
                   )}
                   {myRating?.updatedAt && !saved && (
@@ -492,9 +552,16 @@ function Portal() {
             </h2>
             <p className="text-body text-ink/70 mt-3">
               {lang === "es"
-                ? "Valores y free form pesan igual. El puntaje mezclado ordena la lista y define sí, maybe o no."
-                : "Values and free form count equally. The blended score orders the list and sets yes, maybe or no."}
+                ? "Valores y free form pesan igual. El puntaje mezclado ordena la lista y define sí, maybe o no. Incluye las lecturas de todos los miembros de la junta."
+                : "Values and free form count equally. The blended score orders the list and sets yes, maybe or no. It includes every board member's reads."}
             </p>
+            {status === "loading" && (
+              <p role="status" className="text-body text-muted mt-3">
+                {lang === "es"
+                  ? "Cargando las calificaciones de la junta."
+                  : "Loading the board's ratings."}
+              </p>
+            )}
           </Reveal>
 
           <div className="mt-10 overflow-x-auto">
@@ -606,8 +673,8 @@ function Portal() {
 
           <p className="text-meta text-muted mt-8 max-w-3xl">
             {lang === "es"
-              ? "El puesto y la lectura se calculan con las calificaciones ingresadas. Un análisis que lea los ensayos requiere una llamada a un modelo desde el servidor, que este prototipo no tiene."
-              : "Rank and read are computed from the ratings entered. An analysis that reads the essays themselves needs a model call from a server, which this prototype does not have."}
+              ? "El puesto y la lectura se calculan con las calificaciones ingresadas. Un análisis que lea los ensayos requiere una llamada a un modelo, que todavía no está conectada."
+              : "Rank and read are computed from the ratings entered. An analysis that reads the essays themselves needs a model call, which is not wired up yet."}
           </p>
         </div>
       </section>
@@ -616,17 +683,20 @@ function Portal() {
 }
 
 export default function BoardPortal() {
+  // Remounting the gate sends it back through its session probe, which is what
+  // should happen when the 12 hour cookie lapses mid-session.
+  const [attempt, setAttempt] = useState(0)
   return (
     <PasscodeGate
-      passcode="Lumen-Board!"
-      storageKey="lumen-board-unlocked"
+      key={attempt}
+      role="board"
       eyebrow={{ en: "Board login", es: "Acceso junta" }}
       heading={{
         en: "Enter the board access code.",
         es: "Ingresa el código de acceso de la junta.",
       }}
     >
-      <Portal />
+      <Portal onSessionLost={() => setAttempt((n) => n + 1)} />
     </PasscodeGate>
   )
 }

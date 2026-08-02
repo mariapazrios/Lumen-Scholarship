@@ -7,8 +7,13 @@ to an authenticated session instead of shipping inside the client bundle.
 | Route | Method | Who | Purpose |
 |---|---|---|---|
 | `/api/login` | POST | anyone | Exchange a role passcode for a session cookie |
+| `/api/login` | GET | anyone | Report the role the caller's cookie carries, or 401 |
 | `/api/ratings` | GET, POST | board | Read all ratings, upsert your own |
 | `/api/documents` | GET | board, sponsor | Fetch restricted documents |
+
+`GET /api/login` exists because the cookie is httpOnly: the browser cannot read
+it, so after a reload the gate has no other way to tell a live session from an
+expired one.
 
 Sessions are HMAC-signed httpOnly cookies holding a role and a 12 hour expiry.
 Board sessions can read anything a sponsor can; applicant material is board only.
@@ -50,12 +55,23 @@ VALUES ('scholar-essay', 'juan-angel-aicardy', 'Ensayo de admisión', $$...$$, '
 ON CONFLICT (kind, subject) DO UPDATE SET body = EXCLUDED.body;
 ```
 
-Once a scholar's essay is in the table, delete their entry from
-`src/data/scholarEssays.ts` so it stops being served from the bundle. That file
-is the interim measure this backend replaces.
+All eleven scholar essays are loaded. `src/data/scholarEssays.ts` held them
+before this backend existed and has been deleted; `SponsorPortal` now fetches
+`kind=scholar-essay` against the session cookie. Their `submitted_at` is null:
+the source file carried no submission dates, and inventing them would be worse
+than leaving the column empty.
 
-## Note on the current gates
+## The gates
 
-`src/components/PasscodeGate.tsx` still checks a passcode in the browser. It
-stays as a first hurdle, but it is not the security boundary once these routes
-are live: the boundary is the session cookie the API requires.
+`src/components/PasscodeGate.tsx` posts the typed code to `/api/login` and holds
+nothing itself. No passcode ships in the bundle, and every route behind the gate
+checks the cookie on its own, so rendering the page without the form gets you an
+empty shell and a row of 401s.
+
+Two things deliberately stay client-side, because neither is a credential:
+
+- **Which board member you are.** One shared board code means the server cannot
+  tell members apart, so the client names itself on each save
+  (`lumen-board-member` in localStorage).
+- **`src/pages/Apply.tsx`.** That gate gates public essay prompts, not scholar
+  data, and is unchanged.
