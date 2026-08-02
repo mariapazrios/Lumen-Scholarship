@@ -36,7 +36,12 @@ export default async function handler(req: Request): Promise<Response> {
     role === "board" ? process.env.BOARD_PASSCODE : process.env.SPONSOR_PASSCODE
   if (!expected) return json({ error: "server not configured" }, { status: 500 })
 
-  if (!safeEqual(supplied, expected)) {
+  // Case-insensitive, matching the browser gate this route replaced. The codes
+  // are spoken aloud and pasted around, and the board had been typing them in
+  // whatever case for months; an exact match locked everyone out on arrival.
+  // Folding costs one character class of entropy, which a shared passcode
+  // behind a 12 hour session does not depend on.
+  if (!safeEqual(supplied.toUpperCase(), expected.trim().toUpperCase())) {
     await new Promise((r) => setTimeout(r, 400 + Math.floor(Math.random() * 200)))
     return json({ error: "invalid code" }, { status: 401 })
   }

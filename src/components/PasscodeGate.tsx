@@ -36,9 +36,11 @@ export default function PasscodeGate({ role, eyebrow, heading, children }: Props
         if (!live) return
         // A board cookie satisfies a sponsor gate; the reverse is not true.
         const ok = data?.role === "board" || data?.role === role
-        setState(ok ? "unlocked" : "locked")
+        // Only ever resolve the initial "checking": a slow probe that lands
+        // after a successful submit must not throw the form back up.
+        setState((s) => (s === "checking" ? (ok ? "unlocked" : "locked") : s))
       })
-      .catch(() => live && setState("locked"))
+      .catch(() => live && setState((s) => (s === "checking" ? "locked" : s)))
     return () => {
       live = false
     }
@@ -90,7 +92,10 @@ export default function PasscodeGate({ role, eyebrow, heading, children }: Props
               />
               <button
                 type="submit"
-                disabled={busy || state === "checking"}
+                // Deliberately not disabled while the session probe is in
+                // flight: if that request stalls, a disabled button is
+                // indistinguishable from a rejected code.
+                disabled={busy}
                 className="text-body font-semibold text-primary border border-primary/25 rounded-sm px-6 py-3 cursor-pointer transition-colors duration-200 hover:bg-primary hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {busy
