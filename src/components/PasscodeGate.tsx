@@ -125,31 +125,3 @@ export default function PasscodeGate({ role, eyebrow, heading, children }: Props
     </section>
   )
 }
-
-/** States plainly what each portal reads and who can reach it. */
-export function PrototypeNotice({ scope }: { scope: "board" | "sponsor" }) {
-  const { lang } = useLang()
-  return (
-    <div className="bg-accent text-white">
-      <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-4">
-        <p className="text-body">
-          {lang === "es" ? (
-            <>
-              <strong>Acceso restringido.</strong> Tu sesión dura 12 horas.{" "}
-              {scope === "board"
-                ? "Los candidatos son inventados. Las calificaciones se guardan en el servidor y las ve toda la junta."
-                : "Los ensayos se sirven desde el servidor, solo con una sesión válida."}
-            </>
-          ) : (
-            <>
-              <strong>Restricted access.</strong> Your session lasts 12 hours.{" "}
-              {scope === "board"
-                ? "The candidates are invented. Ratings save to the server and the whole board sees them."
-                : "Essays are served from the server, only to a valid session."}
-            </>
-          )}
-        </p>
-      </div>
-    </div>
-  )
-}

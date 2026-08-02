@@ -1,4 +1,4 @@
-import { issue, json, readSession, safeEqual, unauthorized, type Role } from "./_session"
+import { expire, issue, json, readSession, safeEqual, unauthorized, type Role } from "./_session"
 
 export const config = { runtime: "edge" }
 
@@ -17,6 +17,12 @@ export default async function handler(req: Request): Promise<Response> {
   if (req.method === "GET") {
     const role = await readSession(req)
     return role ? json({ role }) : unauthorized()
+  }
+
+  // Sign out. Without this a session runs the full 12 hours on whatever machine
+  // it was opened on, and there is no way to check the gate still challenges.
+  if (req.method === "DELETE") {
+    return json({ ok: true }, { headers: { "set-cookie": expire() } })
   }
 
   if (req.method !== "POST") return json({ error: "method not allowed" }, { status: 405 })

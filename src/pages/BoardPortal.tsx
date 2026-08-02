@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import PasscodeGate, { PrototypeNotice } from "../components/PasscodeGate"
+import PasscodeGate from "../components/PasscodeGate"
 import Reveal from "../components/primitives/Reveal"
 import { BOARD } from "../data/team"
-import { SAMPLE_APPLICANTS } from "../data/sampleApplicants"
 import { useLang } from "../lib/i18n"
+import {
+  HOUSING,
+  SCHOOL_TYPE,
+  fetchApplicants,
+  signOut,
+  type Applicant,
+} from "../lib/applicants"
 import {
   COMMENT_PLACEHOLDER,
   RECOMMENDATIONS,
@@ -32,21 +38,30 @@ const VERDICT_STYLE: Record<string, string> = {
   unrated: "bg-ink/5 text-muted",
 }
 
+/** Renders prose that arrived as plain text with blank lines between paragraphs. */
+function Prose({ text }: { text: string }) {
+  return (
+    <div className="mt-3 space-y-4 max-w-3xl">
+      {text.split("\n\n").map((p, i) => (
+        <p key={`${i}-${p.slice(0, 16)}`} className="text-body text-ink/80">
+          {p}
+        </p>
+      ))}
+    </div>
+  )
+}
+
 function Portal({ onSessionLost }: { onSessionLost: () => void }) {
-  const { lang, t } = useLang()
+  const { lang } = useLang()
   const [member, setMember] = useState(loadMember)
+  const [people, setPeople] = useState<Applicant[]>([])
   const [store, setStore] = useState<RatingStore>({})
-  const [active, setActive] = useState(SAMPLE_APPLICANTS[0].slug)
+  const [active, setActive] = useState<string>("")
   const [draft, setDraft] = useState<Rating>(emptyRating)
   const [saved, setSaved] = useState(false)
   const [status, setStatus] = useState<"loading" | "ready" | "saving" | "error">("loading")
-  const [filters, setFilters] = useState({ department: "", major: "", gender: "" })
+  const [filters, setFilters] = useState({ department: "", program: "", gender: "" })
 
-  /**
-   * Pull every member's ratings. Called after each save, so the consolidated
-   * table below reflects the rest of the board and not just what this browser
-   * happens to have entered.
-   */
   const refresh = useCallback(async () => {
     try {
       setStore(await fetchRatings())
@@ -57,15 +72,18 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     }
   }, [onSessionLost])
 
-  // Initial load. Seeds the draft from whatever this member already saved for
-  // the first candidate, so reopening the portal resumes where they left off.
   useEffect(() => {
     let live = true
-    fetchRatings()
-      .then((next) => {
+    Promise.all([fetchApplicants(), fetchRatings()])
+      .then(([roster, ratings]) => {
         if (!live) return
-        setStore(next)
-        setDraft(next[SAMPLE_APPLICANTS[0].slug]?.[loadMember()] ?? emptyRating())
+        setPeople(roster)
+        setStore(ratings)
+        const first = roster.find((a) => a.essay) ?? roster[0]
+        if (first) {
+          setActive(first.slug)
+          setDraft(ratings[first.slug]?.[loadMember()] ?? emptyRating())
+        }
         setStatus("ready")
       })
       .catch((e) => {
@@ -78,34 +96,30 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     }
   }, [onSessionLost])
 
-  const applicant = SAMPLE_APPLICANTS.find((a) => a.slug === active)!
+  const submitted = people.filter((a) => a.essay)
+  const applicant = people.find((a) => a.slug === active)
+
+  // Only candidates with an essay can be scored, so the table ranks those.
   const rows = useMemo(
-    () => consolidate(SAMPLE_APPLICANTS.map((a) => a.slug), store, WEIGHTS),
-    [store],
+    () => consolidate(submitted.map((a) => a.slug), store, WEIGHTS),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, people],
   )
-  const labelOf = (slug: string) =>
-    SAMPLE_APPLICANTS.find((a) => a.slug === slug)?.label ?? slug
+  const nameOf = (slug: string) => people.find((a) => a.slug === slug)?.name ?? slug
 
-  /**
-   * Filter options come from the applicants themselves, so they stay in sync.
-   * Majors carry a stable value with a translated label, so the dropdown follows
-   * the language toggle without changing what is being filtered on.
-   */
   const options = useMemo(() => {
-    const uniq = (xs: string[]) => [...new Set(xs)].sort()
-    const majors = [...new Map(SAMPLE_APPLICANTS.map((a) => [a.major.en, a.major])).entries()]
-      .map(([value, label]) => ({ value, label }))
+    const uniq = (xs: string[]) => [...new Set(xs.filter(Boolean))].sort()
     return {
-      departments: uniq(SAMPLE_APPLICANTS.map((a) => a.department)),
-      majors,
-      genders: uniq(SAMPLE_APPLICANTS.map((a) => a.gender)),
+      departments: uniq(people.map((a) => a.department)),
+      programs: uniq(people.map((a) => a.program)),
+      genders: uniq(people.map((a) => a.gender)),
     }
-  }, [])
+  }, [people])
 
-  const visible = SAMPLE_APPLICANTS.filter(
+  const visible = people.filter(
     (a) =>
       (!filters.department || a.department === filters.department) &&
-      (!filters.major || a.major.en === filters.major) &&
+      (!filters.program || a.program === filters.program) &&
       (!filters.gender || a.gender === filters.gender),
   )
 
@@ -123,12 +137,10 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   }
 
   const commit = async () => {
-    if (!member || status === "saving") return
+    if (!member || status === "saving" || !applicant?.essay) return
     setStatus("saving")
     try {
       await saveRating(active, member, draft)
-      // Re-read rather than patching locally: the round trip is what proves the
-      // rating left this browser, and it picks up anyone who saved meanwhile.
       await refresh()
       setSaved(true)
     } catch (e) {
@@ -138,21 +150,37 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   }
 
   const myRating = store[active]?.[member]
+  const t2 = (map: Record<string, { en: string; es: string }>, k: string) =>
+    map[k] ? (lang === "es" ? map[k].es : map[k].en) : k
 
   return (
     <>
-      <PrototypeNotice scope="board" />
-
       <section className="bg-primary text-primary-foreground">
         <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-12 md:py-16">
-          <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
-            {lang === "es" ? "Junta de admisiones" : "Board of admissions"}
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
+                {lang === "es" ? "Junta de admisiones" : "Board of admissions"}
+              </div>
+              <h1 className="text-h2 font-semibold">
+                Centro de Admisiones <em className="italic font-light">Lumen.</em>
+              </h1>
+            </div>
+            <button
+              type="button"
+              onClick={() => signOut().then(onSessionLost)}
+              className="text-meta uppercase tracking-widest text-primary-foreground/70 border border-primary-foreground/25 rounded-sm px-4 py-2 cursor-pointer transition-colors duration-200 hover:text-white hover:border-primary-foreground/60"
+            >
+              {lang === "es" ? "Cerrar sesión" : "Sign out"}
+            </button>
           </div>
-          <h1 className="text-h2 font-semibold">
-            Centro de Admisiones <em className="italic font-light">Lumen.</em>
-          </h1>
 
-          {/* Who is rating */}
+          <p className="text-body text-primary-foreground/70 mt-5 max-w-2xl">
+            {lang === "es"
+              ? `${submitted.length} de ${people.length} candidatos han enviado su ensayo. Las calificaciones se guardan en el servidor y las ve toda la junta.`
+              : `${submitted.length} of ${people.length} candidates have submitted an essay. Ratings save to the server and the whole board sees them.`}
+          </p>
+
           <div className="mt-8">
             <label className="text-meta uppercase tracking-widest text-primary-foreground/60">
               {lang === "es" ? "Estás calificando como" : "You are rating as"}
@@ -184,357 +212,409 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
         </div>
       </section>
 
-      {/* Candidate list + rating form */}
       <section className="bg-background">
         <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-12 md:py-16">
-          <div className="grid grid-cols-1 lg:grid-cols-[16rem_1fr] gap-8 lg:gap-12">
-            <div>
-              <div className="text-meta uppercase tracking-widest text-muted mb-3">
-                {lang === "es" ? "Candidatos" : "Candidates"} ({visible.length})
-              </div>
+          {status === "loading" && (
+            <p role="status" className="text-body text-muted">
+              {lang === "es" ? "Cargando candidatos." : "Loading candidates."}
+            </p>
+          )}
 
-              {/* Filters */}
-              <div className="space-y-2 mb-5">
-                {[
-                  {
-                    key: "department" as const,
-                    label: lang === "es" ? "Departamento" : "Department",
-                    opts: options.departments.map((d) => ({ value: d, text: d })),
-                  },
-                  {
-                    key: "major" as const,
-                    label: lang === "es" ? "Carrera" : "Major",
-                    // sorted by the label being shown, so the list reads alphabetically
-                    // in whichever language is active
-                    opts: options.majors
-                      .map((m) => ({ value: m.value, text: t(m.label) }))
-                      .sort((x, y) => x.text.localeCompare(y.text, lang)),
-                  },
-                  {
-                    key: "gender" as const,
-                    label: lang === "es" ? "Género" : "Gender",
-                    opts: options.genders.map((g) => ({
-                      value: g,
-                      text:
-                        g === "F"
-                          ? lang === "es"
-                            ? "Femenino"
-                            : "Female"
-                          : lang === "es"
-                            ? "Masculino"
-                            : "Male",
-                    })),
-                  },
-                ].map((f) => (
-                  <label key={f.key} className="block">
-                    <span className="sr-only">{f.label}</span>
-                    <select
-                      value={filters[f.key]}
-                      onChange={(e) =>
-                        setFilters((prev) => ({ ...prev, [f.key]: e.target.value }))
-                      }
-                      className="w-full bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink cursor-pointer focus:outline-none focus:border-accent"
-                    >
-                      <option value="">
-                        {lang === "es" ? `Todo: ${f.label}` : `All: ${f.label}`}
-                      </option>
-                      {f.opts.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.text}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ))}
-              </div>
-
-              <ul className="space-y-2">
-                {visible.map((a) => {
-                  const mine = store[a.slug]?.[member]
-                  return (
-                    <li key={a.slug}>
-                      <button
-                        type="button"
-                        onClick={() => pick(a.slug)}
-                        className={`w-full text-left rounded-sm px-4 py-3 border transition-colors duration-200 cursor-pointer ${
-                          active === a.slug
-                            ? "border-primary bg-surface"
-                            : "border-ink/10 hover:border-primary/40"
-                        }`}
-                      >
-                        <div className="text-body font-semibold text-primary flex items-center justify-between gap-2">
-                          {a.label}
-                          {mine && (
-                            <span className="text-[10px] uppercase tracking-widest text-accent">
-                              {lang === "es" ? "Calificado" : "Rated"}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-meta text-muted mt-0.5">
-                          {t(a.major)} · {a.city}
-                        </div>
-                      </button>
-                    </li>
-                  )
-                })}
-                {visible.length === 0 && (
-                  <li className="text-body text-muted">
-                    {lang === "es"
-                      ? "Ningún candidato con esos filtros."
-                      : "No candidates match those filters."}
-                  </li>
-                )}
-              </ul>
-            </div>
-
-            <div>
-              {/* Submission */}
-              <div className="flex flex-wrap items-baseline justify-between gap-3">
-                <h2 className="text-h3 font-semibold text-primary">{applicant.label}</h2>
-                <div className="text-meta uppercase tracking-widest text-muted">
-                  {t(applicant.major)} · {applicant.city}
+          {status !== "loading" && (
+            <div className="grid grid-cols-1 lg:grid-cols-[17rem_1fr] gap-8 lg:gap-12">
+              <div>
+                <div className="text-meta uppercase tracking-widest text-muted mb-3">
+                  {lang === "es" ? "Candidatos" : "Candidates"} ({visible.length})
                 </div>
-              </div>
-              <div className="text-meta uppercase tracking-widest text-accent mt-2">
-                {t(applicant.prompt)}
-              </div>
 
-              {/* Academic record, as sent by Uniandes */}
-              <div className="mt-6 bg-surface rounded-sm p-6">
-                <div className="text-meta uppercase tracking-widest text-muted mb-4">
-                  {lang === "es" ? "Registro académico" : "Academic record"}
-                </div>
-                {/* Global score sits apart: it is out of 500, the components out of 100 */}
-                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                  <div className="text-meta uppercase tracking-widest text-muted">
-                    Saber 11
-                  </div>
-                  <div className="text-h3 font-bold text-primary tabular-nums">
-                    {applicant.academic.saber11}
-                    <span className="text-body font-normal text-muted">/500</span>
-                  </div>
-                </div>
-                {/* Components: labels reserve two lines so every number shares a baseline */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-4 mt-5">
+                <div className="space-y-2 mb-5">
                   {[
-                    { k: lang === "es" ? "Lectura crítica" : "Critical reading", v: applicant.academic.plc },
-                    { k: lang === "es" ? "Matemáticas" : "Mathematics", v: applicant.academic.pma },
-                    { k: lang === "es" ? "Sociales" : "Social studies", v: applicant.academic.psc },
-                    { k: lang === "es" ? "Ciencias" : "Sciences", v: applicant.academic.pcn },
-                    { k: lang === "es" ? "Inglés" : "English", v: applicant.academic.pin },
-                  ].map((cell) => (
-                    <div key={cell.k} className="flex flex-col">
-                      <div className="text-meta uppercase tracking-widest text-muted min-h-[2.6em]">
-                        {cell.k}
-                      </div>
-                      <div className="text-body font-semibold text-ink/80 tabular-nums mt-auto">
-                        {cell.v}
-                        <span className="text-meta font-normal text-muted">/100</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-4 mt-5 pt-5 border-t border-ink/10">
-                  {[
-                    { k: lang === "es" ? "Colegio" : "School", v: applicant.academic.school },
-                    { k: lang === "es" ? "Tipo" : "Type", v: t(applicant.academic.schoolType) },
-                    { k: lang === "es" ? "Grado" : "Graduated", v: applicant.academic.graduated },
-                    { k: "Estrato", v: applicant.academic.estrato },
-                    { k: "Sisbén", v: applicant.academic.sisben },
                     {
-                      k: lang === "es" ? "Hogar" : "Household",
-                      v: `${t(applicant.academic.housing)} · ${applicant.academic.siblings} ${lang === "es" ? "herm." : "sibs"} · ${applicant.academic.age} ${lang === "es" ? "años" : "yrs"}`,
+                      key: "department" as const,
+                      label: lang === "es" ? "Departamento" : "Department",
+                      opts: options.departments,
                     },
-                  ].map((cell) => (
-                    <div key={cell.k}>
-                      <div className="text-meta uppercase tracking-widest text-muted">
-                        {cell.k}
-                      </div>
-                      <div className="text-meta text-ink/80 mt-1">{cell.v}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Submitted in Spanish: shown verbatim, with the English marked as a translation */}
-              <div className="text-meta uppercase tracking-widest text-muted mt-8">
-                {lang === "es"
-                  ? "Ensayo, tal como fue enviado"
-                  : "Essay, translated from the Spanish original"}
-              </div>
-              <div className="mt-3 space-y-4 max-w-3xl">
-                {t(applicant.essay)
-                  .split("\n\n")
-                  .map((p) => (
-                    <p key={p.slice(0, 24)} className="text-body text-ink/80">
-                      {p}
-                    </p>
-                  ))}
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 max-w-3xl">
-                {applicant.shortAnswers.map((s) => (
-                  <div key={s.q.en} className="bg-surface rounded-sm p-5">
-                    <div className="text-meta uppercase tracking-widest text-muted">
-                      {t(s.q)}
-                    </div>
-                    <p className="text-body text-ink/80 mt-1.5">{t(s.a)}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Stacked: the four values, then the notes, then the 1 to 5 */}
-              <div className="mt-12 border-t border-ink/10 pt-8 space-y-10 max-w-3xl">
-                <div>
-                  <div className="text-meta uppercase tracking-widest text-muted">
-                    {lang === "es" ? "Paso 1 · Valores Lumen" : "Step 1 · Lumen values"}
-                  </div>
-                  <p className="text-body text-ink/70 mt-2">
-                    {lang === "es"
-                      ? "Califica de 1 a 5, o N/A si el ensayo no da con qué juzgarlo."
-                      : "Score 1 to 5, or N/A when the essay gives nothing to judge it on."}
-                  </p>
-                  {/* 2x2, each quality with room for its full scale */}
-                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-7">
-                    {VALUES.map((v) => (
-                      <div key={v.key}>
-                        <div className="text-body font-semibold text-primary">
-                          {t(v.label)}
-                        </div>
-                        <div className="mt-2.5 flex gap-2">
-                          {([1, 2, 3, 4, 5, "na"] as Score[]).map((n) => {
-                            const on = draft.values[v.key as ValueKey] === n
-                            return (
-                              <button
-                                key={String(n)}
-                                type="button"
-                                aria-pressed={on}
-                                aria-label={`${t(v.label)}: ${n === "na" ? "N/A" : n}`}
-                                onClick={() => {
-                                  setDraft((d) => ({
-                                    ...d,
-                                    values: { ...d.values, [v.key]: n },
-                                  }))
-                                  setSaved(false)
-                                }}
-                                className={`h-11 rounded-sm border text-body tabular-nums cursor-pointer transition-colors duration-200 ${
-                                  n === "na" ? "px-3" : "w-11"
-                                } ${
-                                  on
-                                    ? "bg-primary text-white border-primary font-semibold"
-                                    : "border-ink/15 text-ink/70 hover:border-primary/50"
-                                }`}
-                              >
-                                {n === "na" ? "N/A" : n}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="text-body text-muted mt-6">
-                    {lang === "es" ? "Promedio de valores" : "Values average"}:{" "}
-                    <strong className="text-primary tabular-nums">
-                      {valuesAverage(draft).toFixed(2)}
-                    </strong>
-                    <span className="text-meta">
-                      {" "}
-                      {lang === "es" ? "(N/A cuenta como 3)" : "(N/A counts as 3)"}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-meta uppercase tracking-widest text-muted">
-                    {lang === "es"
-                      ? "Paso 2 · Comentario y recomendación"
-                      : "Step 2 · Commentary and recommendation"}
-                  </div>
-                  <textarea
-                    value={draft.comments}
-                    onChange={(e) => {
-                      const comments = e.target.value
-                      setDraft((d) => ({ ...d, comments }))
-                      setSaved(false)
-                    }}
-                    rows={5}
-                    placeholder={t(COMMENT_PLACEHOLDER)}
-                    className="mt-4 w-full bg-white border border-ink/15 rounded-sm px-4 py-3 text-body text-ink focus:outline-none focus:border-accent"
-                  />
-                  <div className="mt-8">
-                    <div className="text-meta uppercase tracking-widest text-muted mb-3">
-                      {lang === "es" ? "Recomendación" : "Recommendation"}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {RECOMMENDATIONS.map((r) => (
-                        <button
-                          key={r.score}
-                          type="button"
-                          aria-pressed={draft.recommendation === r.score}
-                          onClick={() => {
-                            setDraft((d) => ({ ...d, recommendation: r.score }))
-                            setSaved(false)
-                          }}
-                          className={`text-body rounded-sm px-4 py-2.5 border cursor-pointer transition-colors duration-200 ${
-                            draft.recommendation === r.score
-                              ? "bg-primary text-white border-primary font-semibold"
-                              : "border-ink/15 text-ink/70 hover:border-primary/50"
-                          }`}
+                    {
+                      key: "program" as const,
+                      label: lang === "es" ? "Carrera" : "Major",
+                      opts: options.programs,
+                    },
+                    {
+                      key: "gender" as const,
+                      label: lang === "es" ? "Género" : "Gender",
+                      opts: options.genders,
+                    },
+                  ]
+                    .filter((f) => f.opts.length > 1)
+                    .map((f) => (
+                      <label key={f.key} className="block">
+                        <span className="sr-only">{f.label}</span>
+                        <select
+                          value={filters[f.key]}
+                          onChange={(e) =>
+                            setFilters((prev) => ({ ...prev, [f.key]: e.target.value }))
+                          }
+                          className="w-full bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink cursor-pointer focus:outline-none focus:border-accent"
                         >
-                          {t(r.label)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                          <option value="">
+                            {lang === "es" ? `Todo: ${f.label}` : `All: ${f.label}`}
+                          </option>
+                          {f.opts.map((o) => (
+                            <option key={o} value={o}>
+                              {f.key === "gender"
+                                ? o === "F"
+                                  ? lang === "es"
+                                    ? "Femenino"
+                                    : "Female"
+                                  : lang === "es"
+                                    ? "Masculino"
+                                    : "Male"
+                                : o}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ))}
                 </div>
+
+                <ul className="space-y-2">
+                  {visible.map((a) => {
+                    const mine = store[a.slug]?.[member]
+                    return (
+                      <li key={a.slug}>
+                        <button
+                          type="button"
+                          onClick={() => pick(a.slug)}
+                          className={`w-full text-left rounded-sm px-4 py-3 border transition-colors duration-200 cursor-pointer ${
+                            active === a.slug
+                              ? "border-primary bg-surface"
+                              : "border-ink/10 hover:border-primary/40"
+                          } ${a.essay ? "" : "opacity-55"}`}
+                        >
+                          <div className="text-body font-semibold text-primary flex items-center justify-between gap-2">
+                            {a.name}
+                            {mine && (
+                              <span className="text-[10px] uppercase tracking-widest text-accent">
+                                {lang === "es" ? "Calificado" : "Rated"}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-meta text-muted mt-0.5">
+                            {a.essay
+                              ? `${a.program || "—"} · ${a.city || "—"}`
+                              : lang === "es"
+                                ? "Sin ensayo enviado"
+                                : "No essay submitted"}
+                          </div>
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
               </div>
 
-              <div className="mt-8">
-                <div className="flex flex-wrap items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={commit}
-                    disabled={!member || status === "saving" || status === "loading"}
-                    className="text-body font-semibold rounded-sm px-6 py-3 bg-primary text-white cursor-pointer transition-opacity duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {status === "saving"
-                      ? lang === "es"
-                        ? "Guardando"
-                        : "Saving"
-                      : lang === "es"
-                        ? "Guardar calificación"
-                        : "Save rating"}
-                  </button>
-                  <span className="text-body text-muted">
-                    {lang === "es" ? "Puntaje mezclado" : "Blended score"}:{" "}
-                    <strong className="text-primary tabular-nums">
-                      {blended(draft, WEIGHTS).toFixed(2)}
-                    </strong>
-                  </span>
-                  {saved && status === "ready" && (
-                    <span role="status" className="text-body text-accent">
+              <div>
+                {!applicant && (
+                  <p className="text-body text-muted">
+                    {lang === "es" ? "Ningún candidato seleccionado." : "No candidate selected."}
+                  </p>
+                )}
+
+                {applicant && (
+                  <>
+                    <div className="flex flex-wrap items-baseline justify-between gap-3">
+                      <h2 className="text-h3 font-semibold text-primary">{applicant.name}</h2>
+                      <div className="text-meta uppercase tracking-widest text-muted">
+                        {[applicant.program, applicant.city].filter(Boolean).join(" · ")}
+                      </div>
+                    </div>
+                    <div className="text-meta uppercase tracking-widest text-accent mt-2">
+                      {applicant.submitted_at
+                        ? `${lang === "es" ? "Enviado" : "Submitted"} ${new Date(
+                            applicant.submitted_at,
+                          ).toLocaleDateString(lang, {
+                            day: "numeric",
+                            month: "long",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}`
+                        : lang === "es"
+                          ? "Sin envío"
+                          : "Nothing submitted"}
+                      {!applicant.invited &&
+                        (lang === "es"
+                          ? " · No estaba en la convocatoria"
+                          : " · Not on the invited list")}
+                    </div>
+
+                    {/* Academic record, as sent by Uniandes */}
+                    <div className="mt-6 bg-surface rounded-sm p-6">
+                      <div className="text-meta uppercase tracking-widest text-muted mb-4">
+                        {lang === "es" ? "Registro académico" : "Academic record"}
+                      </div>
+                      {applicant.saber11 == null ? (
+                        <p className="text-body text-ink/70">
+                          {lang === "es"
+                            ? "Sin puntajes Saber 11 en la convocatoria. La hoja de cálculo llegó con valores de relleno para esta cohorte, así que no se muestra ninguno."
+                            : "No Saber 11 scores on the roster. The spreadsheet arrived with placeholder values for this cohort, so none are shown."}
+                        </p>
+                      ) : (
+                        <>
+                          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                            <div className="text-meta uppercase tracking-widest text-muted">
+                              Saber 11
+                            </div>
+                            <div className="text-h3 font-bold text-primary tabular-nums">
+                              {applicant.saber11}
+                              <span className="text-body font-normal text-muted">/500</span>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-4 mt-5">
+                            {[
+                              { k: lang === "es" ? "Lectura crítica" : "Critical reading", v: applicant.plc },
+                              { k: lang === "es" ? "Matemáticas" : "Mathematics", v: applicant.pma },
+                              { k: lang === "es" ? "Sociales" : "Social studies", v: applicant.psc },
+                              { k: lang === "es" ? "Ciencias" : "Sciences", v: applicant.pcn },
+                              { k: lang === "es" ? "Inglés" : "English", v: applicant.pin },
+                            ].map((cell) => (
+                              <div key={cell.k} className="flex flex-col">
+                                <div className="text-meta uppercase tracking-widest text-muted min-h-[2.6em]">
+                                  {cell.k}
+                                </div>
+                                <div className="text-body font-semibold text-ink/80 tabular-nums mt-auto">
+                                  {cell.v ?? "—"}
+                                  <span className="text-meta font-normal text-muted">/100</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {(applicant.school || applicant.estrato) && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-4 mt-5 pt-5 border-t border-ink/10">
+                          {[
+                            { k: lang === "es" ? "Colegio" : "School", v: applicant.school },
+                            {
+                              k: lang === "es" ? "Tipo" : "Type",
+                              v: t2(SCHOOL_TYPE, applicant.school_type),
+                            },
+                            { k: lang === "es" ? "Grado" : "Graduated", v: applicant.graduated },
+                            { k: "Estrato", v: applicant.estrato },
+                            { k: "Sisbén", v: applicant.sisben },
+                            {
+                              k: lang === "es" ? "Hogar" : "Household",
+                              v: [
+                                t2(HOUSING, applicant.housing),
+                                applicant.siblings &&
+                                  `${applicant.siblings} ${lang === "es" ? "herm." : "sibs"}`,
+                                applicant.age &&
+                                  `${Math.floor(applicant.age)} ${lang === "es" ? "años" : "yrs"}`,
+                              ]
+                                .filter(Boolean)
+                                .join(" · "),
+                            },
+                          ]
+                            .filter((c) => c.v)
+                            .map((cell) => (
+                              <div key={cell.k}>
+                                <div className="text-meta uppercase tracking-widest text-muted">
+                                  {cell.k}
+                                </div>
+                                <div className="text-meta text-ink/80 mt-1">{cell.v}</div>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Submitted in Spanish, shown verbatim */}
+                    <div className="text-meta uppercase tracking-widest text-muted mt-8">
                       {lang === "es"
-                        ? "Guardado para toda la junta."
-                        : "Saved for the whole board."}
-                    </span>
-                  )}
-                  {status === "error" && (
-                    <span role="alert" className="text-body text-accent">
-                      {lang === "es"
-                        ? "No se pudo guardar. Revisa la conexión e intenta de nuevo."
-                        : "Could not save. Check the connection and try again."}
-                    </span>
-                  )}
-                  {myRating?.updatedAt && !saved && (
-                    <span className="text-meta text-muted">
-                      {lang === "es" ? "Última vez" : "Last saved"}:{" "}
-                      {new Date(myRating.updatedAt).toLocaleDateString(lang)}
-                    </span>
-                  )}
-                </div>
+                        ? "Ensayo, tal como fue enviado"
+                        : "Essay, as submitted (Spanish original)"}
+                    </div>
+                    {applicant.essay ? (
+                      <Prose text={applicant.essay} />
+                    ) : (
+                      <p className="text-body text-ink/70 mt-3">
+                        {lang === "es"
+                          ? "Este candidato todavía no ha enviado su ensayo."
+                          : "This candidate has not submitted an essay yet."}
+                      </p>
+                    )}
+
+                    {applicant.answers && (
+                      <div className="mt-8">
+                        <div className="text-meta uppercase tracking-widest text-muted">
+                          {lang === "es" ? "Respuestas cortas" : "Short answers"}
+                        </div>
+                        <div className="bg-surface rounded-sm p-5 mt-3 max-w-3xl">
+                          <Prose text={applicant.answers} />
+                        </div>
+                      </div>
+                    )}
+
+                    {applicant.essay && (
+                      <>
+                        <div className="mt-12 border-t border-ink/10 pt-8 space-y-10 max-w-3xl">
+                          <div>
+                            <div className="text-meta uppercase tracking-widest text-muted">
+                              {lang === "es" ? "Paso 1 · Valores Lumen" : "Step 1 · Lumen values"}
+                            </div>
+                            <p className="text-body text-ink/70 mt-2">
+                              {lang === "es"
+                                ? "Califica de 1 a 5, o N/A si el ensayo no da con qué juzgarlo."
+                                : "Score 1 to 5, or N/A when the essay gives nothing to judge it on."}
+                            </p>
+                            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-7">
+                              {VALUES.map((v) => (
+                                <div key={v.key}>
+                                  <div className="text-body font-semibold text-primary">
+                                    {lang === "es" ? v.label.es : v.label.en}
+                                  </div>
+                                  <div className="mt-2.5 flex gap-2">
+                                    {([1, 2, 3, 4, 5, "na"] as Score[]).map((n) => {
+                                      const on = draft.values[v.key as ValueKey] === n
+                                      return (
+                                        <button
+                                          key={String(n)}
+                                          type="button"
+                                          aria-pressed={on}
+                                          aria-label={`${lang === "es" ? v.label.es : v.label.en}: ${n === "na" ? "N/A" : n}`}
+                                          onClick={() => {
+                                            setDraft((d) => ({
+                                              ...d,
+                                              values: { ...d.values, [v.key]: n },
+                                            }))
+                                            setSaved(false)
+                                          }}
+                                          className={`h-11 rounded-sm border text-body tabular-nums cursor-pointer transition-colors duration-200 ${
+                                            n === "na" ? "px-3" : "w-11"
+                                          } ${
+                                            on
+                                              ? "bg-primary text-white border-primary font-semibold"
+                                              : "border-ink/15 text-ink/70 hover:border-primary/50"
+                                          }`}
+                                        >
+                                          {n === "na" ? "N/A" : n}
+                                        </button>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="text-body text-muted mt-6">
+                              {lang === "es" ? "Promedio de valores" : "Values average"}:{" "}
+                              <strong className="text-primary tabular-nums">
+                                {valuesAverage(draft).toFixed(2)}
+                              </strong>
+                              <span className="text-meta">
+                                {" "}
+                                {lang === "es" ? "(N/A cuenta como 3)" : "(N/A counts as 3)"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="text-meta uppercase tracking-widest text-muted">
+                              {lang === "es"
+                                ? "Paso 2 · Comentario y recomendación"
+                                : "Step 2 · Commentary and recommendation"}
+                            </div>
+                            <textarea
+                              value={draft.comments}
+                              onChange={(e) => {
+                                const comments = e.target.value
+                                setDraft((d) => ({ ...d, comments }))
+                                setSaved(false)
+                              }}
+                              rows={5}
+                              placeholder={
+                                lang === "es" ? COMMENT_PLACEHOLDER.es : COMMENT_PLACEHOLDER.en
+                              }
+                              className="mt-4 w-full bg-white border border-ink/15 rounded-sm px-4 py-3 text-body text-ink focus:outline-none focus:border-accent"
+                            />
+                            <div className="mt-8">
+                              <div className="text-meta uppercase tracking-widest text-muted mb-3">
+                                {lang === "es" ? "Recomendación" : "Recommendation"}
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {RECOMMENDATIONS.map((r) => (
+                                  <button
+                                    key={r.score}
+                                    type="button"
+                                    aria-pressed={draft.recommendation === r.score}
+                                    onClick={() => {
+                                      setDraft((d) => ({ ...d, recommendation: r.score }))
+                                      setSaved(false)
+                                    }}
+                                    className={`text-body rounded-sm px-4 py-2.5 border cursor-pointer transition-colors duration-200 ${
+                                      draft.recommendation === r.score
+                                        ? "bg-primary text-white border-primary font-semibold"
+                                        : "border-ink/15 text-ink/70 hover:border-primary/50"
+                                    }`}
+                                  >
+                                    {lang === "es" ? r.label.es : r.label.en}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-8">
+                          <div className="flex flex-wrap items-center gap-4">
+                            <button
+                              type="button"
+                              onClick={commit}
+                              disabled={!member || status === "saving"}
+                              className="text-body font-semibold rounded-sm px-6 py-3 bg-primary text-white cursor-pointer transition-opacity duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              {status === "saving"
+                                ? lang === "es"
+                                  ? "Guardando"
+                                  : "Saving"
+                                : lang === "es"
+                                  ? "Guardar calificación"
+                                  : "Save rating"}
+                            </button>
+                            <span className="text-body text-muted">
+                              {lang === "es" ? "Puntaje mezclado" : "Blended score"}:{" "}
+                              <strong className="text-primary tabular-nums">
+                                {blended(draft, WEIGHTS).toFixed(2)}
+                              </strong>
+                            </span>
+                            {saved && status === "ready" && (
+                              <span role="status" className="text-body text-accent">
+                                {lang === "es"
+                                  ? "Guardado para toda la junta."
+                                  : "Saved for the whole board."}
+                              </span>
+                            )}
+                            {status === "error" && (
+                              <span role="alert" className="text-body text-accent">
+                                {lang === "es"
+                                  ? "No se pudo guardar. Revisa la conexión e intenta de nuevo."
+                                  : "Could not save. Check the connection and try again."}
+                              </span>
+                            )}
+                            {myRating?.updatedAt && !saved && (
+                              <span className="text-meta text-muted">
+                                {lang === "es" ? "Última vez" : "Last saved"}:{" "}
+                                {new Date(myRating.updatedAt).toLocaleDateString(lang)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -555,13 +635,6 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 ? "Valores y free form pesan igual. El puntaje mezclado ordena la lista y define sí, maybe o no. Incluye las lecturas de todos los miembros de la junta."
                 : "Values and free form count equally. The blended score orders the list and sets yes, maybe or no. It includes every board member's reads."}
             </p>
-            {status === "loading" && (
-              <p role="status" className="text-body text-muted mt-3">
-                {lang === "es"
-                  ? "Cargando las calificaciones de la junta."
-                  : "Loading the board's ratings."}
-              </p>
-            )}
           </Reveal>
 
           <div className="mt-10 overflow-x-auto">
@@ -593,7 +666,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                       {row.raters ? i + 1 : "·"}
                     </td>
                     <td className="py-3 pr-4 text-body font-semibold text-primary">
-                      {labelOf(row.candidate)}
+                      {nameOf(row.candidate)}
                     </td>
                     <td className="py-3 pr-4 text-body tabular-nums text-ink/80">
                       {row.raters ? row.valuesAvg.toFixed(2) : "·"}
@@ -604,9 +677,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                     <td className="py-3 pr-4 text-body tabular-nums font-bold text-primary">
                       {row.raters ? row.score.toFixed(2) : "·"}
                     </td>
-                    <td className="py-3 pr-4 text-body tabular-nums text-muted">
-                      {row.raters}
-                    </td>
+                    <td className="py-3 pr-4 text-body tabular-nums text-muted">{row.raters}</td>
                     <td className="py-3 pr-4">
                       <span
                         className={`inline-block text-[10px] uppercase tracking-widest font-semibold rounded-full px-2.5 py-1 ${VERDICT_STYLE[row.recommendation]}`}
@@ -626,17 +697,25 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                     </td>
                   </tr>
                 ))}
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="py-4 text-body text-muted">
+                      {lang === "es"
+                        ? "Todavía no hay ensayos que calificar."
+                        : "No essays to rate yet."}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
 
-          {/* Read of the scores */}
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-4">
             {rows.map((row) => (
               <div key={row.candidate} className="bg-white border border-ink/10 rounded-sm p-6">
                 <div className="flex items-baseline justify-between gap-3">
                   <div className="text-body font-semibold text-primary">
-                    {labelOf(row.candidate)}
+                    {nameOf(row.candidate)}
                   </div>
                   <div className="text-meta tabular-nums text-muted">
                     {row.raters ? row.score.toFixed(2) : "·"}
@@ -653,16 +732,12 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                           </div>
                           <div className="text-meta text-muted tabular-nums whitespace-nowrap">
                             {lang === "es" ? "Valores" : "Values"}{" "}
-                            <strong className="text-ink/80">
-                              {valuesAverage(r).toFixed(1)}
-                            </strong>{" "}
+                            <strong className="text-ink/80">{valuesAverage(r).toFixed(1)}</strong>{" "}
                             · {lang === "es" ? "Recomendación" : "Rec"}{" "}
                             <strong className="text-ink/80">{r.recommendation}/5</strong>
                           </div>
                         </div>
-                        {r.comments && (
-                          <p className="text-body text-ink/75 mt-2">{r.comments}</p>
-                        )}
+                        {r.comments && <p className="text-body text-ink/75 mt-2">{r.comments}</p>}
                       </div>
                     ))}
                   </div>
@@ -683,8 +758,6 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 }
 
 export default function BoardPortal() {
-  // Remounting the gate sends it back through its session probe, which is what
-  // should happen when the 12 hour cookie lapses mid-session.
   const [attempt, setAttempt] = useState(0)
   return (
     <PasscodeGate

@@ -53,6 +53,10 @@ export async function issue(role: Role): Promise<string> {
   )
 }
 
+/** Clears the cookie. Same attributes as issue(), or the browser keeps the old one. */
+export const expire = () =>
+  `${COOKIE}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`
+
 export async function readSession(req: Request): Promise<Role | null> {
   const raw = req.headers.get("cookie") ?? ""
   const match = raw.match(new RegExp(`${COOKIE}=([^;]+)`))

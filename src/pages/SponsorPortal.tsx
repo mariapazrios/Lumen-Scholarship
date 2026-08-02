@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
-import PasscodeGate, { PrototypeNotice } from "../components/PasscodeGate"
+import PasscodeGate from "../components/PasscodeGate"
 import Reveal from "../components/primitives/Reveal"
+import { signOut } from "../lib/applicants"
 import { SCHOLARS } from "../data/scholars"
 import { useLang, type L } from "../lib/i18n"
 
@@ -69,8 +70,6 @@ function Portal() {
 
   return (
     <>
-      <PrototypeNotice scope="sponsor" />
-
       <section className="bg-primary text-primary-foreground relative overflow-hidden">
         <img
           src="/lumen-icon.png"
@@ -79,8 +78,17 @@ function Portal() {
           className="pointer-events-none select-none absolute -right-32 -top-32 w-[30rem] opacity-[0.06] brightness-0 invert"
         />
         <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-12 md:py-16 relative">
-          <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
-            {lang === "es" ? "Para patrocinadores" : "For sponsors"}
+          <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+            <div className="text-meta uppercase tracking-widest text-primary-foreground/60">
+              {lang === "es" ? "Para patrocinadores" : "For sponsors"}
+            </div>
+            <button
+              type="button"
+              onClick={() => signOut().then(() => window.location.reload())}
+              className="text-meta uppercase tracking-widest text-primary-foreground/70 border border-primary-foreground/25 rounded-sm px-4 py-2 cursor-pointer transition-colors duration-200 hover:text-white hover:border-primary-foreground/60"
+            >
+              {lang === "es" ? "Cerrar sesión" : "Sign out"}
+            </button>
           </div>
           <h1 className="text-h2 font-semibold">
             {lang === "es" ? (
