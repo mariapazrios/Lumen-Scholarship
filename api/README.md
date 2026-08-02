@@ -48,6 +48,13 @@ Documents are rows in `lumen_documents`, not files. `kind` controls access:
 
 - `scholar-essay` — visible to sponsors and the board
 - `applicant-essay` — board only
+- `applicant-answers` — board only; the ¿Quién soy? / ¿Quién quiero ser? short
+  answers, kept apart from the essay because the board portal shows them apart
+
+The gate is `kind.startsWith("applicant")`, so any further `applicant-*` kind is
+board only by default. `subject` is a slug: the scholar's for `scholar-essay`,
+the applicant's name slug (diacritics stripped, as with scholar photos) for the
+applicant kinds, with the full name on `title`.
 
 ```sql
 INSERT INTO lumen_documents (kind, subject, title, body, submitted_at)
