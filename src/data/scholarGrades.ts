@@ -125,3 +125,29 @@ export const SCHOLAR_GRADES: Record<string, ScholarGrades> = {
     ]
   }
 }
+
+/**
+ * Saber 11 (ICFES) global scores, recovered from the Uniandes postulados
+ * files in Maria Paz's mail (2026-08-02).
+ *
+ * Generación 2024 comes from "Datos Postulados LUMEN - Quiero Estudiar
+ * V21122023". No official score exists for Generación 2025: Uniandes admitted
+ * that round by school performance and wrote "no contamos con este detalle"
+ * next to every candidate; the Ciclo 2 file carries no Saber column at all.
+ * Álzate's 432 is self-reported in his admissions essay and labeled as such.
+ */
+export type Saber11 = { score: number; selfReported?: boolean }
+
+export const SCHOLAR_SABER11: Record<string, Saber11 | null> = {
+  "juan-angel-aicardy": { score: 394 },
+  "jose-maturana": { score: 399 },
+  "juan-pablo-contreras": { score: 383 },
+  "julian-rodriguez": { score: 386 },
+  "sebastian-martinez": { score: 419 },
+  "valerie-suarez": { score: 382 },
+  "daniel-alzate": { score: 432, selfReported: true },
+  "juan-daniel-gonzalo": null,
+  "mateo-arcila": null,
+  "santiago-rubiano": null,
+  "valentina-salgado": null,
+}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
+import ApplicantsMap from "../components/ApplicantsMap"
 import PasscodeGate from "../components/PasscodeGate"
 import Reveal from "../components/primitives/Reveal"
 import { BOARD } from "../data/team"
@@ -289,7 +290,28 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
           {status !== "loading" && (
             <div className="grid grid-cols-1 lg:grid-cols-[17rem_1fr] gap-8 lg:gap-12">
-              <div>
+              {/* On a phone the 17-row list means scrolling past everyone to
+                  reach the essay; a dropdown jumps straight to a candidate. */}
+              <div className="lg:hidden">
+                <label className="text-meta uppercase tracking-widest text-muted">
+                  {lang === "es" ? "Candidato" : "Candidate"} ({visible.length})
+                </label>
+                <select
+                  value={active}
+                  onChange={(e) => e.target.value && pick(e.target.value)}
+                  className="mt-2 w-full bg-white border border-ink/15 rounded-sm px-3 py-3 text-body text-ink cursor-pointer focus:outline-none focus:border-accent"
+                >
+                  {!active && <option value="">—</option>}
+                  {visible.map((a) => (
+                    <option key={a.slug} value={a.slug}>
+                      {a.name}
+                      {a.essay ? "" : lang === "es" ? " — sin ensayo" : " — no essay"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="hidden lg:block">
                 <div className="text-meta uppercase tracking-widest text-muted mb-3">
                   {lang === "es" ? "Candidatos" : "Candidates"} ({visible.length})
                 </div>
@@ -720,6 +742,25 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
               </div>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Where the candidates come from */}
+      <section className="bg-background">
+        <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-12 md:py-16">
+          <Reveal>
+            <div className="text-meta uppercase tracking-widest text-muted mb-3">
+              {lang === "es" ? "Origen" : "Origin"}
+            </div>
+            <h2 className="text-h3 font-semibold text-primary">
+              {lang === "es"
+                ? "De dónde vienen los candidatos."
+                : "Where the candidates come from."}
+            </h2>
+          </Reveal>
+          <div className="mt-8">
+            <ApplicantsMap applicants={people} />
+          </div>
         </div>
       </section>
 

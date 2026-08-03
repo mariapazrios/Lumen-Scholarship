@@ -6,7 +6,7 @@ import { SCHOLARS } from "../data/scholars"
 import { useLang, type L } from "../lib/i18n"
 
 import GpaTrend from "../components/GpaTrend"
-import { SCHOLAR_GRADES } from "../data/scholarGrades"
+import { SCHOLAR_GRADES, SCHOLAR_SABER11 } from "../data/scholarGrades"
 import { SCHOLAR_TERMS } from "../data/scholarTerms"
 
 /**
@@ -93,11 +93,11 @@ function Portal() {
           <h1 className="text-h2 font-semibold">
             {lang === "es" ? (
               <>
-                Tu portafolio, <em className="italic font-light">estudiante por estudiante.</em>
+                Tus estudiantes, <em className="italic font-light">uno a uno.</em>
               </>
             ) : (
               <>
-                Your portfolio, <em className="italic font-light">scholar by scholar.</em>
+                Your scholars, <em className="italic font-light">one by one.</em>
               </>
             )}
           </h1>
@@ -155,6 +155,38 @@ function Portal() {
             </h2>
           </Reveal>
 
+          {/* On a phone the accordion is a lot of thumb travel; jump directly. */}
+          <div className="lg:hidden mt-6">
+            <label className="sr-only">
+              {lang === "es" ? "Elige un estudiante" : "Pick a scholar"}
+            </label>
+            <select
+              value={open ?? ""}
+              onChange={(e) => {
+                const slug = e.target.value || null
+                setOpen(slug)
+                if (slug)
+                  setTimeout(
+                    () =>
+                      document
+                        .getElementById(`scholar-${slug}`)
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                    60,
+                  )
+              }}
+              className="w-full bg-white border border-ink/15 rounded-sm px-3 py-3 text-body text-ink cursor-pointer focus:outline-none focus:border-accent"
+            >
+              <option value="">
+                {lang === "es" ? "Elige un estudiante…" : "Pick a scholar…"}
+              </option>
+              {SCHOLARS.map((s) => (
+                <option key={s.slug} value={s.slug}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="mt-8 space-y-3">
             {SCHOLARS.map((s) => {
               const isOpen = open === s.slug
@@ -165,7 +197,8 @@ function Portal() {
               return (
                 <div
                   key={s.slug}
-                  className="bg-white border border-ink/10 rounded-sm overflow-hidden"
+                  id={`scholar-${s.slug}`}
+                  className="bg-white border border-ink/10 rounded-sm overflow-hidden scroll-mt-24"
                 >
                   <button
                     type="button"
@@ -321,6 +354,29 @@ function Portal() {
                                   : "No grade record imported."}
                               </p>
                             )}
+                            <div className="mt-4 pt-4 border-t border-ink/10 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                              <div className="text-meta uppercase tracking-widest text-muted">
+                                Saber 11
+                              </div>
+                              {SCHOLAR_SABER11[s.slug] ? (
+                                <div className="text-body font-semibold text-primary tabular-nums">
+                                  {SCHOLAR_SABER11[s.slug]!.score}
+                                  <span className="text-meta font-normal text-muted">/500</span>
+                                  {SCHOLAR_SABER11[s.slug]!.selfReported && (
+                                    <span className="text-meta font-normal text-muted">
+                                      {" "}
+                                      · {lang === "es" ? "autorreportado" : "self-reported"}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-meta text-muted">
+                                  {lang === "es"
+                                    ? "Admisión por desempeño escolar, sin puntaje en el registro"
+                                    : "Admitted on school performance; no score on record"}
+                                </div>
+                              )}
+                            </div>
                           </div>
 
                           {/* Board rubric from their own admissions round */}

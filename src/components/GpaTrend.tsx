@@ -5,9 +5,11 @@ import type { ScholarTermRecord } from "../data/scholarTerms"
 const ACCENT = "var(--color-cobalt)"
 
 /**
- * Term-by-term trend for one scholar, with achievements called out against the
- * terms they happened in. The y axis is fixed to 3.0 to 5.0: the whole cohort
- * sits in that band, so a shared scale lets sponsors compare scholars.
+ * Term-by-term record for one scholar, with achievements called out against
+ * the terms they happened in. Zero-based columns on a fixed 0-to-5 axis, the
+ * same shape as the site's other bar charts: each term reads as a level in a
+ * passing band rather than a slope, and the shared scale still lets sponsors
+ * compare scholars.
  */
 export default function GpaTrend({
   record,
@@ -24,32 +26,17 @@ export default function GpaTrend({
   const W = 620
   const H = 200
   const PAD = { l: 34, r: 16, t: 16, b: 34 }
-  const MIN = 3.0
   const MAX = 5.0
   const innerW = W - PAD.l - PAD.r
   const innerH = H - PAD.t - PAD.b
 
-  const x = (i: number) =>
-    PAD.l + (terms.length === 1 ? innerW / 2 : (i / (terms.length - 1)) * innerW)
-  const y = (v: number) => PAD.t + innerH - ((v - MIN) / (MAX - MIN)) * innerH
+  // one slot per term, bar centered in its slot
+  const slotW = innerW / terms.length
+  const barW = Math.min(56, slotW * 0.5)
+  const x = (i: number) => PAD.l + slotW * i + slotW / 2
+  const y = (v: number) => PAD.t + innerH - (v / MAX) * innerH
 
-  const ticks = [3.0, 3.5, 4.0, 4.5, 5.0]
-
-  // The line breaks across N/A terms: a semester the scholar sat out is a gap,
-  // not a point on a trend, and drawing through it would invent continuity.
-  const segments: string[] = []
-  {
-    let run: string[] = []
-    terms.forEach((t, i) => {
-      if (t.average == null) {
-        if (run.length > 1) segments.push(run.join(" "))
-        run = []
-        return
-      }
-      run.push(`${run.length === 0 ? "M" : "L"} ${x(i)} ${y(t.average)}`)
-    })
-    if (run.length > 1) segments.push(run.join(" "))
-  }
+  const ticks = [1, 2, 3, 4, 5]
 
   // one achievement pinned per enrolled term, in order, so the callouts spread
   // across the run and never land on a semester the scholar sat out
@@ -65,33 +52,38 @@ export default function GpaTrend({
         {ticks.map((tk) => (
           <g key={tk}>
             <line x1={PAD.l} x2={W - PAD.r} y1={y(tk)} y2={y(tk)}
-              stroke="var(--color-ink)" strokeOpacity={tk === 4 ? 0.18 : 0.08} />
+              stroke="var(--color-ink)" strokeOpacity={0.08} />
             <text x={PAD.l - 8} y={y(tk) + 4} textAnchor="end"
               fontSize="10" fill="var(--color-muted)" className="tabular-nums">
               {tk.toFixed(1)}
             </text>
           </g>
         ))}
-
-        {segments.map((d) => (
-          <path key={d} d={d} fill="none" stroke={ACCENT} strokeWidth={2.5}
-            strokeLinejoin="round" strokeLinecap="round" />
-        ))}
+        {/* baseline */}
+        <line x1={PAD.l} x2={W - PAD.r} y1={y(0)} y2={y(0)}
+          stroke="var(--color-ink)" strokeOpacity={0.25} />
 
         {terms.map((t, i) => (
           <g key={t.term}>
             {t.average == null ? (
-              <text x={x(i)} y={y(4) + 4} textAnchor="middle" fontSize="10"
+              <text x={x(i)} y={y(2.5) + 4} textAnchor="middle" fontSize="10"
                 fill="var(--color-muted)" fontStyle="italic">
                 {lang === "es" ? "Sin matrícula" : "Not enrolled"}
               </text>
             ) : (
               <>
-                <circle cx={x(i)} cy={y(t.average)} r={active === i ? 7 : 5}
-                  fill={ACCENT} stroke="#fff" strokeWidth={2}
-                  className="cursor-pointer transition-all duration-200"
-                  onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(null)} />
-                <text x={x(i)} y={y(t.average) - 12} textAnchor="middle"
+                <rect
+                  x={x(i) - barW / 2}
+                  y={y(t.average)}
+                  width={barW}
+                  height={y(0) - y(t.average)}
+                  fill={ACCENT}
+                  opacity={active === null || active === i ? 1 : 0.45}
+                  className="cursor-pointer transition-opacity duration-200"
+                  onMouseEnter={() => setActive(i)}
+                  onMouseLeave={() => setActive(null)}
+                />
+                <text x={x(i)} y={y(t.average) - 8} textAnchor="middle"
                   fontSize="11" fontWeight="700" fill="var(--color-navy)" className="tabular-nums">
                   {t.average.toFixed(2)}
                 </text>
