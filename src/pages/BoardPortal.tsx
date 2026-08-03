@@ -18,12 +18,12 @@ import {
   WEIGHTS,
   blended,
   consolidate,
-  emptyRating,
   fetchRatings,
   loadMember,
   readOfScores,
   saveMember,
   saveRating,
+  scoreValue,
   valuesAverage,
   type Rating,
   type RatingStore,
@@ -36,6 +36,42 @@ const VERDICT_STYLE: Record<string, string> = {
   maybe: "bg-accent/15 text-accent",
   no: "bg-ink/10 text-muted",
   unrated: "bg-ink/5 text-muted",
+}
+
+/**
+ * What a member is composing, as distinct from a saved Rating: everything
+ * starts unset. The form used to arrive pre-filled with a complete all-3s
+ * "Strong / Solid" rating, so one stray click on Save recorded a
+ * legitimate-looking score the member never chose.
+ */
+type Draft = {
+  values: Record<ValueKey, Score | null>
+  recommendation: number | null
+  comments: string
+}
+
+const emptyDraft = (): Draft => ({
+  values: { resilience: null, excellence: null, integrity: null, impact: null },
+  recommendation: null,
+  comments: "",
+})
+
+/** A draft is saveable only once all four values and the recommendation are set. */
+function toRating(d: Draft): Rating | null {
+  if (VALUES.some((v) => d.values[v.key] == null) || d.recommendation == null) return null
+  return {
+    values: d.values as Record<ValueKey, Score>,
+    recommendation: d.recommendation,
+    comments: d.comments,
+    updatedAt: "",
+  }
+}
+
+const draftValuesAvg = (d: Draft): number | null => {
+  const vals = VALUES.map((v) => d.values[v.key])
+  if (vals.some((s) => s == null)) return null
+  const nums = vals.map((s) => scoreValue(s as Score))
+  return nums.reduce((a, b) => a + b, 0) / nums.length
 }
 
 /** Renders prose that arrived as plain text with blank lines between paragraphs. */
@@ -57,7 +93,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const [people, setPeople] = useState<Applicant[]>([])
   const [store, setStore] = useState<RatingStore>({})
   const [active, setActive] = useState<string>("")
-  const [draft, setDraft] = useState<Rating>(emptyRating)
+  const [draft, setDraft] = useState<Draft>(emptyDraft)
   const [saved, setSaved] = useState(false)
   const [status, setStatus] = useState<"loading" | "ready" | "saving" | "error">("loading")
   const [filters, setFilters] = useState({ department: "", program: "", gender: "" })
@@ -82,7 +118,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
         const first = roster.find((a) => a.essay) ?? roster[0]
         if (first) {
           setActive(first.slug)
-          setDraft(ratings[first.slug]?.[loadMember()] ?? emptyRating())
+          setDraft(ratings[first.slug]?.[loadMember()] ?? emptyDraft())
         }
         setStatus("ready")
       })
@@ -107,6 +143,12 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   )
   const nameOf = (slug: string) => people.find((a) => a.slug === slug)?.name ?? slug
 
+  const ratedRows = rows.filter((r) => r.raters > 0)
+  // The yes/maybe/no cut is relative to the board's median, so one early
+  // rating silently re-labels everyone else. Hold the chips until every
+  // submitted candidate has at least one read.
+  const verdictsLive = rows.length > 0 && ratedRows.length === rows.length
+
   const options = useMemo(() => {
     const uniq = (xs: string[]) => [...new Set(xs.filter(Boolean))].sort()
     return {
@@ -116,31 +158,48 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     }
   }, [people])
 
-  const visible = people.filter(
-    (a) =>
-      (!filters.department || a.department === filters.department) &&
-      (!filters.program || a.program === filters.program) &&
-      (!filters.gender || a.gender === filters.gender),
-  )
+  const matches = (f: typeof filters) => (a: Applicant) =>
+    (!f.department || a.department === f.department) &&
+    (!f.program || a.program === f.program) &&
+    (!f.gender || a.gender === f.gender)
+
+  const visible = people.filter(matches(filters))
+
+  /**
+   * Changing a filter can hide the candidate being read, which left the detail
+   * pane showing someone the list no longer contains. Reselect in the handler
+   * so pane and list always agree.
+   */
+  const applyFilter = (key: keyof typeof filters, value: string) => {
+    const next = { ...filters, [key]: value }
+    setFilters(next)
+    const nextVisible = people.filter(matches(next))
+    if (nextVisible.some((a) => a.slug === active)) return
+    const first = nextVisible[0]
+    setActive(first?.slug ?? "")
+    setDraft(first ? (store[first.slug]?.[member] ?? emptyDraft()) : emptyDraft())
+    setSaved(false)
+  }
 
   const pick = (slug: string) => {
     setActive(slug)
-    setDraft(store[slug]?.[member] ?? emptyRating())
+    setDraft(store[slug]?.[member] ?? emptyDraft())
     setSaved(false)
   }
 
   const chooseMember = (slug: string) => {
     setMember(slug)
     saveMember(slug)
-    setDraft(store[active]?.[slug] ?? emptyRating())
+    setDraft(store[active]?.[slug] ?? emptyDraft())
     setSaved(false)
   }
 
   const commit = async () => {
-    if (!member || status === "saving" || !applicant?.essay) return
+    const rating = toRating(draft)
+    if (!member || !rating || status === "saving" || !applicant?.essay) return
     setStatus("saving")
     try {
-      await saveRating(active, member, draft)
+      await saveRating(active, member, rating)
       await refresh()
       setSaved(true)
     } catch (e) {
@@ -163,7 +222,15 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 {lang === "es" ? "Junta de admisiones" : "Board of admissions"}
               </div>
               <h1 className="text-h2 font-semibold">
-                Centro de Admisiones <em className="italic font-light">Lumen.</em>
+                {lang === "es" ? (
+                  <>
+                    Centro de Admisiones <em className="italic font-light">Lumen.</em>
+                  </>
+                ) : (
+                  <>
+                    Lumen Admissions <em className="italic font-light">Center.</em>
+                  </>
+                )}
               </h1>
             </div>
             <button
@@ -251,9 +318,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                         <span className="sr-only">{f.label}</span>
                         <select
                           value={filters[f.key]}
-                          onChange={(e) =>
-                            setFilters((prev) => ({ ...prev, [f.key]: e.target.value }))
-                          }
+                          onChange={(e) => applyFilter(f.key, e.target.value)}
                           className="w-full bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink cursor-pointer focus:outline-none focus:border-accent"
                         >
                           <option value="">
@@ -300,16 +365,28 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                             )}
                           </div>
                           <div className="text-meta text-muted mt-0.5">
-                            {a.essay
-                              ? `${a.program || "—"} · ${a.city || "—"}`
-                              : lang === "es"
-                                ? "Sin ensayo enviado"
-                                : "No essay submitted"}
+                            {(() => {
+                              const meta = [a.program, a.city].filter(Boolean).join(" · ")
+                              if (a.essay) return meta || "—"
+                              const none = lang === "es" ? "sin ensayo" : "no essay"
+                              return meta
+                                ? `${meta} · ${none}`
+                                : lang === "es"
+                                  ? "Sin ensayo enviado"
+                                  : "No essay submitted"
+                            })()}
                           </div>
                         </button>
                       </li>
                     )
                   })}
+                  {visible.length === 0 && (
+                    <li className="text-body text-muted">
+                      {lang === "es"
+                        ? "Ningún candidato con esos filtros."
+                        : "No candidates match those filters."}
+                    </li>
+                  )}
                 </ul>
               </div>
 
@@ -404,12 +481,26 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                             { k: "Sisbén", v: applicant.sisben },
                             {
                               k: lang === "es" ? "Hogar" : "Household",
+                              // "Rented · 1 sibs · 17 yrs" read as codes; spell it out
                               v: [
-                                t2(HOUSING, applicant.housing),
+                                applicant.housing &&
+                                  (lang === "es"
+                                    ? `Vivienda ${t2(HOUSING, applicant.housing).toLowerCase()}`
+                                    : `${t2(HOUSING, applicant.housing)} home`),
                                 applicant.siblings &&
-                                  `${applicant.siblings} ${lang === "es" ? "herm." : "sibs"}`,
+                                  `${applicant.siblings} ${
+                                    applicant.siblings === "1"
+                                      ? lang === "es"
+                                        ? "hermano"
+                                        : "sibling"
+                                      : lang === "es"
+                                        ? "hermanos"
+                                        : "siblings"
+                                  }`,
                                 applicant.age &&
-                                  `${Math.floor(applicant.age)} ${lang === "es" ? "años" : "yrs"}`,
+                                  (lang === "es"
+                                    ? `${Math.floor(applicant.age)} años`
+                                    : `age ${Math.floor(applicant.age)}`),
                               ]
                                 .filter(Boolean)
                                 .join(" · "),
@@ -508,7 +599,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                             <div className="text-body text-muted mt-6">
                               {lang === "es" ? "Promedio de valores" : "Values average"}:{" "}
                               <strong className="text-primary tabular-nums">
-                                {valuesAverage(draft).toFixed(2)}
+                                {draftValuesAvg(draft)?.toFixed(2) ?? "—"}
                               </strong>
                               <span className="text-meta">
                                 {" "}
@@ -569,7 +660,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                             <button
                               type="button"
                               onClick={commit}
-                              disabled={!member || status === "saving"}
+                              disabled={!member || !toRating(draft) || status === "saving"}
                               className="text-body font-semibold rounded-sm px-6 py-3 bg-primary text-white cursor-pointer transition-opacity duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               {status === "saving"
@@ -583,9 +674,23 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                             <span className="text-body text-muted">
                               {lang === "es" ? "Puntaje mezclado" : "Blended score"}:{" "}
                               <strong className="text-primary tabular-nums">
-                                {blended(draft, WEIGHTS).toFixed(2)}
+                                {(() => {
+                                  const r = toRating(draft)
+                                  return r ? blended(r, WEIGHTS).toFixed(2) : "—"
+                                })()}
                               </strong>
                             </span>
+                            {status !== "saving" && (!member || !toRating(draft)) && (
+                              <span className="text-meta text-muted">
+                                {!member
+                                  ? lang === "es"
+                                    ? "Elige tu nombre arriba para poder guardar."
+                                    : "Pick your name above to be able to save."
+                                  : lang === "es"
+                                    ? "Califica los cuatro valores y elige una recomendación."
+                                    : "Score all four values and pick a recommendation."}
+                              </span>
+                            )}
                             {saved && status === "ready" && (
                               <span role="status" className="text-body text-accent">
                                 {lang === "es"
@@ -632,8 +737,8 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
             </h2>
             <p className="text-body text-ink/70 mt-3">
               {lang === "es"
-                ? "Valores y free form pesan igual. El puntaje mezclado ordena la lista y define sí, maybe o no. Incluye las lecturas de todos los miembros de la junta."
-                : "Values and free form count equally. The blended score orders the list and sets yes, maybe or no. It includes every board member's reads."}
+                ? "Valores y recomendación pesan igual. El puntaje mezclado ordena la lista y define sí, maybe o no. El corte es relativo a la mediana de la junta, así que aparece cuando cada candidato con ensayo tiene al menos una lectura."
+                : "Values and recommendation count equally. The blended score orders the list and sets yes, maybe or no. The cut is relative to the board's median, so it appears once every submitted candidate has at least one read."}
             </p>
           </Reveal>
 
@@ -645,7 +750,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                     lang === "es" ? "Puesto" : "Rank",
                     lang === "es" ? "Candidato" : "Candidate",
                     lang === "es" ? "Valores" : "Values",
-                    lang === "es" ? "Free form" : "Free form",
+                    lang === "es" ? "Recomendación" : "Recommendation",
                     lang === "es" ? "Mezclado" : "Blended",
                     lang === "es" ? "Lecturas" : "Reads",
                     lang === "es" ? "¿Siguiente ronda?" : "Next round?",
@@ -660,32 +765,32 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, i) => (
+                {ratedRows.map((row, i) => (
                   <tr key={row.candidate} className="border-b border-ink/5">
-                    <td className="py-3 pr-4 text-body tabular-nums text-muted">
-                      {row.raters ? i + 1 : "·"}
-                    </td>
+                    <td className="py-3 pr-4 text-body tabular-nums text-muted">{i + 1}</td>
                     <td className="py-3 pr-4 text-body font-semibold text-primary">
                       {nameOf(row.candidate)}
                     </td>
                     <td className="py-3 pr-4 text-body tabular-nums text-ink/80">
-                      {row.raters ? row.valuesAvg.toFixed(2) : "·"}
+                      {row.valuesAvg.toFixed(2)}
                     </td>
                     <td className="py-3 pr-4 text-body tabular-nums text-ink/80">
-                      {row.raters ? row.freeFormAvg.toFixed(2) : "·"}
+                      {row.freeFormAvg.toFixed(2)}
                     </td>
                     <td className="py-3 pr-4 text-body tabular-nums font-bold text-primary">
-                      {row.raters ? row.score.toFixed(2) : "·"}
+                      {row.score.toFixed(2)}
                     </td>
                     <td className="py-3 pr-4 text-body tabular-nums text-muted">{row.raters}</td>
                     <td className="py-3 pr-4">
                       <span
-                        className={`inline-block text-[10px] uppercase tracking-widest font-semibold rounded-full px-2.5 py-1 ${VERDICT_STYLE[row.recommendation]}`}
+                        className={`inline-block text-[10px] uppercase tracking-widest font-semibold rounded-full px-2.5 py-1 ${
+                          verdictsLive ? VERDICT_STYLE[row.recommendation] : VERDICT_STYLE.unrated
+                        }`}
                       >
-                        {row.recommendation === "unrated"
+                        {!verdictsLive
                           ? lang === "es"
-                            ? "Sin calificar"
-                            : "Unrated"
+                            ? "Pendiente"
+                            : "Pending"
                           : row.recommendation === "yes"
                             ? lang === "es"
                               ? "Sí"
@@ -697,12 +802,16 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                     </td>
                   </tr>
                 ))}
-                {rows.length === 0 && (
+                {ratedRows.length === 0 && (
                   <tr>
                     <td colSpan={7} className="py-4 text-body text-muted">
-                      {lang === "es"
-                        ? "Todavía no hay ensayos que calificar."
-                        : "No essays to rate yet."}
+                      {rows.length === 0
+                        ? lang === "es"
+                          ? "Todavía no hay ensayos que calificar."
+                          : "No essays to rate yet."
+                        : lang === "es"
+                          ? "Aún no hay calificaciones guardadas."
+                          : "No ratings saved yet."}
                     </td>
                   </tr>
                 )}
@@ -710,8 +819,18 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
             </table>
           </div>
 
+          {rows.length > ratedRows.length && (
+            <p className="text-meta text-muted mt-4">
+              {lang === "es" ? "Sin lecturas todavía: " : "No reads yet: "}
+              {rows
+                .filter((r) => !r.raters)
+                .map((r) => nameOf(r.candidate))
+                .join(", ")}
+            </p>
+          )}
+
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {rows.map((row) => (
+            {ratedRows.map((row) => (
               <div key={row.candidate} className="bg-white border border-ink/10 rounded-sm p-6">
                 <div className="flex items-baseline justify-between gap-3">
                   <div className="text-body font-semibold text-primary">
@@ -748,8 +867,8 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
           <p className="text-meta text-muted mt-8 max-w-3xl">
             {lang === "es"
-              ? "El puesto y la lectura se calculan con las calificaciones ingresadas. Un análisis que lea los ensayos requiere una llamada a un modelo, que todavía no está conectada."
-              : "Rank and read are computed from the ratings entered. An analysis that reads the essays themselves needs a model call, which is not wired up yet."}
+              ? "El puesto y la lectura se calculan con las calificaciones que la junta ha ingresado."
+              : "Rank and read are computed from the ratings the board has entered."}
           </p>
         </div>
       </section>

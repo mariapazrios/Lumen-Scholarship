@@ -187,14 +187,17 @@ function GpaByMajor() {
                   m.total ? "font-bold text-foreground" : delta > 0 ? "text-foreground" : "text-muted"
                 }`}
               >
-                {delta > 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1)}
+                {/* A zero delta rendered as "0.0 / 0%" reads like missing data.
+                    "·" is the site's placeholder mark; the row title still
+                    carries both figures. */}
+                {delta === 0 ? "·" : delta > 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1)}
               </div>
               <div
                 className={`order-3 sm:order-none text-meta tabular-nums text-right ${
                   m.total ? "font-bold text-accent" : pct > 0 ? "font-semibold text-accent" : "text-muted"
                 }`}
               >
-                {pct > 0 ? `+${pct}%` : `${pct}%`}
+                {delta === 0 ? "·" : pct > 0 ? `+${pct}%` : `${pct}%`}
               </div>
             </div>
           )

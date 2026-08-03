@@ -73,7 +73,7 @@ export const SCHOLARS: Scholar[] = [
     name: "Daniel Álzate",
     generation: "2025",
     major: { en: "Physics", es: "Física" },
-    hometown: "Galapaga",
+    hometown: "Galapa",
     department: "Atlántico",
     short: {
       en: "Daniel grew up on the Caribbean coast looking up at the sky, and physics gave that wonder a language. He dreams of NASA, and of one day opening the door to science for kids who grew up the way he did.",
@@ -89,11 +89,11 @@ export const SCHOLARS: Scholar[] = [
     },
     story: {
       en: [
-        "Born in Barranquilla and raised in Galapaga, Daniel has been fascinated since childhood by the universe and the laws that govern it. His admissions essay told the story of a knee injury days before Colombia's national exam: he postponed surgery, sat the test through the pain, and earned the fourth-best score in his school, then spent two months of recovery teaching himself the classes he was missing.",
+        "Born in Barranquilla and raised in Galapa, Daniel has been fascinated since childhood by the universe and the laws that govern it. His admissions essay told the story of a knee injury days before Colombia's national exam: he postponed surgery, sat the test through the pain, and earned the fourth-best score in his school, then spent two months of recovery teaching himself the classes he was missing.",
         "His ambitions run from joining NASA and applying science to everyday human problems in medicine, the environment, and the economy, to founding a Colombian institution that helps low-income youth discover and access scientific education. He credits his parents' constant support, and the values they taught him, for making the journey possible.",
       ],
       es: [
-        "Nacido en Barranquilla y criado en Galapaga, Daniel se ha sentido fascinado desde niño por el universo y las leyes que lo gobiernan. Su ensayo de admisión contó la historia de una lesión de rodilla días antes de las Pruebas Saber 11: pospuso la cirugía, presentó el examen con dolor y obtuvo el cuarto mejor puntaje de su colegio, para luego pasar dos meses de recuperación estudiando por su cuenta las clases que se estaba perdiendo.",
+        "Nacido en Barranquilla y criado en Galapa, Daniel se ha sentido fascinado desde niño por el universo y las leyes que lo gobiernan. Su ensayo de admisión contó la historia de una lesión de rodilla días antes de las Pruebas Saber 11: pospuso la cirugía, presentó el examen con dolor y obtuvo el cuarto mejor puntaje de su colegio, para luego pasar dos meses de recuperación estudiando por su cuenta las clases que se estaba perdiendo.",
         "Sus ambiciones van desde llegar a la NASA y aplicar la ciencia a problemas humanos cotidianos en la medicina, el medio ambiente y la economía, hasta fundar una institución colombiana que ayude a jóvenes de bajos recursos a descubrir y acceder a la educación científica. Agradece el apoyo constante de sus padres y los valores que le enseñaron.",
       ],
     },
@@ -499,7 +499,7 @@ export type MapCity = {
 
 /** Where the Lumens come from: 7 hometowns across 6 departments. */
 export const MAP_CITIES: MapCity[] = [
-  { city: "Galapaga", department: "Atlántico", x: 203, y: 76, labelSide: "right", scholars: ["daniel-alzate"] },
+  { city: "Galapa", department: "Atlántico", x: 203, y: 76, labelSide: "right", scholars: ["daniel-alzate"] },
   { city: "Cartagena", department: "Bolívar", x: 172, y: 101, labelSide: "left", scholars: ["jose-maturana"] },
   { city: "Montería", department: "Córdoba", x: 154, y: 183, labelSide: "left", scholars: ["juan-angel-aicardy"] },
   { city: "Duitama", department: "Boyacá", x: 295, y: 328, labelSide: "right", scholars: ["juan-daniel-gonzalo", "sebastian-martinez"] },

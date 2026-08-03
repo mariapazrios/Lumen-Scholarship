@@ -83,8 +83,10 @@ export default function Header({ route }: { route: string }) {
           <img src="/logo-navy.svg" alt="Lumen" className="h-7 md:h-8 w-auto" />
         </a>
 
-        <div className="hidden md:flex items-center gap-8 lg:gap-12">
-          <nav aria-label="Primary" className="flex items-center gap-8 lg:gap-12">
+        {/* gap-8 at md overflowed a 768px viewport by ~13px and scrolled the
+            whole page sideways; the tighter run only applies below lg */}
+        <div className="hidden md:flex items-center gap-4 lg:gap-12">
+          <nav aria-label="Primary" className="flex items-center gap-5 lg:gap-12">
             {NAV_LINKS.map((link) => {
               const active = route === link.route
               return (

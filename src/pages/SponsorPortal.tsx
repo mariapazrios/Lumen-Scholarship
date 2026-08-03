@@ -222,10 +222,23 @@ function Portal() {
                             against the terms they happened in, on the chart above. */}
                         <div>
                           <div className="bg-surface rounded-sm p-5">
-                            <div className="text-meta uppercase tracking-widest text-muted">
-                              {lang === "es"
-                                ? "Ensayo de admisión, tal como fue enviado"
-                                : "Admissions essay, as submitted"}
+                            <div className="flex items-baseline justify-between gap-3">
+                              <div className="text-meta uppercase tracking-widest text-muted">
+                                {lang === "es"
+                                  ? "Ensayo de admisión, tal como fue enviado"
+                                  : "Admissions essay, as submitted"}
+                              </div>
+                              {/* An expanded essay pushes the bottom toggle a full
+                                  screen away, which reads as "no way back". */}
+                              {essayOpen === s.slug && (
+                                <button
+                                  type="button"
+                                  onClick={() => setEssayOpen(null)}
+                                  className="text-meta uppercase tracking-widest text-accent cursor-pointer shrink-0"
+                                >
+                                  {lang === "es" ? "Contraer" : "Collapse"}
+                                </button>
+                              )}
                             </div>
                             {record?.essay ? (
                               <>

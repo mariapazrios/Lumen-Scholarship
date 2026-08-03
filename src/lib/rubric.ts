@@ -114,12 +114,9 @@ export async function saveRating(candidate: string, member: string, rating: Rati
   if (!res.ok) throw new Error(`rating save failed: ${res.status}`)
 }
 
-export const emptyRating = (): Rating => ({
-  values: { resilience: 3, excellence: 3, integrity: 3, impact: 3 },
-  recommendation: 3,
-  comments: "",
-  updatedAt: "",
-})
+// (emptyRating, the all-3s default, is gone: a pre-filled form let one stray
+// Save record a complete rating nobody chose. Drafts now start unset — see
+// BoardPortal's Draft type.)
 
 /** Mean of the four value scores, with N/A entering as a 3. */
 export function valuesAverage(r: Rating) {

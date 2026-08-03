@@ -28,7 +28,9 @@ const TITLES: Record<Lang, Record<string, string>> = {
     team: "Team and Process · Lumen",
     "get-involved": "Get Involved · Lumen",
     apply: "Apply · Lumen",
-    board: "Board Login · Lumen",
+    // Not "Board Login": the title survives past the gate, and a member two
+    // hours into rating should not see a tab that still says login.
+    board: "Admissions Board · Lumen",
     sponsors: "For Sponsors · Lumen",
   },
   es: {
@@ -37,7 +39,7 @@ const TITLES: Record<Lang, Record<string, string>> = {
     team: "Equipo y Proceso · Lumen",
     "get-involved": "Vincúlate · Lumen",
     apply: "Postúlate · Lumen",
-    board: "Acceso Junta · Lumen",
+    board: "Junta de Admisiones · Lumen",
     sponsors: "Patrocinadores · Lumen",
   },
 }
