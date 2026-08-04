@@ -70,7 +70,8 @@ ON CONFLICT (kind, subject) DO UPDATE SET body = EXCLUDED.body;
 The two reports are rows in the same table, `kind = 'report'`, `subject` the
 year (`'2024'`, `'2025'`), `body` the PDF as base64 with no line wrapping so
 `atob` in the edge runtime can take it whole. They are deliberately not in
-`public/`: this repo is public, and both PDFs carry per-scholar averages and the
+`public/`: everything there is served unauthenticated at its own URL, whatever
+the repository's visibility, and both PDFs carry per-scholar averages and the
 fund's financial position. `/api/report?year=2025` checks the cookie, decodes,
 and answers `application/pdf`, so the sponsor card is a plain link.
 

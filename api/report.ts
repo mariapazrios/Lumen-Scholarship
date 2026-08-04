@@ -6,10 +6,10 @@ export const config = { runtime: "edge" }
 /**
  * The annual reports, as PDFs, served only to a valid session.
  *
- * These cannot live in `public/`: this repo is public on GitHub and anything
- * under `public/` is fetchable by URL, while both reports carry per-scholar
- * averages and the fund's financial position. So they sit in `lumen_documents`
- * as base64 under `kind = 'report'`, and come back through here.
+ * These cannot live in `public/`: everything there is served unauthenticated at
+ * its own URL, no matter who can see the repository, and both reports carry
+ * per-scholar averages and the fund's financial position. So they sit in
+ * `lumen_documents` as base64 under `kind = 'report'`, and come back through here.
  *
  * A plain <a href> is enough to reach this: the session cookie rides along on a
  * top-level navigation, so the browser opens the PDF in its own viewer and an

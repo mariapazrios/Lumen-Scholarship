@@ -38,9 +38,9 @@ function useScholarEssays() {
 }
 
 /**
- * The reports. The PDFs are still not committed to this repo: it is public on
- * GitHub, anything under `public/` is fetchable by URL, and both reports carry
- * per-scholar averages and the fund's financial position. They live in
+ * The reports. The PDFs are not shipped with the site: anything under `public/`
+ * is served unauthenticated at its own URL, and both reports carry per-scholar
+ * averages and the fund's financial position. They live in
  * `lumen_documents` as base64 under `kind = 'report'` and come back through
  * `/api/report`, which requires the session cookie. A top-level navigation
  * carries that cookie, so a plain link is all this needs.

@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS lumen_documents (
   title        TEXT        NOT NULL DEFAULT '',
   -- Essay text, or for kind='report' the PDF as unwrapped base64: the reports
   -- carry per-scholar averages and the fund's position, so they cannot sit in
-  -- `public/` of a public repo. api/report.ts decodes and streams them.
+  -- `public/`, which is served unauthenticated. api/report.ts streams them.
   body         TEXT        NOT NULL,
   submitted_at TIMESTAMPTZ,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
