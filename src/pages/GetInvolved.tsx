@@ -150,26 +150,41 @@ function SponsorsSection() {
           </h2>
         </Reveal>
 
-        {/* Proof strip */}
+        {/* The record: facts, not choices. Boxed and hoverable like the tiers
+            below, they read as a third row of things to pick from. Unboxed, on
+            rules, at stat size, they read as what they are. */}
         <Reveal delay={80}>
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-px bg-ink/10 border border-ink/10 rounded-sm overflow-hidden">
-            {PROOF.map((p) => (
-              <div key={p.label.en} className="bg-surface-soft p-6">
-                <Tricolor className="w-7 h-[3px] mb-4" />
-                <div className="text-h2 font-bold text-primary tabular-nums leading-none">
-                  {t(p.value)}
+          <div className="mt-12">
+            <Tricolor className="w-7 h-[3px] mb-4" />
+            <div className="text-meta uppercase tracking-widest text-muted mb-7">
+              {lang === "es" ? "El registro hasta hoy" : "The record so far"}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-ink/15">
+              {PROOF.map((p) => (
+                <div
+                  key={p.label.en}
+                  className="py-5 sm:py-0 sm:px-8 sm:first:pl-0 sm:last:pr-0"
+                >
+                  <div className="text-stat font-bold text-primary tabular-nums leading-none">
+                    {t(p.value)}
+                  </div>
+                  <div className="text-meta uppercase tracking-widest text-muted mt-4">
+                    {t(p.label)}
+                  </div>
+                  <div className="text-meta text-muted mt-1.5 tabular-nums">{t(p.sub)}</div>
                 </div>
-                <div className="text-meta uppercase tracking-widest text-muted mt-2.5">
-                  {t(p.label)}
-                </div>
-                <div className="text-meta text-muted mt-1.5 tabular-nums">{t(p.sub)}</div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </Reveal>
 
         {/* Tiers */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        <Reveal delay={80}>
+          <div className="text-meta uppercase tracking-widest text-muted mt-16 mb-5">
+            {lang === "es" ? "Formas de financiar" : "Ways to fund"}
+          </div>
+        </Reveal>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {TIERS.map((tier, i) => (
             <Reveal key={tier.label.en} delay={i * 110}>
               <div className="rounded-sm p-8 h-full flex flex-col bg-white border border-ink/10 transition-transform duration-300 hover:-translate-y-1">

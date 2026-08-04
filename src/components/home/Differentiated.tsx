@@ -36,7 +36,7 @@ const PILLARS: Pillar[] = [
   },
   {
     n: "03",
-    title: { en: "Connect", es: "Conectar" },
+    title: { en: "Network", es: "Red profesional" },
     challenge: {
       en: "No preparation for competitive selection processes, and no professional network to lean on.",
       es: "Sin preparación para procesos de selección competitivos y sin una red profesional en la cual apoyarse.",
