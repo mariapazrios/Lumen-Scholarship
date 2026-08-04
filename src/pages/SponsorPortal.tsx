@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import PasscodeGate from "../components/PasscodeGate"
+import ArrowButton from "../components/primitives/ArrowButton"
 import Reveal from "../components/primitives/Reveal"
 import { signOut } from "../lib/applicants"
 import { SCHOLARS } from "../data/scholars"
@@ -37,28 +38,34 @@ function useScholarEssays() {
 }
 
 /**
- * Annual reports. The PDFs are not committed to this repo: anything in the
- * project is fetchable by URL, and the reports carry per-scholar grades. They
- * attach here once the portal is served behind real authentication.
+ * The reports. The PDFs are still not committed to this repo: it is public on
+ * GitHub, anything under `public/` is fetchable by URL, and both reports carry
+ * per-scholar averages and the fund's financial position. They live in
+ * `lumen_documents` as base64 under `kind = 'report'` and come back through
+ * `/api/report`, which requires the session cookie. A top-level navigation
+ * carries that cookie, so a plain link is all this needs.
  */
-const REPORTS: Array<{ year: string; title: L; note: L; pages: number }> = [
+const REPORTS: Array<{ year: string; title: L; note: L; pages: number; size: L }> = [
   {
     year: "2024",
-    title: { en: "Annual report 2024", es: "Informe anual 2024" },
+    // The document calls itself a semiannual report, and it covers Enero–Junio.
+    title: { en: "Semiannual report 2024", es: "Informe semestral 2024" },
     note: {
-      en: "First generation: six scholars, first-semester results, and the founding cohort's profiles.",
-      es: "Primera generación: seis estudiantes, resultados del primer semestre y los perfiles de la cohorte fundadora.",
+      en: "January to June 2024. First generation: six scholars, their own accounts of getting in, first-semester results, and the fund's position at close.",
+      es: "Enero a junio de 2024. Primera generación: seis estudiantes, su relato de cómo entraron, resultados del primer semestre y la posición del fondo al cierre.",
     },
     pages: 10,
+    size: { en: "PDF · 1.7 MB", es: "PDF · 1,7 MB" },
   },
   {
     year: "2025",
     title: { en: "Annual report 2025", es: "Informe anual 2025" },
     note: {
-      en: "Both generations: eleven scholars, GPA against program averages, retention, and the fund's position.",
-      es: "Ambas generaciones: once estudiantes, promedios frente a sus carreras, retención y la posición del fondo.",
+      en: "Both generations: eleven scholars, GPA against program averages, retention against every other aid route, the admissions funnel, and the board.",
+      es: "Ambas generaciones: once estudiantes, promedios frente a sus carreras, retención frente a las demás vías de financiación, el embudo de admisión y la junta.",
     },
     pages: 17,
+    size: { en: "PDF · 3.8 MB", es: "PDF · 3,8 MB" },
   },
 ]
 
@@ -103,8 +110,8 @@ function Portal() {
           </h1>
           <p className="text-lead font-light text-primary-foreground/75 mt-5 max-w-2xl">
             {lang === "es"
-              ? "Once estudiantes, dos generaciones, cinco más en camino. Los informes anuales y el perfil de cada Lumen."
-              : "Eleven scholars, two generations, five more incoming. The annual reports and a profile for every Lumen."}
+              ? "Once estudiantes, dos generaciones, cinco más en camino. Los informes y el perfil de cada Lumen."
+              : "Eleven scholars, two generations, five more incoming. The reports and a profile for every Lumen."}
           </p>
         </div>
       </section>
@@ -114,7 +121,7 @@ function Portal() {
         <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-12 md:py-16">
           <Reveal>
             <div className="text-meta uppercase tracking-widest text-muted mb-4">
-              {lang === "es" ? "Informes anuales" : "Annual reports"}
+              {lang === "es" ? "Informes" : "Reports"}
             </div>
             <h2 className="text-h3 font-semibold text-primary">
               {lang === "es" ? "El registro completo." : "The full record."}
@@ -123,18 +130,26 @@ function Portal() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
             {REPORTS.map((r, i) => (
               <Reveal key={r.year} delay={i * 110}>
-                <div className="bg-surface rounded-sm p-8 h-full border-t-2 border-primary">
+                <div className="bg-surface rounded-sm p-8 h-full border-t-2 border-primary flex flex-col">
                   <div className="flex items-baseline justify-between gap-4">
                     <h3 className="text-h3 font-semibold text-primary">{t(r.title)}</h3>
-                    <span className="text-meta uppercase tracking-widest text-muted">
+                    <span className="text-meta uppercase tracking-widest text-muted shrink-0">
                       {r.pages} {lang === "es" ? "págs" : "pp"}
                     </span>
                   </div>
                   <p className="text-body text-ink/75 mt-3">{t(r.note)}</p>
-                  <div className="mt-5 text-meta uppercase tracking-widest text-accent">
-                    {lang === "es"
-                      ? "Se adjunta con autenticación"
-                      : "Attaches with authentication"}
+                  {/* mt-auto so both cards land their link on the same line even
+                      when one note runs a row longer than the other. */}
+                  <div className="mt-auto pt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                    <ArrowButton
+                      tone="cobalt"
+                      href={`/api/report?year=${r.year}`}
+                      target="_blank"
+                      label={lang === "es" ? "Abrir el informe" : "Open the report"}
+                    />
+                    <span className="text-meta uppercase tracking-widest text-muted">
+                      {t(r.size)}
+                    </span>
                   </div>
                 </div>
               </Reveal>
@@ -315,7 +330,7 @@ function Portal() {
                         </div>
                         <div>
                           {/* Grades */}
-                          <div className="mt-6 bg-surface rounded-sm p-5">
+                          <div className="bg-surface rounded-sm p-5">
                             <div className="text-meta uppercase tracking-widest text-muted">
                               {lang === "es" ? "Desempeño académico" : "Academic performance"}
                             </div>
@@ -378,20 +393,9 @@ function Portal() {
                               )}
                             </div>
                           </div>
-
-                          {/* Board rubric from their own admissions round */}
-                          <div className="mt-4 bg-surface rounded-sm p-5">
-                            <div className="text-meta uppercase tracking-widest text-muted">
-                              {lang === "es"
-                                ? "Rúbrica consolidada de su proceso"
-                                : "Consolidated rubric from their round"}
-                            </div>
-                            <p className="text-body text-ink/70 mt-2">
-                              {lang === "es"
-                                ? "Pendiente: las rúbricas diligenciadas de 2023 y 2024 no se han importado todavía."
-                                : "Pending: the completed 2023 and 2024 rubrics have not been imported yet."}
-                            </p>
-                          </div>
+                          {/* No rubric card here: Lumen does not hold the scored
+                              rubrics from the 2023 and 2024 rounds, so a placeholder
+                              promising them was promising something that isn't coming. */}
                         </div>
                       </div>
                     </div>

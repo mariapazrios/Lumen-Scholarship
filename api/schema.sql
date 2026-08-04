@@ -21,12 +21,15 @@ CREATE INDEX IF NOT EXISTS lumen_ratings_candidate ON lumen_ratings (candidate);
 -- in the client bundle. `kind` drives access: applicant-* is board only.
 CREATE TABLE IF NOT EXISTS lumen_documents (
   id           BIGSERIAL PRIMARY KEY,
-  -- 'scholar-essay' | 'applicant-essay' | 'applicant-answers'. Anything
-  -- matching 'applicant%' is board only, so a new applicant-* kind inherits
-  -- the right gate without touching api/documents.ts.
+  -- 'scholar-essay' | 'applicant-essay' | 'applicant-answers' | 'report'.
+  -- Anything matching 'applicant%' is board only, so a new applicant-* kind
+  -- inherits the right gate without touching api/documents.ts.
   kind         TEXT        NOT NULL,
-  subject      TEXT        NOT NULL,   -- scholar slug or applicant slug
+  subject      TEXT        NOT NULL,   -- scholar slug, applicant slug, or report year
   title        TEXT        NOT NULL DEFAULT '',
+  -- Essay text, or for kind='report' the PDF as unwrapped base64: the reports
+  -- carry per-scholar averages and the fund's position, so they cannot sit in
+  -- `public/` of a public repo. api/report.ts decodes and streams them.
   body         TEXT        NOT NULL,
   submitted_at TIMESTAMPTZ,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),

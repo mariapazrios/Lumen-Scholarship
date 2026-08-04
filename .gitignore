@@ -25,3 +25,6 @@ dist-ssr
 
 # Real scholar records: essays and grades for named students. Never commit.
 src/data/private/
+
+# Local Claude Code state: worktrees and the dev-server launch config.
+.claude/

@@ -4,6 +4,8 @@ type Props = {
   label: string
   tone?: Tone
   href?: string
+  /** Set to "_blank" for anything that must not navigate away from a portal. */
+  target?: string
   forceHover?: boolean
   className?: string
 }
@@ -30,6 +32,7 @@ export default function ArrowButton({
   label,
   tone = "navy",
   href,
+  target,
   forceHover = false,
   className = "",
 }: Props) {
@@ -53,7 +56,12 @@ export default function ArrowButton({
 
   if (href) {
     return (
-      <a href={href} className={shared}>
+      <a
+        href={href}
+        target={target}
+        rel={target === "_blank" ? "noopener" : undefined}
+        className={shared}
+      >
         {inner}
       </a>
     )

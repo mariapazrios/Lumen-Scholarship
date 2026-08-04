@@ -335,8 +335,9 @@ export default function Stats() {
                     son la cohorte de mejor desempeño de toda la universidad, por encima de
                     los programas con y sin apoyo financiero.
                   </strong>{" "}
-                  Nuestra meta: formar una cohorte unida y rigurosamente seleccionada, que
-                  marque la pauta de excelencia en lo académico y en los valores.
+                  Seleccionamos con rigor, sostenemos ese estándar en lo académico y en
+                  los valores, y ponemos a cada Lumen frente a las empresas que compiten
+                  por exactamente este perfil.
                 </>
               ) : (
                 <>
@@ -346,8 +347,9 @@ export default function Stats() {
                     Lumens are the best-performing cohort across the entire university,
                     including financial aid and non-financial aid programs alike.
                   </strong>{" "}
-                  Our goal is to build a tight, rigorously selected cohort that sets the
-                  standard for excellence across academics and values.
+                  We select rigorously, hold the cohort to that standard across academics
+                  and values, and put every Lumen in front of the companies competing for
+                  exactly this profile.
                 </>
               )}
             </p>

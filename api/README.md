@@ -1,8 +1,9 @@
 # Lumen portal backend
 
-Three edge functions behind the board and sponsor portals. They exist so that
-ratings can be shared between board members, and so that essays are served only
-to an authenticated session instead of shipping inside the client bundle.
+Edge functions behind the board and sponsor portals. They exist so that ratings
+can be shared between board members, and so that essays and the annual reports
+are served only to an authenticated session instead of shipping inside the
+client bundle.
 
 | Route | Method | Who | Purpose |
 |---|---|---|---|
@@ -10,6 +11,8 @@ to an authenticated session instead of shipping inside the client bundle.
 | `/api/login` | GET | anyone | Report the role the caller's cookie carries, or 401 |
 | `/api/ratings` | GET, POST | board | Read all ratings, upsert your own |
 | `/api/documents` | GET | board, sponsor | Fetch restricted documents |
+| `/api/applicants` | GET | board | The roster joined to each candidate's essay and answers |
+| `/api/report` | GET | board, sponsor | Stream an annual report PDF |
 
 `GET /api/login` exists because the cookie is httpOnly: the browser cannot read
 it, so after a reload the gate has no other way to tell a live session from an
@@ -61,6 +64,20 @@ INSERT INTO lumen_documents (kind, subject, title, body, submitted_at)
 VALUES ('scholar-essay', 'juan-angel-aicardy', 'Ensayo de admisión', $$...$$, '2023-12-17')
 ON CONFLICT (kind, subject) DO UPDATE SET body = EXCLUDED.body;
 ```
+
+### The reports
+
+The two reports are rows in the same table, `kind = 'report'`, `subject` the
+year (`'2024'`, `'2025'`), `body` the PDF as base64 with no line wrapping so
+`atob` in the edge runtime can take it whole. They are deliberately not in
+`public/`: this repo is public, and both PDFs carry per-scholar averages and the
+fund's financial position. `/api/report?year=2025` checks the cookie, decodes,
+and answers `application/pdf`, so the sponsor card is a plain link.
+
+The 2024 file was 4.8 MB, almost all of it one 300 DPI grayscale cover PNG; it
+was recompressed to 200 DPI JPEG (1.7 MB) with every page's text byte-identical.
+The 2025 file is vector and font weight rather than photography, so it did not
+usefully compress and is stored as sent.
 
 All eleven scholar essays are loaded. `src/data/scholarEssays.ts` held them
 before this backend existed and has been deleted; `SponsorPortal` now fetches

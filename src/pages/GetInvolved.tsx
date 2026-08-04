@@ -5,15 +5,31 @@ import { useLang, type L } from "../lib/i18n"
 
 const CONTACT_EMAIL = "hq@lumenedu.org"
 
-/** The case for sponsoring, in numbers. */
-const PROOF: Array<{ value: string; label: L }> = [
-  { value: "8,065", label: { en: "Applicants screened", es: "Aspirantes evaluados" } },
-  { value: "11", label: { en: "Selected to date", es: "Seleccionados hasta hoy" } },
-  { value: "Top 1%", label: { en: "National ICFES exam", es: "Examen ICFES nacional" } },
-  { value: "100%", label: { en: "Retention", es: "Retención" } },
+/** The case for sponsoring, in three numbers: how narrow the funnel is, what
+ *  they scored coming in, and how they perform once they are here. */
+const PROOF: Array<{ value: L; label: L; sub: L }> = [
+  {
+    value: { en: "0.14%", es: "0,14%" },
+    label: { en: "Acceptance rate", es: "Tasa de admisión" },
+    sub: { en: "11 selected from 8,065", es: "11 seleccionados de 8.065" },
+  },
+  {
+    value: { en: "Top 1%", es: "Top 1%" },
+    label: { en: "National ICFES exam", es: "Examen ICFES nacional" },
+    sub: { en: "Every Lumen, both generations", es: "Todos los Lumens, ambas generaciones" },
+  },
+  {
+    value: { en: "+10%", es: "+10%" },
+    label: { en: "GPA above the Andes average", es: "Promedio por encima de Los Andes" },
+    sub: { en: "4.3 against 3.9", es: "4.3 frente a 3.9" },
+  },
 ]
 
-/** Pragmatic returns: a curated talent portfolio, reported on annually. */
+/**
+ * Three returns. "First look at hiring" and "direct access to the cohort" were
+ * the same promise told twice, so they are one card: the access is what produces
+ * the first look.
+ */
 const RETURNS: Array<{ n: string; title: L; body: L }> = [
   {
     n: "01",
@@ -25,10 +41,10 @@ const RETURNS: Array<{ n: string; title: L; body: L }> = [
   },
   {
     n: "02",
-    title: { en: "First look at hiring", es: "Primera opción en contratación" },
+    title: { en: "First look at the cohort", es: "Primera mirada a la cohorte" },
     body: {
-      en: "Meet interns and early-career candidates years before they reach the open market, across engineering, economics, physics and chemistry.",
-      es: "Conoce practicantes y candidatos de inicio de carrera años antes de que lleguen al mercado abierto, en ingeniería, economía, física y química.",
+      en: "Speaker slots, workshops and recruiting sessions put your team in front of all of them, so you meet interns and early-career candidates years before they reach the open market.",
+      es: "Charlas, talleres y sesiones de selección ponen a tu equipo frente a todos ellos, así conoces practicantes y candidatos de inicio de carrera años antes de que lleguen al mercado abierto.",
     },
   },
   {
@@ -39,17 +55,22 @@ const RETURNS: Array<{ n: string; title: L; body: L }> = [
       es: "Un informe anual por Lumen: carrera, promedio frente a su programa, prácticas, competencias y lo que ha construido.",
     },
   },
-  {
-    n: "04",
-    title: { en: "Direct access to the cohort", es: "Acceso directo a la cohorte" },
-    body: {
-      en: "Speaker slots, workshops and recruiting sessions put your firm and your team in front of all of them.",
-      es: "Charlas, talleres y sesiones de selección ponen a tu empresa y a tu equipo frente a todos ellos.",
-    },
-  },
 ]
 
+/**
+ * Companies lead. Under the talent-pipeline framing a company that opens a role
+ * is doing the last step of the program, not making a smaller donation, so it
+ * reads first and the individual routes follow.
+ */
 const OTHER_WAYS: Array<{ heading: L; items: L[] }> = [
+  {
+    heading: { en: "Companies open doors.", es: "Las empresas abren puertas." },
+    items: [
+      { en: "Open internships and early-career roles", es: "Abre prácticas y vacantes de inicio de carrera" },
+      { en: "Fast-track Lumen applications", es: "Agiliza los procesos de selección para los Lumens" },
+      { en: "Host a session with your recruiting team", es: "Organiza una sesión con tu equipo de selección" },
+    ],
+  },
   {
     heading: { en: "Individuals give time.", es: "Las personas aportan tiempo." },
     items: [
@@ -59,13 +80,27 @@ const OTHER_WAYS: Array<{ heading: L; items: L[] }> = [
       { en: "Introduce us to a potential sponsor", es: "Preséntanos a un patrocinador potencial" },
     ],
   },
+]
+
+/**
+ * Tax treatment, as two banners under the commitment rather than a section of
+ * its own. It is the mechanics of a decision already made, so it does not need
+ * a headline competing with the reasons to give.
+ */
+const TAX: Array<{ jurisdiction: L; detail: L }> = [
   {
-    heading: { en: "Companies give access.", es: "Las empresas aportan acceso." },
-    items: [
-      { en: "Open internships and early-career roles", es: "Abre prácticas y vacantes de inicio de carrera" },
-      { en: "Fast-track Lumen applications", es: "Agiliza los procesos de selección para los Lumens" },
-      { en: "Host a session with your recruiting team", es: "Organiza una sesión con tu equipo de selección" },
-    ],
+    jurisdiction: { en: "United States", es: "Estados Unidos" },
+    detail: {
+      en: "Through the University of the Andes Foundation, a 501(c)(3) rated 4/4 on Charity Navigator, so the gift is fully deductible. Online, wire, or check, and many employers match.",
+      es: "A través de la University of the Andes Foundation, una 501(c)(3) con calificación 4/4 en Charity Navigator, totalmente deducible. En línea, transferencia o cheque, y muchas empresas duplican la donación.",
+    },
+  },
+  {
+    jurisdiction: { en: "Colombia", es: "Colombia" },
+    detail: {
+      en: "Through Universidad de los Andes, carrying a 25% tax benefit against renta líquida. Transfer, PSE, card, or check.",
+      es: "A través de la Universidad de los Andes, con un descuento tributario del 25% sobre la renta líquida. Transferencia, PSE, tarjeta o cheque.",
+    },
   },
 ]
 
@@ -103,11 +138,13 @@ function SponsorsSection() {
           <h2 className="text-h2 font-semibold text-primary">
             {lang === "es" ? (
               <>
-                Financia a un Lumen. <em className="italic font-light">Sigue su carrera.</em>
+                Financia a un Lumen.{" "}
+                <em className="italic font-light">Sigue su carrera hasta la empresa.</em>
               </>
             ) : (
               <>
-                Fund a Lumen. <em className="italic font-light">Follow their career.</em>
+                Fund a Lumen.{" "}
+                <em className="italic font-light">Follow their career into the firm.</em>
               </>
             )}
           </h2>
@@ -115,16 +152,17 @@ function SponsorsSection() {
 
         {/* Proof strip */}
         <Reveal delay={80}>
-          <div className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-px bg-ink/10 border border-ink/10 rounded-sm overflow-hidden">
+          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-px bg-ink/10 border border-ink/10 rounded-sm overflow-hidden">
             {PROOF.map((p) => (
               <div key={p.label.en} className="bg-surface-soft p-6">
                 <Tricolor className="w-7 h-[3px] mb-4" />
                 <div className="text-h2 font-bold text-primary tabular-nums leading-none">
-                  {p.value}
+                  {t(p.value)}
                 </div>
                 <div className="text-meta uppercase tracking-widest text-muted mt-2.5">
                   {t(p.label)}
                 </div>
+                <div className="text-meta text-muted mt-1.5 tabular-nums">{t(p.sub)}</div>
               </div>
             ))}
           </div>
@@ -164,6 +202,25 @@ function SponsorsSection() {
               : "All commitments can be paid upfront or deferred in semester installments, every 6 months, at 0% interest."}
           </p>
         </Reveal>
+
+        {/* Deductibility, as banners: where you file determines the route. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+          {TAX.map((row, i) => (
+            <Reveal key={row.jurisdiction.en} delay={140 + i * 100}>
+              <div className="h-full bg-white border border-ink/10 border-l-2 border-l-primary rounded-sm px-6 py-5">
+                <div className="flex flex-wrap items-baseline gap-x-3">
+                  <span className="text-body font-semibold text-primary">
+                    {t(row.jurisdiction)}
+                  </span>
+                  <span className="text-meta uppercase tracking-widest text-accent">
+                    {lang === "es" ? "Deducible" : "Deductible"}
+                  </span>
+                </div>
+                <p className="text-body text-ink/75 mt-2">{t(row.detail)}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
       </div>
     </section>
   )
@@ -183,23 +240,31 @@ function ReturnsSection() {
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-24 relative">
         <Reveal>
           <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
-            {lang === "es" ? "Lo que recibes" : "What you get"}
+            {lang === "es" ? "Lo que regresa" : "What comes back"}
           </div>
           <h2 className="text-h2 font-semibold">
             {lang === "es" ? (
               <>
-                Un portafolio de talento,{" "}
-                <em className="italic font-light">no una donación y adiós.</em>
+                Formamos el talento que{" "}
+                <em className="italic font-light">
+                  impulsa a las mejores empresas de Colombia.
+                </em>
               </>
             ) : (
               <>
-                A talent portfolio, <em className="italic font-light">not a donation and goodbye.</em>
+                Fostering the talent pool that{" "}
+                <em className="italic font-light">propels Colombia's top businesses.</em>
               </>
             )}
           </h2>
+          <p className="text-lead font-light text-primary-foreground/75 mt-6 max-w-3xl">
+            {lang === "es"
+              ? "Tú financias. Nosotros elegimos, formamos y conectamos. La relación dura los cinco años de la carrera y llega hasta el primer empleo."
+              : "You fund. We select, develop, and connect. The relationship runs the full five years of the degree and into the first job."}
+          </p>
         </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
           {RETURNS.map((r, i) => (
             <Reveal key={r.n} delay={i * 100}>
               <div className="border border-primary-foreground/15 rounded-sm p-7 md:p-8 h-full bg-primary-foreground/[0.03]">
@@ -219,132 +284,21 @@ function ReturnsSection() {
   )
 }
 
-/** Tax treatment, stated as such. */
-function TaxSection() {
-  const { lang } = useLang()
-  return (
-    <section className="bg-background">
-      <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-24">
-        <Reveal>
-          <div className="text-meta uppercase tracking-widest text-muted mb-4">
-            {lang === "es" ? "Tratamiento tributario" : "Tax treatment"}
-          </div>
-          <h2 className="text-h2 font-semibold text-primary">
-            {lang === "es" ? (
-              <>
-                Deducible <em className="italic font-light">a ambos lados de la frontera.</em>
-              </>
-            ) : (
-              <>
-                Deductible <em className="italic font-light">on either side of the border.</em>
-              </>
-            )}
-          </h2>
-          <p className="text-body text-ink/75 mt-4">
-            {lang === "es"
-              ? "Donde declares impuestos determina la ruta de tu donación."
-              : "Where you file determines the route your donation takes."}
-          </p>
-        </Reveal>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
-          <Reveal>
-            <div className="bg-surface rounded-sm p-8 h-full border-t-2 border-primary">
-              <div className="text-meta uppercase tracking-widest text-muted">
-                {lang === "es" ? "Si declaras en" : "If you file in the"}
-              </div>
-              <h3 className="text-h3 font-semibold text-primary mt-1">
-                {lang === "es" ? "Estados Unidos" : "United States"}
-              </h3>
-              <dl className="mt-5 space-y-3 text-body">
-                <div>
-                  <dt className="text-meta uppercase tracking-widest text-muted">
-                    {lang === "es" ? "Vehículo" : "Vehicle"}
-                  </dt>
-                  <dd className="text-ink/80">University of the Andes Foundation</dd>
-                </div>
-                <div>
-                  <dt className="text-meta uppercase tracking-widest text-muted">
-                    {lang === "es" ? "Estatus" : "Status"}
-                  </dt>
-                  <dd className="text-ink/80">
-                    {lang === "es"
-                      ? "501(c)(3), totalmente deducible, 4/4 en Charity Navigator"
-                      : "501(c)(3), fully deductible, rated 4/4 on Charity Navigator"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-meta uppercase tracking-widest text-muted">
-                    {lang === "es" ? "Cómo pagar" : "How to pay"}
-                  </dt>
-                  <dd className="text-ink/80">
-                    {lang === "es"
-                      ? "En línea, transferencia o cheque. Muchas empresas duplican la donación."
-                      : "Online, wire, or check. Many employers match."}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </Reveal>
-          <Reveal delay={120}>
-            <div className="bg-surface rounded-sm p-8 h-full border-t-2 border-primary">
-              <div className="text-meta uppercase tracking-widest text-muted">
-                {lang === "es" ? "Si declaras en" : "If you file in"}
-              </div>
-              <h3 className="text-h3 font-semibold text-primary mt-1">Colombia</h3>
-              <dl className="mt-5 space-y-3 text-body">
-                <div>
-                  <dt className="text-meta uppercase tracking-widest text-muted">
-                    {lang === "es" ? "Vehículo" : "Vehicle"}
-                  </dt>
-                  <dd className="text-ink/80">Universidad de los Andes</dd>
-                </div>
-                <div>
-                  <dt className="text-meta uppercase tracking-widest text-muted">
-                    {lang === "es" ? "Beneficio" : "Benefit"}
-                  </dt>
-                  <dd className="text-ink/80">
-                    {lang === "es"
-                      ? "Descuento tributario del 25% sobre la renta líquida"
-                      : "A 25% tax benefit against renta líquida"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-meta uppercase tracking-widest text-muted">
-                    {lang === "es" ? "Cómo pagar" : "How to pay"}
-                  </dt>
-                  <dd className="text-ink/80">
-                    {lang === "es"
-                      ? "Transferencia, PSE, tarjeta o cheque."
-                      : "Transfer, PSE, card, or check."}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </Reveal>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function OtherWaysSection() {
   const { lang, t } = useLang()
   return (
     <section id="other-ways" className="bg-surface scroll-mt-24">
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-24">
+        {/* No eyebrow: it said exactly what the heading now says. */}
         <Reveal>
-          <div className="text-meta uppercase tracking-widest text-muted mb-4">
-            {lang === "es" ? "Otras formas de vincularse" : "Other ways to get involved"}
-          </div>
           <h2 className="text-h2 font-semibold text-primary">
             {lang === "es" ? (
               <>
-                No todo aporte <em className="italic font-light">es un cheque.</em>
+                Otras formas <em className="italic font-light">de vincularse.</em>
               </>
             ) : (
               <>
-                Not every contribution <em className="italic font-light">is a check.</em>
+                Other ways <em className="italic font-light">to get involved.</em>
               </>
             )}
           </h2>
@@ -395,18 +349,22 @@ export default function GetInvolved() {
             <h1 className="text-display font-light">
               {lang === "es" ? (
                 <>
-                  Un Lumen cuesta <em className="italic font-semibold">US$50K.</em>
+                  Tú financias.
+                  <br />
+                  <em className="italic font-semibold">Nosotros encontramos el talento.</em>
                 </>
               ) : (
                 <>
-                  One Lumen costs <em className="italic font-semibold">US$50K.</em>
+                  You fund it.
+                  <br />
+                  <em className="italic font-semibold">We find the talent.</em>
                 </>
               )}
             </h1>
-            <p className="text-lead font-light text-primary-foreground/75 mt-6">
+            <p className="text-lead font-light text-primary-foreground/75 mt-6 max-w-3xl">
               {lang === "es"
-                ? "Eso cubre diez semestres, una sesión de verano y el sostenimiento. Los patrocinadores lo financian. Otros aportan tiempo y acceso. Aquí está cómo funciona cada camino."
-                : "That covers ten semesters, a summer session, and the living stipend. Sponsors fund it. Others give time and access. Here is how each route works."}
+                ? "Un Lumen cuesta US$50K: diez semestres, una sesión de verano y el sostenimiento. Nosotros elegimos entre miles de aspirantes, los formamos durante cinco años y los conectamos con las empresas que contratan en su campo. Otros aportan tiempo y acceso. Aquí está cómo funciona cada camino."
+                : "One Lumen costs US$50K: ten semesters, a summer session, and the living stipend. We select from thousands of applicants, develop them for five years, and connect them to the companies hiring in their field. Others give time and access. Here is how each route works."}
             </p>
           </Reveal>
         </div>
@@ -414,7 +372,6 @@ export default function GetInvolved() {
 
       <SponsorsSection />
       <ReturnsSection />
-      <TaxSection />
       <OtherWaysSection />
 
       {/* Closing CTA */}
