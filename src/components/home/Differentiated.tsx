@@ -62,15 +62,11 @@ export default function Differentiated() {
           <h2 className="text-h2 font-semibold">
             {lang === "es" ? (
               <>
-                La matrícula es el punto de partida.
-                <br />
-                <em className="italic font-light">La carrera es el punto de llegada.</em>
+                Buscamos ser más que <em className="italic font-light">matrícula.</em>
               </>
             ) : (
               <>
-                Tuition is where we start.
-                <br />
-                <em className="italic font-light">A career is where we finish.</em>
+                We strive to be more than <em className="italic font-light">tuition.</em>
               </>
             )}
           </h2>

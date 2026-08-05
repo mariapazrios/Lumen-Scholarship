@@ -15,7 +15,8 @@ export type TeamMember = {
   /**
    * What each board member says Lumen means to them, in their own words.
    * These are quotes: the English is what they wrote, and the Spanish is a
-   * translation of it. Do not rewrite them into house voice.
+   * translation of it. Do not rewrite them into house voice. The founder's
+   * card labels this "Founder's message" instead of "Personal highlight".
    */
   highlight: L
 }
@@ -67,8 +68,8 @@ export const BOARD: TeamMember[] = [
     industry: { en: "Finance", es: "Finanzas" },
     credentials: ["Duke University", "Goldman Sachs", "Blackstone", "Sequence Holdings"],
     highlight: {
-      en: "The talent has always been here. What Lumen adds is someone willing to go find it, stay with it for five years, and put it in rooms that were closed to it. Judge us in ten years, by what these students are running.",
-      es: "El talento siempre ha estado aquí. Lo que Lumen agrega es alguien dispuesto a ir a buscarlo, a acompañarlo durante cinco años y a ponerlo en salas que le estaban cerradas. Júzguennos en diez años, por lo que estos estudiantes estén dirigiendo.",
+      en: "Every generation inherits rules it did not write (and that make no sense). The rule we take personally upon ourselves to break: that where you are born determines how much you can dream and how far you can go. And we do this by building the path between Colombia's leading companies and the finest local talent, and walking with each Lumen through that path.",
+      es: "Cada generación hereda reglas que no escribió (y que no tienen sentido). La regla que asumimos personalmente romper: que el lugar donde naces determina cuánto puedes soñar y hasta dónde puedes llegar. Y lo hacemos construyendo el camino entre las empresas líderes de Colombia y el mejor talento local, y caminando con cada Lumen por ese camino.",
     },
   },
   {

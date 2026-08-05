@@ -8,13 +8,32 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
   return (
     <Reveal delay={delay} className="h-full">
       <div className="group h-full flex flex-col min-w-0">
-        <div className="relative overflow-hidden rounded-sm">
-          <img
-            src={`/team/${member.slug}.jpg`}
-            alt={member.name}
-            className="w-full aspect-[5/6] object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
-            loading="lazy"
-          />
+        <div className="relative">
+          {/* The founder's portrait carries a soft cobalt halo, the same
+              radial-blur device the hero uses. It sits outside the image's
+              overflow-hidden wrapper so it can bleed past the frame. */}
+          {member.founder && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-4 blur-2xl opacity-35"
+              style={{
+                background:
+                  "radial-gradient(ellipse at center, var(--color-cobalt) 0%, transparent 70%)",
+              }}
+            />
+          )}
+          <div
+            className={`relative overflow-hidden rounded-sm ${
+              member.founder ? "ring-1 ring-accent/40" : ""
+            }`}
+          >
+            <img
+              src={`/team/${member.slug}.jpg`}
+              alt={member.name}
+              className="w-full aspect-[5/6] object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
+              loading="lazy"
+            />
+          </div>
         </div>
         {/* Industry and the founder badge share a row, so every name starts at the same latitude */}
         <div className="mt-4 flex flex-wrap items-center gap-1.5">
@@ -65,8 +84,18 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
             instead, by the reserved credentials height, and the quotes run to
             their natural depth. The ragged bottom edge is invisible. */}
         <div className="pt-3 border-t border-ink/10">
-          <div className="text-[11px] uppercase tracking-widest text-muted">
-            {lang === "es" ? "En sus palabras" : "Personal highlight"}
+          <div
+            className={`text-[11px] uppercase tracking-widest ${
+              member.founder ? "text-accent font-semibold" : "text-muted"
+            }`}
+          >
+            {member.founder
+              ? lang === "es"
+                ? "Mensaje de la fundadora"
+                : "Founder's message"
+              : lang === "es"
+                ? "En sus palabras"
+                : "Personal highlight"}
           </div>
           {/* Italic because these are their own words, not description of them. */}
           <p className="text-meta italic text-ink/70 mt-1.5 leading-relaxed">
