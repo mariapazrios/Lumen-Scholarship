@@ -100,12 +100,15 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
           {/* Italic because these are their own words, not description of them.
               The founder's message is set upright and in full ink instead: it is
               the statement of intent for the programme, not a board member's
-              reflection on it. */}
+              reflection on it, and its opening line carries in bold. */}
           <p
             className={`text-meta mt-1.5 leading-relaxed ${
               member.founder ? "text-ink" : "italic text-ink/70"
             }`}
           >
+            {member.highlightLead && (
+              <strong className="font-bold">{t(member.highlightLead)} </strong>
+            )}
             {t(member.highlight)}
           </p>
         </div>

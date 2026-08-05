@@ -16,8 +16,6 @@ import {
   RECOMMENDATIONS,
   SessionExpired,
   VALUES,
-  WEIGHTS,
-  blended,
   consolidate,
   fetchRatings,
   loadMember,
@@ -52,7 +50,7 @@ type Draft = {
 }
 
 const emptyDraft = (): Draft => ({
-  values: { resilience: null, excellence: null, integrity: null, impact: null },
+  values: { resilience: null, excellence: null, integrity: null, community: null },
   recommendation: null,
   comments: "",
 })
@@ -139,7 +137,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
   // Only candidates with an essay can be scored, so the table ranks those.
   const rows = useMemo(
-    () => consolidate(submitted.map((a) => a.slug), store, WEIGHTS),
+    () => consolidate(submitted.map((a) => a.slug), store),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, people],
   )
@@ -743,11 +741,11 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                                   : "Save rating"}
                             </button>
                             <span className="text-body text-muted">
-                              {lang === "es" ? "Puntaje mezclado" : "Blended score"}:{" "}
+                              {lang === "es" ? "Promedio de valores" : "Values average"}:{" "}
                               <strong className="text-primary tabular-nums">
                                 {(() => {
                                   const r = toRating(draft)
-                                  return r ? blended(r, WEIGHTS).toFixed(2) : "—"
+                                  return r ? valuesAverage(r).toFixed(2) : "—"
                                 })()}
                               </strong>
                             </span>
@@ -827,8 +825,8 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
             </h2>
             <p className="text-body text-ink/70 mt-3">
               {lang === "es"
-                ? "Valores y recomendación pesan igual. El puntaje mezclado ordena la lista y define sí, maybe o no. El corte es relativo a la mediana de la junta, así que aparece cuando cada candidato con ensayo tiene al menos una lectura."
-                : "Values and recommendation count equally. The blended score orders the list and sets yes, maybe or no. The cut is relative to the board's median, so it appears once every submitted candidate has at least one read."}
+                ? "El promedio de los cuatro valores ordena la lista y define sí, maybe o no. La recomendación y los comentarios de cada miembro se leen aparte, más abajo. El corte es relativo a la mediana de la junta, así que aparece cuando cada candidato con ensayo tiene al menos una lectura."
+                : "The average of the four values orders the list and sets yes, maybe or no. Each member's recommendation and comments read separately, below. The cut is relative to the board's median, so it appears once every submitted candidate has at least one read."}
             </p>
           </Reveal>
 
@@ -839,9 +837,8 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                   {[
                     lang === "es" ? "Puesto" : "Rank",
                     lang === "es" ? "Candidato" : "Candidate",
-                    lang === "es" ? "Valores" : "Values",
+                    lang === "es" ? "Promedio de valores" : "Values average",
                     lang === "es" ? "Recomendación" : "Recommendation",
-                    lang === "es" ? "Mezclado" : "Blended",
                     lang === "es" ? "Lecturas" : "Reads",
                     lang === "es" ? "¿Siguiente ronda?" : "Next round?",
                   ].map((h) => (
@@ -861,14 +858,11 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                     <td className="py-3 pr-4 text-body font-semibold text-primary">
                       {nameOf(row.candidate)}
                     </td>
-                    <td className="py-3 pr-4 text-body tabular-nums text-ink/80">
+                    <td className="py-3 pr-4 text-body tabular-nums font-bold text-primary">
                       {row.valuesAvg.toFixed(2)}
                     </td>
                     <td className="py-3 pr-4 text-body tabular-nums text-ink/80">
                       {row.freeFormAvg.toFixed(2)}
-                    </td>
-                    <td className="py-3 pr-4 text-body tabular-nums font-bold text-primary">
-                      {row.score.toFixed(2)}
                     </td>
                     <td className="py-3 pr-4 text-body tabular-nums text-muted">{row.raters}</td>
                     <td className="py-3 pr-4">
@@ -894,7 +888,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 ))}
                 {ratedRows.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-4 text-body text-muted">
+                    <td colSpan={6} className="py-4 text-body text-muted">
                       {rows.length === 0
                         ? lang === "es"
                           ? "Todavía no hay ensayos que calificar."

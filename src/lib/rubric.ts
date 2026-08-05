@@ -3,21 +3,23 @@ import type { L } from "./i18n"
 /**
  * The Lumen essay rubric, rebuilt from "Lumen Rubric (12.15.23).xlsx".
  *
- * Step 1 scores the four Lumen values (REII) from 1 to 5. Step 2 is free-form
- * commentary plus a recommendation on the same 5 point scale. A weighted blend
- * of the two produces the score the board ranks on, with the weights and the
- * "maybe" margin adjustable in the control center.
+ * Step 1 scores the four Lumen values from 1 to 5. Step 2 is free-form
+ * commentary plus an overall recommendation on the same 5 point scale.
  *
- * The original workbook blended the values *rank* with the free-form *score*,
- * which pushed weaker cohorts up the table. This blends the values average with
- * the recommendation so both inputs run the same direction.
+ * The board ranks on the values average, full stop. Earlier versions blended
+ * the values with the recommendation behind a set of weights, which meant the
+ * number ordering the table was one nobody had actually given. The three things
+ * a reader needs are the values average, what people wrote, and the
+ * recommendation, so those are the three things shown.
  */
 
 export const VALUES = [
   { key: "resilience", label: { en: "Resilience", es: "Resiliencia" } },
   { key: "excellence", label: { en: "Excellence", es: "Excelencia" } },
   { key: "integrity", label: { en: "Integrity", es: "Integridad" } },
-  { key: "impact", label: { en: "Impact", es: "Impacto" } },
+  // Community, matching the values published on the landing page. The workbook
+  // called this one Impact and the two had drifted apart.
+  { key: "community", label: { en: "Community", es: "Comunidad" } },
 ] as const
 
 export type ValueKey = (typeof VALUES)[number]["key"]
@@ -50,10 +52,8 @@ export type Rating = {
 export const NA_AS = 3
 export const scoreValue = (s: Score) => (s === "na" ? NA_AS : s)
 
-export type Weights = { values: number; freeForm: number; maybeMargin: number }
-
-/** Fixed: values and free form count equally, with a 20% band for "maybe". */
-export const WEIGHTS: Weights = { values: 0.5, freeForm: 0.5, maybeMargin: 0.2 }
+/** Width of the band around the median that reads as "maybe", as a share of the range. */
+export const MAYBE_MARGIN = 0.2
 
 /** ratings[candidateSlug][memberSlug] */
 export type RatingStore = Record<string, Record<string, Rating>>
@@ -124,12 +124,6 @@ export function valuesAverage(r: Rating) {
   return v.reduce((a, b) => a + b, 0) / v.length
 }
 
-/** Values average and recommendation, blended by the control center weights. */
-export function blended(r: Rating, w: Weights) {
-  const total = w.values + w.freeForm || 1
-  return (valuesAverage(r) * w.values + r.recommendation * w.freeForm) / total
-}
-
 export type Consolidated = {
   candidate: string
   raters: number
@@ -145,11 +139,7 @@ export type Consolidated = {
  * bucketed against the median, with the "maybe" margin widening the band that
  * needs discussion rather than a decision.
  */
-export function consolidate(
-  candidates: string[],
-  store: RatingStore,
-  w: Weights,
-): Consolidated[] {
+export function consolidate(candidates: string[], store: RatingStore): Consolidated[] {
   const rows = candidates.map((candidate) => {
     const byMember = Object.values(store[candidate] ?? {})
     if (byMember.length === 0) {
@@ -163,12 +153,13 @@ export function consolidate(
         recommendation: "unrated" as const,
       }
     }
-    const scores = byMember.map((r) => blended(r, w))
+    // The ranking number is the values average and nothing else.
+    const scores = byMember.map(valuesAverage)
     const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length
     return {
       candidate,
       raters: byMember.length,
-      valuesAvg: mean(byMember.map(valuesAverage)),
+      valuesAvg: mean(scores),
       freeFormAvg: mean(byMember.map((r) => r.recommendation)),
       score: mean(scores),
       spread: Math.max(...scores) - Math.min(...scores),
@@ -183,7 +174,7 @@ export function consolidate(
   const mid = sorted.length % 2
     ? sorted[(sorted.length - 1) / 2]
     : (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
-  const band = ((Math.max(...sorted) - Math.min(...sorted)) * w.maybeMargin) / 2
+  const band = ((Math.max(...sorted) - Math.min(...sorted)) * MAYBE_MARGIN) / 2
 
   for (const row of rows) {
     if (row.raters === 0) continue

@@ -19,6 +19,8 @@ export type TeamMember = {
    * card labels this "Founder's message" instead of "Personal highlight".
    */
   highlight: L
+  /** Opening line set in bold ahead of the highlight. Founder's card only. */
+  highlightLead?: L
 }
 
 /** The Lumen Board of Admissions, alphabetical by last name. */
@@ -67,9 +69,13 @@ export const BOARD: TeamMember[] = [
     city: "New York City",
     industry: { en: "Finance", es: "Finanzas" },
     credentials: ["Duke University", "Goldman Sachs", "Blackstone", "Sequence Holdings"],
+    highlightLead: {
+      en: "Every generation inherits rules it did not write and that are meant to be broken.",
+      es: "Cada generación hereda reglas que no escribió y que están hechas para romperse.",
+    },
     highlight: {
-      en: "Every generation inherits rules it did not write (and that make no sense). The rule we take personally upon ourselves to break: that where you are born determines how much you can dream and how far you can go. And we do this by building the path between Colombia's leading companies and the finest local talent, and walking with each Lumen through that path.",
-      es: "Cada generación hereda reglas que no escribió (y que no tienen sentido). La regla que asumimos personalmente romper: que el lugar donde naces determina cuánto puedes soñar y hasta dónde puedes llegar. Y lo hacemos construyendo el camino entre las empresas líderes de Colombia y el mejor talento local, y caminando con cada Lumen por ese camino.",
+      en: "The social rule we have taken personally upon ourselves to dismantle: that in Colombia, where you are born determines how much you can dream and how far you can go.",
+      es: "La regla social que hemos asumido personalmente desmantelar: que en Colombia, el lugar donde naces determina cuánto puedes soñar y hasta dónde puedes llegar.",
     },
   },
   {
