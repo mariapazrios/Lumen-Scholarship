@@ -12,8 +12,12 @@ export type TeamMember = {
   industry: L
   /** Career and academic credentials, shown as a meta line */
   credentials: string[]
-  /** How they describe their interview style and focus */
-  interviewStyle: L
+  /**
+   * What each board member says Lumen means to them, in their own words.
+   * These are quotes: the English is what they wrote, and the Spanish is a
+   * translation of it. Do not rewrite them into house voice.
+   */
+  highlight: L
 }
 
 /** The Lumen Board of Admissions, alphabetical by last name. */
@@ -25,9 +29,9 @@ export const BOARD: TeamMember[] = [
     city: "Madrid",
     industry: { en: "Finance", es: "Finanzas" },
     credentials: ["Universidad Complutense de Madrid", "BBVA"],
-    interviewStyle: {
-      en: "Calm and structured. He explores how candidates reason through decisions, looking for judgment and discipline beyond the numbers.",
-      es: "Tranquilo y estructurado. Explora cómo razonan los candidatos al tomar decisiones, buscando criterio y disciplina más allá de los números.",
+    highlight: {
+      en: "Contributing to a powerful movement for a fairer, more just world.",
+      es: "Contribuir a un movimiento poderoso por un mundo más justo y equitativo.",
     },
   },
   {
@@ -37,9 +41,9 @@ export const BOARD: TeamMember[] = [
     city: "Bogotá",
     industry: { en: "Technology", es: "Tecnología" },
     credentials: ["Duke University", "Morgan Stanley", "Y Combinator", "Forbes 30 Under 30"],
-    interviewStyle: {
-      en: "Fast-moving and curious. He digs into what candidates have built or taught themselves, looking for initiative and rigor in analytical thinking.",
-      es: "Ágil y curioso. Indaga en lo que los candidatos han construido o aprendido por su cuenta, buscando iniciativa y rigor en el pensamiento analítico.",
+    highlight: {
+      en: "My favorite part of Lumen has been being able to inspire members to take entrepreneurial projects while they continue their education. Lumen on itself significantly changes the outcomes of its members, but it makes me happy to instill in them an entrepreneurial mind to hopefully foster more builders in the long run.",
+      es: "Mi parte favorita de Lumen ha sido poder inspirar a sus miembros a emprender proyectos mientras siguen estudiando. Lumen por sí solo cambia significativamente el futuro de sus miembros, pero me alegra sembrar en ellos una mentalidad emprendedora, con la esperanza de formar más constructores a largo plazo.",
     },
   },
   {
@@ -49,9 +53,9 @@ export const BOARD: TeamMember[] = [
     city: "Bogotá",
     industry: { en: "Law", es: "Derecho" },
     credentials: ["Universidad de los Andes", "NYU", "Allen & Overy"],
-    interviewStyle: {
-      en: "Socratic. He presses gently on how candidates argue and defend a position, looking for clarity of thought and integrity under pressure.",
-      es: "Socrático. Examina con calma cómo los candidatos argumentan y defienden una postura, buscando claridad de pensamiento e integridad bajo presión.",
+    highlight: {
+      en: "Serving on Lumen's board has reinforced my belief that the greatest investment I can make is in the hearts, minds, and character of the next generation. It is a privilege to support this mission under exceptional leadership, but above all, to walk alongside students whose stories would inspire anyone, knowing that the impact will extend far beyond them, to their families and the communities they aspire to shape.",
+      es: "Estar en la junta de Lumen ha reforzado mi convicción de que la mayor inversión que puedo hacer es en el corazón, la mente y el carácter de la próxima generación. Es un privilegio apoyar esta misión bajo un liderazgo excepcional, pero sobre todo caminar al lado de estudiantes cuyas historias inspirarían a cualquiera, sabiendo que el impacto irá mucho más allá de ellos, hasta sus familias y las comunidades que aspiran a transformar.",
     },
   },
   {
@@ -62,9 +66,9 @@ export const BOARD: TeamMember[] = [
     city: "New York City",
     industry: { en: "Finance", es: "Finanzas" },
     credentials: ["Duke University", "Goldman Sachs", "Blackstone", "Sequence Holdings"],
-    interviewStyle: {
-      en: "A conversation, not an interrogation. She asks candidates to tell their story from the beginning and listens for resilience, ambition, and honesty about setbacks.",
-      es: "Una conversación, no un interrogatorio. Pide a los candidatos contar su historia desde el principio y presta atención a la resiliencia, la ambición y la honestidad frente a los tropiezos.",
+    highlight: {
+      en: "The talent has always been here. What Lumen adds is someone willing to go find it, stay with it for five years, and put it in rooms that were closed to it. Judge us in ten years, by what these students are running.",
+      es: "El talento siempre ha estado aquí. Lo que Lumen agrega es alguien dispuesto a ir a buscarlo, a acompañarlo durante cinco años y a ponerlo en salas que le estaban cerradas. Júzguennos en diez años, por lo que estos estudiantes estén dirigiendo.",
     },
   },
   {
@@ -74,9 +78,9 @@ export const BOARD: TeamMember[] = [
     city: "New York City",
     industry: { en: "Education", es: "Educación" },
     credentials: ["Duke University", "Teach For America", "Bold Charter School", "Regis High School"],
-    interviewStyle: {
-      en: "Warm and reflective. She asks about moments of failure and feedback, looking for self-awareness and a genuine love of learning.",
-      es: "Cálida y reflexiva. Pregunta por momentos de fracaso y retroalimentación, buscando autoconocimiento y un amor genuino por aprender.",
+    highlight: {
+      en: "As an educator, there is no greater joy than hearing someone speak passionately about learning. Lumen students are hungry to learn and to take on the world, and I come out of every interview rethinking how I see things. Alongside talent and access, the program looks for students who are motivated to build a better Colombia.",
+      es: "Como educadora, no hay alegría más grande que escuchar a alguien hablar con pasión sobre aprender. Los estudiantes Lumen tienen hambre de aprender y de comerse el mundo, y salgo de cada entrevista replanteándome cómo veo las cosas. Además del talento y del acceso, el programa busca estudiantes motivados a construir una Colombia mejor.",
     },
   },
   {
@@ -86,9 +90,9 @@ export const BOARD: TeamMember[] = [
     city: "Bogotá",
     industry: { en: "Technology / Consulting", es: "Tecnología / Consultoría" },
     credentials: ["Georgetown University", "Boston Consulting Group"],
-    interviewStyle: {
-      en: "Big-picture. He explores how candidates connect their goals to the world around them, looking for adaptability and rigor in analytical thinking.",
-      es: "De visión amplia. Explora cómo los candidatos conectan sus metas con el mundo que los rodea, buscando adaptabilidad y rigor en el pensamiento analítico.",
+    highlight: {
+      en: "Lumen creates a beautiful relationship that allows us to share our experience and help shape the next generation of leaders while learning even more from them!",
+      es: "¡Lumen crea una relación hermosa que nos permite compartir nuestra experiencia y ayudar a formar a la próxima generación de líderes, mientras aprendemos aún más de ellos!",
     },
   },
 ]

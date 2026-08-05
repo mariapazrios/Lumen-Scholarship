@@ -31,14 +31,18 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
         <h3 className="text-body font-semibold text-primary mt-3 leading-snug break-words md:min-h-[2.6em]">
           {member.name}
         </h3>
-        <div className="text-meta font-semibold text-ink/80 mt-1 break-words md:min-h-[2.6em]">
+        {/* Three lines: the Spanish "Profesora de bachillerato, Regis High School"
+            is the longest org on the board and sets this floor. */}
+        <div className="text-meta font-semibold text-ink/80 mt-1 break-words md:min-h-[4em]">
           {t(member.org)}
         </div>
         <div className="text-meta uppercase tracking-widest text-muted mt-1.5">
           {member.city}
         </div>
         {member.credentials.length > 0 && (
-          <div className="text-meta text-muted mt-2.5 leading-relaxed">
+          /* Reserved height: with the divider pinned from above rather than
+             below, this is what keeps every divider at the same latitude. */
+          <div className="text-meta text-muted mt-2.5 leading-relaxed md:min-h-[7em]">
             {/* Real spaces around the dot keep "Blackstone · Sequence" breakable */}
             {member.credentials.map((c, i) => (
               <span key={c}>
@@ -55,14 +59,18 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
             ))}
           </div>
         )}
-        {/* mt-auto pins the divider and interview style to the same latitude on every card */}
-        <div className="mt-auto pt-3 border-t border-ink/10">
+        {/* The quotes run from 66 to 415 characters, so the divider can no longer
+            be pinned from the bottom: reserving for the longest would leave a
+            third of a card empty under the shortest. It is pinned from above
+            instead, by the reserved credentials height, and the quotes run to
+            their natural depth. The ragged bottom edge is invisible. */}
+        <div className="pt-3 border-t border-ink/10">
           <div className="text-[11px] uppercase tracking-widest text-muted">
-            {lang === "es" ? "Estilo de entrevista" : "Interview style"}
+            {lang === "es" ? "En sus palabras" : "Personal highlight"}
           </div>
-          {/* Reserved height so every divider and label sits at the same latitude */}
-          <p className="text-meta text-ink/70 mt-1.5 leading-relaxed md:min-h-[11.5em]">
-            {t(member.interviewStyle)}
+          {/* Italic because these are their own words, not description of them. */}
+          <p className="text-meta italic text-ink/70 mt-1.5 leading-relaxed">
+            {t(member.highlight)}
           </p>
         </div>
       </div>
