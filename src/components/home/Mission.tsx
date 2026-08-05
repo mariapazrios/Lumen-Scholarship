@@ -102,9 +102,16 @@ export default function Mission() {
             <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-8">
               {lang === "es" ? "Nuestros valores" : "Our values"}
             </div>
-            <div className="flex flex-wrap items-center gap-x-10 gap-y-6">
+            {/* The separating dots are hidden on a phone, which left four bold
+                words wrapping as loose text. Below sm they become a 2x2 set,
+                each under its own cobalt rule, so they read as four values
+                rather than four words. From sm up this is the original row. */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:flex sm:flex-wrap sm:items-center sm:gap-x-10 sm:gap-y-6">
               {VALUES.map((v, i) => (
-                <span key={v.en} className="flex items-center gap-x-10">
+                <span
+                  key={v.en}
+                  className="flex items-center border-t-2 border-accent pt-3 sm:border-t-0 sm:pt-0 sm:gap-x-10"
+                >
                   <span className="text-h3 font-bold text-primary tracking-tight">{t(v)}</span>
                   {i < VALUES.length - 1 && (
                     <span
@@ -115,6 +122,14 @@ export default function Mission() {
                 </span>
               ))}
             </div>
+
+            {/* What the money actually buys, named. The majors come from the
+                eleven scholars on the roster, not from an eligibility list. */}
+            <p className="text-body text-ink/75 mt-8 max-w-3xl">
+              {lang === "es"
+                ? "Lumen es una beca STEM+: financiamos ingeniería y ciencias, y también economía y administración. Hoy nuestros estudiantes cursan Ingeniería de Sistemas y Computación, Ingeniería Biomédica, Ingeniería Electrónica, Ingeniería Industrial, Física, Química y Economía."
+                : "Lumen is a STEM+ scholarship: we fund engineering and the sciences, and economics and business alongside them. Our scholars are studying Systems and Computing Engineering, Biomedical Engineering, Electronic Engineering, Industrial Engineering, Physics, Chemistry and Economics."}
+            </p>
           </div>
         </Reveal>
       </div>

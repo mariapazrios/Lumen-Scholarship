@@ -118,6 +118,11 @@ export default function AdmissionsProcess({
                   ? "Lumen elige selectivamente de un grupo ya altamente curado: los finalistas de Quiero Estudiar."
                   : "Lumen cherry-picks from an already highly curated pool: the finalists of Quiero Estudiar."}
               </p>
+              <p className="text-body text-ink/75 mt-4 max-w-lg">
+                {lang === "es"
+                  ? "Es una beca STEM+: ingeniería y ciencias, más economía y administración. Nuestros estudiantes cursan Ingeniería de Sistemas y Computación, Ingeniería Biomédica, Ingeniería Electrónica, Ingeniería Industrial, Física, Química y Economía."
+                  : "It is a STEM+ scholarship: engineering and the sciences, plus economics and business. Our scholars study Systems and Computing Engineering, Biomedical Engineering, Electronic Engineering, Industrial Engineering, Physics, Chemistry and Economics."}
+              </p>
             </Reveal>
 
             {/* Funnel */}
