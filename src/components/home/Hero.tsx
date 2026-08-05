@@ -53,13 +53,6 @@ export default function Hero() {
               </>
             )}
           </h1>
-          {/* Says what the programme concretely is. Deliberately does not repeat
-              the path claim, which now lands once in the Differentiated lead. */}
-          <p className="text-lead font-light text-primary-foreground/75 mt-8 max-w-3xl">
-            {lang === "es"
-              ? "El primer programa de becarios de Colombia, construido con la Universidad de los Andes. Seleccionamos del 1% superior del examen nacional, cubrimos el 95% de la matrícula durante diez semestres y acompañamos a cada Lumen hasta que está trabajando."
-              : "Colombia's first scholar program, built with Universidad de los Andes. We select from the top 1% of the national exam, cover 95% of tuition for ten semesters, and stay with every Lumen until they are working."}
-          </p>
         </Reveal>
       </div>
     </section>

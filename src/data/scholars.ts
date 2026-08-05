@@ -101,12 +101,10 @@ export const SCHOLARS: Scholar[] = [
       en: [
         "Ranks in the top 5% of the physics department",
         "Multi-instrumentalist: electric bass, piano, guitar, and percussion, and part of Los Andes's salsa band",
-        "Trains daily: gym and fútbol, plus the dance rhythms of his Caribbean culture",
       ],
       es: [
         "Está en el 5% superior del departamento de física",
         "Multiinstrumentista: bajo eléctrico, piano, guitarra y percusión, y parte de la banda de salsa de Los Andes",
-        "Entrena a diario: gimnasio y fútbol, además de los ritmos de su cultura caribeña",
       ],
     },
   },
@@ -268,12 +266,10 @@ export const SCHOLARS: Scholar[] = [
       en: [
         "Finalist, Intelligent Planet Hackathon (Google Cloud · KFUPM); only Latin American team, from 500+ worldwide",
         "Member of the Robotic Automation Society; spoke at Colombia's Congreso de la República",
-        "Discovered squash at the sports center, and now owns his own racket",
       ],
       es: [
         "Finalista del Intelligent Planet Hackathon (Google Cloud · KFUPM); único equipo latinoamericano entre más de 500",
         "Miembro de la Robotic Automation Society; participó como invitado en el Congreso de la República",
-        "Descubrió el squash en el centro deportivo, y ya tiene raqueta propia",
       ],
     },
   },
@@ -309,11 +305,9 @@ export const SCHOLARS: Scholar[] = [
     highlights: {
       en: [
         "Weighing a double major with Business Administration",
-        "Learned of his Lumen acceptance on his grandmother's birthday",
       ],
       es: [
         "Considera una doble titulación con Administración",
-        "Conoció su aceptación a Lumen el día del cumpleaños de su abuela",
       ],
     },
   },
@@ -433,11 +427,9 @@ export const SCHOLARS: Scholar[] = [
     },
     highlights: {
       en: [
-        "Took up tennis at the university, and made friends across majors and semesters",
         "Core member of the board-games club, her favorite campus community",
       ],
       es: [
-        "Empezó tenis en la universidad e hizo amigos de todas las carreras y semestres",
         "Miembro activa del club de juegos de mesa, su comunidad favorita del campus",
       ],
     },

@@ -69,6 +69,9 @@ const REPORTS: Array<{ year: string; title: L; note: L; pages: number; size: L }
   },
 ]
 
+/** Oldest cohort first, so the list reads in the order the program grew. */
+const GENERATIONS = ["2024", "2025"] as const
+
 function Portal() {
   const { lang, t, tl } = useLang()
   const [open, setOpen] = useState<string | null>(SCHOLARS[0]?.slug ?? null)
@@ -194,17 +197,42 @@ function Portal() {
               <option value="">
                 {lang === "es" ? "Elige un estudiante…" : "Pick a scholar…"}
               </option>
-              {SCHOLARS.map((s) => (
-                <option key={s.slug} value={s.slug}>
-                  {s.name}
-                </option>
+              {GENERATIONS.map((gen) => (
+                <optgroup
+                  key={gen}
+                  label={lang === "es" ? `Generación ${gen}` : `${gen} Generation`}
+                >
+                  {SCHOLARS.filter((s) => s.generation === gen).map((s) => (
+                    <option key={s.slug} value={s.slug}>
+                      {s.name}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </div>
 
-          <div className="mt-8 space-y-3">
-            {SCHOLARS.map((s) => {
-              const isOpen = open === s.slug
+          {/* Split by cohort: the two generations are at different points in the
+              degree, so comparing a 2025 scholar's terms against a 2024 one's
+              without saying which is which invites the wrong conclusion. */}
+          <div className="mt-8 space-y-12">
+            {GENERATIONS.map((gen) => {
+              const cohort = SCHOLARS.filter((s) => s.generation === gen)
+              if (cohort.length === 0) return null
+              return (
+                <div key={gen}>
+                  <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-4">
+                    <h3 className="text-meta uppercase tracking-widest font-semibold text-primary">
+                      {lang === "es" ? `Generación ${gen}` : `${gen} Generation`}
+                    </h3>
+                    <span className="text-meta text-muted">
+                      {cohort.length} {lang === "es" ? "estudiantes" : "scholars"}
+                    </span>
+                    <span aria-hidden="true" className="flex-1 h-px bg-ink/15 min-w-8" />
+                  </div>
+                  <div className="space-y-3">
+                    {cohort.map((s) => {
+                      const isOpen = open === s.slug
               const record = {
                 grades: SCHOLAR_GRADES[s.slug],
                 essay: essays?.[s.slug],
@@ -400,6 +428,10 @@ function Portal() {
                       </div>
                     </div>
                   )}
+                </div>
+                      )
+                    })}
+                  </div>
                 </div>
               )
             })}

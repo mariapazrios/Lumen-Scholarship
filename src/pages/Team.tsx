@@ -97,8 +97,15 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
                 ? "En sus palabras"
                 : "Personal highlight"}
           </div>
-          {/* Italic because these are their own words, not description of them. */}
-          <p className="text-meta italic text-ink/70 mt-1.5 leading-relaxed">
+          {/* Italic because these are their own words, not description of them.
+              The founder's message is set upright and in full ink instead: it is
+              the statement of intent for the programme, not a board member's
+              reflection on it. */}
+          <p
+            className={`text-meta mt-1.5 leading-relaxed ${
+              member.founder ? "text-ink" : "italic text-ink/70"
+            }`}
+          >
             {t(member.highlight)}
           </p>
         </div>
