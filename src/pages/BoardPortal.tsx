@@ -257,7 +257,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   return (
     <>
       <section className="bg-primary text-primary-foreground">
-        <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-12 md:py-16">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
@@ -322,7 +322,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
       </section>
 
       <section className="bg-background">
-        <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-12 md:py-16">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
           {status === "loading" && (
             <p role="status" className="text-body text-muted">
               {lang === "es" ? "Cargando candidatos." : "Loading candidates."}
@@ -631,7 +631,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                         <div className="text-meta uppercase tracking-widest text-muted">
                           {lang === "es" ? "Respuestas cortas" : "Short answers"}
                         </div>
-                        <div className="bg-surface rounded-sm p-5 mt-3 max-w-3xl">
+                        <div className="bg-surface rounded-sm p-4 sm:p-5 mt-3 max-w-3xl">
                           <Prose text={applicant.answers} />
                         </div>
                       </div>
@@ -842,7 +842,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
       {/* Where the candidates come from */}
       <section className="bg-background">
-        <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-12 md:py-16">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
           <Reveal>
             <div className="text-meta uppercase tracking-widest text-muted mb-3">
               {lang === "es" ? "Origen" : "Origin"}
@@ -861,7 +861,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
       {/* Consolidated */}
       <section className="bg-surface-soft">
-        <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-12 md:py-16">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
           <Reveal>
             <div className="text-meta uppercase tracking-widest text-muted mb-3">
               {lang === "es" ? "Consolidado" : "Consolidated"}
@@ -878,7 +878,13 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
             </p>
           </Reveal>
 
-          <div className="mt-10 overflow-x-auto">
+          {/* Six columns cannot fit a phone, so the table scrolls sideways. Say
+              so: cut-off content with no cue reads as a broken layout, and the
+              same numbers appear again as cards below. */}
+          <p className="md:hidden text-meta uppercase tracking-widest text-muted mt-8">
+            {lang === "es" ? "Desliza para ver la tabla →" : "Swipe to see the table →"}
+          </p>
+          <div className="mt-4 md:mt-10 overflow-x-auto">
             <table className="w-full min-w-[52rem] text-left border-collapse">
               <thead>
                 <tr className="border-b border-ink/15">

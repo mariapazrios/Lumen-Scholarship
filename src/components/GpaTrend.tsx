@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useLang } from "../lib/i18n"
+import { useIsNarrow } from "../lib/viewport"
 import type { ScholarTermRecord } from "../data/scholarTerms"
 
 const ACCENT = "var(--color-cobalt)"
@@ -19,13 +20,27 @@ export default function GpaTrend({
   achievements: string[]
 }) {
   const { lang } = useLang()
+  const narrow = useIsNarrow()
   const [active, setActive] = useState<number | null>(null)
   const terms = record.terms
   if (terms.length === 0) return null
 
-  const W = 620
+  /**
+   * Two geometries, not one scaled. On a phone this chart sits inside about
+   * 280px of column, so a 620 unit viewBox would render every label at roughly
+   * a third of its size. The narrow variant is drawn near 1:1 instead, which
+   * costs some width and buys legible numbers.
+   */
+  const W = narrow ? 280 : 620
   const H = 200
-  const PAD = { l: 34, r: 16, t: 16, b: 34 }
+  const PAD = narrow ? { l: 30, r: 6, t: 20, b: 30 } : { l: 34, r: 16, t: 16, b: 34 }
+  const FS = narrow
+    ? { axis: 11, value: 13, term: 11, none: 11 }
+    : { axis: 10, value: 11, term: 10, none: 10 }
+  // Label offsets travel with the geometry so the wide chart is unchanged: at
+  // narrow widths the axis gutter is smaller and a bigger label needs to sit
+  // closer in, or "5.0" clips off the left edge.
+  const OFF = narrow ? { axis: 7, value: 6, term: 10 } : { axis: 8, value: 8, term: 12 }
   const MAX = 5.0
   const innerW = W - PAD.l - PAD.r
   const innerH = H - PAD.t - PAD.b
@@ -53,8 +68,8 @@ export default function GpaTrend({
           <g key={tk}>
             <line x1={PAD.l} x2={W - PAD.r} y1={y(tk)} y2={y(tk)}
               stroke="var(--color-ink)" strokeOpacity={0.08} />
-            <text x={PAD.l - 8} y={y(tk) + 4} textAnchor="end"
-              fontSize="10" fill="var(--color-muted)" className="tabular-nums">
+            <text x={PAD.l - OFF.axis} y={y(tk) + 4} textAnchor="end"
+              fontSize={FS.axis} fill="var(--color-muted)" className="tabular-nums">
               {tk.toFixed(1)}
             </text>
           </g>
@@ -66,7 +81,7 @@ export default function GpaTrend({
         {terms.map((t, i) => (
           <g key={t.term}>
             {t.average == null ? (
-              <text x={x(i)} y={y(2.5) + 4} textAnchor="middle" fontSize="10"
+              <text x={x(i)} y={y(2.5) + 4} textAnchor="middle" fontSize={FS.none}
                 fill="var(--color-muted)" fontStyle="italic">
                 {lang === "es" ? "Sin matrícula" : "Not enrolled"}
               </text>
@@ -83,13 +98,13 @@ export default function GpaTrend({
                   onMouseEnter={() => setActive(i)}
                   onMouseLeave={() => setActive(null)}
                 />
-                <text x={x(i)} y={y(t.average) - 8} textAnchor="middle"
-                  fontSize="11" fontWeight="700" fill="var(--color-navy)" className="tabular-nums">
+                <text x={x(i)} y={y(t.average) - OFF.value} textAnchor="middle"
+                  fontSize={FS.value} fontWeight="700" fill="var(--color-navy)" className="tabular-nums">
                   {t.average.toFixed(2)}
                 </text>
               </>
             )}
-            <text x={x(i)} y={H - 12} textAnchor="middle" fontSize="10"
+            <text x={x(i)} y={H - OFF.term} textAnchor="middle" fontSize={FS.term}
               fill="var(--color-muted)" className="tabular-nums">
               {t.term}
             </text>

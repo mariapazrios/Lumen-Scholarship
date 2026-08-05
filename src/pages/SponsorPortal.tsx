@@ -87,7 +87,7 @@ function Portal() {
           aria-hidden="true"
           className="pointer-events-none select-none absolute -right-32 -top-32 w-[30rem] opacity-[0.06] brightness-0 invert"
         />
-        <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-12 md:py-16 relative">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16 relative">
           <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
             <div className="text-meta uppercase tracking-widest text-primary-foreground/60">
               {lang === "es" ? "Para patrocinadores" : "For sponsors"}
@@ -121,7 +121,7 @@ function Portal() {
 
       {/* Reports */}
       <section className="bg-background">
-        <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-12 md:py-16">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
           <Reveal>
             <div className="text-meta uppercase tracking-widest text-muted mb-4">
               {lang === "es" ? "Informes" : "Reports"}
@@ -163,7 +163,7 @@ function Portal() {
 
       {/* Scholar profiles */}
       <section className="bg-surface-soft">
-        <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-12 md:py-16">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
           <Reveal>
             <div className="text-meta uppercase tracking-widest text-muted mb-4">
               {lang === "es" ? "Perfiles" : "Profiles"}
@@ -247,7 +247,7 @@ function Portal() {
                     type="button"
                     aria-expanded={isOpen}
                     onClick={() => setOpen(isOpen ? null : s.slug)}
-                    className="w-full text-left px-6 py-5 flex flex-wrap items-center gap-x-6 gap-y-2 cursor-pointer hover:bg-surface/60 transition-colors duration-200"
+                    className="w-full text-left px-4 sm:px-6 py-4 sm:py-5 flex flex-wrap items-center gap-x-6 gap-y-2 cursor-pointer hover:bg-surface/60 transition-colors duration-200"
                   >
                     <img
                       src={`/scholars/${s.slug}.jpg`}
@@ -266,13 +266,13 @@ function Portal() {
                   </button>
 
                   {isOpen && (
-                    <div className="px-6 pb-6 pt-2 border-t border-ink/10">
+                    <div className="px-4 sm:px-6 pb-6 pt-2 border-t border-ink/10">
                       {/* No overview here: the public scholars page already carries the
                           story and quote. This view is the detail sponsors cannot get
                           elsewhere. */}
                       {/* Trend first: this is the view sponsors come here for */}
                       {SCHOLAR_TERMS[s.slug] && (
-                        <div className="bg-surface rounded-sm p-5 mb-6">
+                        <div className="bg-surface rounded-sm p-4 sm:p-5 mb-6">
                           <div className="flex flex-wrap items-baseline justify-between gap-3 mb-3">
                             <div className="text-meta uppercase tracking-widest text-muted">
                               {lang === "es" ? "Promedio por semestre" : "Average by term"}
@@ -297,7 +297,7 @@ function Portal() {
                         {/* Achievements are not listed here: they appear as callouts
                             against the terms they happened in, on the chart above. */}
                         <div>
-                          <div className="bg-surface rounded-sm p-5">
+                          <div className="bg-surface rounded-sm p-4 sm:p-5">
                             <div className="flex items-baseline justify-between gap-3">
                               <div className="text-meta uppercase tracking-widest text-muted">
                                 {lang === "es"
@@ -358,7 +358,7 @@ function Portal() {
                         </div>
                         <div>
                           {/* Grades */}
-                          <div className="bg-surface rounded-sm p-5">
+                          <div className="bg-surface rounded-sm p-4 sm:p-5">
                             <div className="text-meta uppercase tracking-widest text-muted">
                               {lang === "es" ? "Desempeño académico" : "Academic performance"}
                             </div>
