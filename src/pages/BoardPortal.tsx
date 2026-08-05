@@ -98,6 +98,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const [saved, setSaved] = useState(false)
   const [status, setStatus] = useState<"loading" | "ready" | "saving" | "error">("loading")
   const [filters, setFilters] = useState({ department: "", program: "", gender: "" })
+  const [sort, setSort] = useState<"name" | "saber-desc" | "saber-asc">("name")
 
   const refresh = useCallback(async () => {
     try {
@@ -164,7 +165,25 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     (!f.program || a.program === f.program) &&
     (!f.gender || a.gender === f.gender)
 
-  const visible = people.filter(matches(filters))
+  /**
+   * Candidates with no Saber 11 on record sink to the bottom in both
+   * directions. Ascending order is for finding the bottom of the field, and a
+   * missing score is not the bottom of the field, it is an unknown.
+   */
+  const ordered = (xs: Applicant[]) => {
+    const by = [...xs]
+    const byName = (a: Applicant, b: Applicant) => a.name.localeCompare(b.name)
+    if (sort === "name") return by.sort(byName)
+    const dir = sort === "saber-desc" ? -1 : 1
+    return by.sort((a, b) => {
+      if (a.saber11 == null && b.saber11 == null) return byName(a, b)
+      if (a.saber11 == null) return 1
+      if (b.saber11 == null) return -1
+      return (a.saber11 - b.saber11) * dir || byName(a, b)
+    })
+  }
+
+  const visible = ordered(people.filter(matches(filters)))
 
   /**
    * Changing a filter can hide the candidate being read, which left the detail
@@ -317,6 +336,32 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 </div>
 
                 <div className="space-y-2 mb-5">
+                  {/* Sort sits above the filters: it changes the reading order of
+                      the whole field, where the filters change who is in it. */}
+                  <label className="block">
+                    <span className="sr-only">
+                      {lang === "es" ? "Ordenar por" : "Sort by"}
+                    </span>
+                    <select
+                      value={sort}
+                      onChange={(e) => setSort(e.target.value as typeof sort)}
+                      className="w-full bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink cursor-pointer focus:outline-none focus:border-accent"
+                    >
+                      <option value="name">
+                        {lang === "es" ? "Orden: nombre (A-Z)" : "Sort: name (A-Z)"}
+                      </option>
+                      <option value="saber-desc">
+                        {lang === "es"
+                          ? "Orden: ICFES, mayor a menor"
+                          : "Sort: ICFES, highest first"}
+                      </option>
+                      <option value="saber-asc">
+                        {lang === "es"
+                          ? "Orden: ICFES, menor a mayor"
+                          : "Sort: ICFES, lowest first"}
+                      </option>
+                    </select>
+                  </label>
                   {[
                     {
                       key: "department" as const,
@@ -388,14 +433,18 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                           </div>
                           <div className="text-meta text-muted mt-0.5">
                             {(() => {
-                              const meta = [a.program, a.city].filter(Boolean).join(" · ")
-                              if (a.essay) return meta || "—"
-                              const none = lang === "es" ? "sin ensayo" : "no essay"
-                              return meta
-                                ? `${meta} · ${none}`
-                                : lang === "es"
-                                  ? "Sin ensayo enviado"
-                                  : "No essay submitted"
+                              // The score rides in the meta line so the ICFES sort is
+                              // legible: an ordered list with the number hidden asks
+                              // the reader to trust it.
+                              const saber =
+                                a.saber11 != null
+                                  ? `ICFES ${a.saber11}`
+                                  : lang === "es"
+                                    ? "sin ICFES"
+                                    : "no ICFES"
+                              const parts = [a.program, a.city, saber].filter(Boolean)
+                              if (!a.essay) parts.push(lang === "es" ? "sin ensayo" : "no essay")
+                              return parts.join(" · ")
                             })()}
                           </div>
                         </button>
