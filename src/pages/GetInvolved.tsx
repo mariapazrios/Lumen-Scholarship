@@ -58,13 +58,13 @@ const RETURNS: Array<{ n: string; title: L; body: L }> = [
 ]
 
 /**
- * Companies lead. Under the talent-pipeline framing a company that opens a role
- * is doing the last step of the program, not making a smaller donation, so it
- * reads first and the individual routes follow.
+ * Split by who is reading and what they have to give. Corporates lead: under the
+ * talent-pipeline framing a company that opens a role is doing the last step of
+ * the program, and the individual routes follow.
  */
 const OTHER_WAYS: Array<{ heading: L; items: L[] }> = [
   {
-    heading: { en: "Companies open doors.", es: "Las empresas abren puertas." },
+    heading: { en: "Corporates: Access", es: "Empresas: Acceso" },
     items: [
       { en: "Open internships and early-career roles", es: "Abre prácticas y vacantes de inicio de carrera" },
       { en: "Fast-track Lumen applications", es: "Agiliza los procesos de selección para los Lumens" },
@@ -72,7 +72,7 @@ const OTHER_WAYS: Array<{ heading: L; items: L[] }> = [
     ],
   },
   {
-    heading: { en: "Individuals give time.", es: "Las personas aportan tiempo." },
+    heading: { en: "Individuals: Time and network", es: "Personas: Tiempo y red" },
     items: [
       { en: "Speak at a mentorship session", es: "Da una charla de mentoría" },
       { en: "Take a 15-minute call with a Lumen", es: "Toma una llamada de 15 minutos con un Lumen" },
@@ -83,23 +83,23 @@ const OTHER_WAYS: Array<{ heading: L; items: L[] }> = [
 ]
 
 /**
- * Tax treatment, as two banners under the commitment rather than a section of
- * its own. It is the mechanics of a decision already made, so it does not need
- * a headline competing with the reasons to give.
+ * Tax treatment, reduced to a sticker and one line per jurisdiction. It is the
+ * mechanics of a decision already made, so it does not need a headline, a card,
+ * or the payment-method detail that used to run alongside it.
  */
 const TAX: Array<{ jurisdiction: L; detail: L }> = [
   {
     jurisdiction: { en: "United States", es: "Estados Unidos" },
     detail: {
-      en: "Through the University of the Andes Foundation, a 501(c)(3) rated 4/4 on Charity Navigator, so the gift is fully deductible. Online, wire, or check, and many employers match.",
-      es: "A través de la University of the Andes Foundation, una 501(c)(3) con calificación 4/4 en Charity Navigator, totalmente deducible. En línea, transferencia o cheque, y muchas empresas duplican la donación.",
+      en: "Through the University of the Andes Foundation, a 501(c)(3).",
+      es: "A través de la University of the Andes Foundation, una 501(c)(3).",
     },
   },
   {
     jurisdiction: { en: "Colombia", es: "Colombia" },
     detail: {
-      en: "Through Universidad de los Andes, carrying a 25% tax benefit against renta líquida. Transfer, PSE, card, or check.",
-      es: "A través de la Universidad de los Andes, con un descuento tributario del 25% sobre la renta líquida. Transferencia, PSE, tarjeta o cheque.",
+      en: "Through Universidad de los Andes, carrying a 25% tax benefit against renta líquida.",
+      es: "A través de la Universidad de los Andes, con un descuento tributario del 25% sobre la renta líquida.",
     },
   },
 ]
@@ -131,11 +131,27 @@ function SponsorsSection() {
   return (
     <section id="sponsors" className="bg-surface-soft scroll-mt-24">
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-24">
+        {/* The record leads the page, ahead of any heading. The numbers are the
+            argument; the heading and the tiers are what you do about them. */}
         <Reveal>
-          <div className="text-meta uppercase tracking-widest text-muted mb-4">
-            {lang === "es" ? "Patrocinadores" : "Sponsors"}
+          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-ink/15">
+            {PROOF.map((p) => (
+              <div key={p.label.en} className="py-5 sm:py-0 sm:px-8 sm:first:pl-0 sm:last:pr-0">
+                <Tricolor className="w-7 h-[3px] mb-5" />
+                <div className="text-stat font-bold text-primary tabular-nums leading-none">
+                  {t(p.value)}
+                </div>
+                <div className="text-meta uppercase tracking-widest text-muted mt-4">
+                  {t(p.label)}
+                </div>
+                <div className="text-meta text-muted mt-1.5 tabular-nums">{t(p.sub)}</div>
+              </div>
+            ))}
           </div>
-          <h2 className="text-h2 font-semibold text-primary">
+        </Reveal>
+
+        <Reveal delay={80}>
+          <h2 className="text-h2 font-semibold text-primary mt-16">
             {lang === "es" ? (
               <>
                 Financia a un Lumen.{" "}
@@ -150,41 +166,8 @@ function SponsorsSection() {
           </h2>
         </Reveal>
 
-        {/* The record: facts, not choices. Boxed and hoverable like the tiers
-            below, they read as a third row of things to pick from. Unboxed, on
-            rules, at stat size, they read as what they are. */}
-        <Reveal delay={80}>
-          <div className="mt-12">
-            <Tricolor className="w-7 h-[3px] mb-4" />
-            <div className="text-meta uppercase tracking-widest text-muted mb-7">
-              {lang === "es" ? "El registro hasta hoy" : "The record so far"}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-ink/15">
-              {PROOF.map((p) => (
-                <div
-                  key={p.label.en}
-                  className="py-5 sm:py-0 sm:px-8 sm:first:pl-0 sm:last:pr-0"
-                >
-                  <div className="text-stat font-bold text-primary tabular-nums leading-none">
-                    {t(p.value)}
-                  </div>
-                  <div className="text-meta uppercase tracking-widest text-muted mt-4">
-                    {t(p.label)}
-                  </div>
-                  <div className="text-meta text-muted mt-1.5 tabular-nums">{t(p.sub)}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Reveal>
-
         {/* Tiers */}
-        <Reveal delay={80}>
-          <div className="text-meta uppercase tracking-widest text-muted mt-16 mb-5">
-            {lang === "es" ? "Formas de financiar" : "Ways to fund"}
-          </div>
-        </Reveal>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
           {TIERS.map((tier, i) => (
             <Reveal key={tier.label.en} delay={i * 110}>
               <div className="rounded-sm p-8 h-full flex flex-col bg-white border border-ink/10 transition-transform duration-300 hover:-translate-y-1">
@@ -218,24 +201,22 @@ function SponsorsSection() {
           </p>
         </Reveal>
 
-        {/* Deductibility, as banners: where you file determines the route. */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          {TAX.map((row, i) => (
-            <Reveal key={row.jurisdiction.en} delay={140 + i * 100}>
-              <div className="h-full bg-white border border-ink/10 border-l-2 border-l-primary rounded-sm px-6 py-5">
-                <div className="flex flex-wrap items-baseline gap-x-3">
-                  <span className="text-body font-semibold text-primary">
-                    {t(row.jurisdiction)}
-                  </span>
-                  <span className="text-meta uppercase tracking-widest text-accent">
-                    {lang === "es" ? "Deducible" : "Deductible"}
-                  </span>
-                </div>
-                <p className="text-body text-ink/75 mt-2">{t(row.detail)}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
+        {/* Deductibility as a sticker plus one line per jurisdiction. */}
+        <Reveal delay={140}>
+          <div className="mt-10 flex flex-col sm:flex-row sm:items-center gap-x-8 gap-y-5">
+            <span className="self-start sm:self-center shrink-0 -rotate-3 inline-block rounded-full border-2 border-accent text-accent text-meta uppercase tracking-widest font-semibold px-5 py-2">
+              {lang === "es" ? "Deducible de impuestos" : "Tax deductible"}
+            </span>
+            <div className="space-y-1.5">
+              {TAX.map((row) => (
+                <p key={row.jurisdiction.en} className="text-body text-ink/75">
+                  <span className="font-semibold text-primary">{t(row.jurisdiction)}</span>{" "}
+                  {t(row.detail)}
+                </p>
+              ))}
+            </div>
+          </div>
+        </Reveal>
       </div>
     </section>
   )
@@ -272,10 +253,10 @@ function ReturnsSection() {
               </>
             )}
           </h2>
-          <p className="text-lead font-light text-primary-foreground/75 mt-6 max-w-3xl">
+          <p className="text-lead font-light text-primary-foreground/75 mt-6 max-w-4xl">
             {lang === "es"
-              ? "Tú financias. Nosotros elegimos, formamos y conectamos. La relación dura los cinco años de la carrera y llega hasta el primer empleo."
-              : "You fund. We select, develop, and connect. The relationship runs the full five years of the degree and into the first job."}
+              ? "Los patrocinadores cubren la beca y nosotros nos encargamos del resto: elegimos a quién se le otorga, acompañamos a cada estudiante durante los cinco años de la carrera y lo presentamos a las empresas donde va a empezar su vida profesional."
+              : "Sponsors cover the scholarship and we take it from there, choosing who receives it, working alongside them through all five years of the degree, and introducing them to the companies where they will start their careers."}
           </p>
         </Reveal>
 
@@ -284,7 +265,11 @@ function ReturnsSection() {
             <Reveal key={r.n} delay={i * 100}>
               <div className="border border-primary-foreground/15 rounded-sm p-7 md:p-8 h-full bg-primary-foreground/[0.03]">
                 <div className="flex items-baseline justify-between gap-4">
-                  <h3 className="text-h3 font-semibold">{t(r.title)}</h3>
+                  {/* Two lines reserved on all three: the longest title wraps, and
+                      without this the bodies start at three different heights. */}
+                  <h3 className="text-h3 font-semibold leading-tight md:min-h-[2.4em]">
+                    {t(r.title)}
+                  </h3>
                   <span className="text-meta font-semibold tracking-widest text-primary-foreground/50">
                     {r.n}
                   </span>
@@ -303,28 +288,31 @@ function OtherWaysSection() {
   const { lang, t } = useLang()
   return (
     <section id="other-ways" className="bg-surface scroll-mt-24">
-      <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-24">
-        {/* No eyebrow: it said exactly what the heading now says. */}
+      {/* Deliberately quieter than the sponsor section above: smaller heading,
+          tighter band, and a line that says outright where this sits. Funding a
+          scholar is the ask; everything here is what people do instead. */}
+      <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-12 md:py-16">
         <Reveal>
-          <h2 className="text-h2 font-semibold text-primary">
-            {lang === "es" ? (
-              <>
-                Otras formas <em className="italic font-light">de vincularse.</em>
-              </>
-            ) : (
-              <>
-                Other ways <em className="italic font-light">to get involved.</em>
-              </>
-            )}
+          <h2 className="text-h3 font-semibold text-primary">
+            {lang === "es"
+              ? "Otras formas de vincularse."
+              : "Other ways to get involved."}
           </h2>
+          <p className="text-body text-ink/70 mt-3 max-w-2xl">
+            {lang === "es"
+              ? "Patrocinar es lo que sostiene el programa. Para quienes no pueden financiar una beca, estas son las demás formas de aportar."
+              : "Sponsorship is what keeps the program running. For those who cannot fund a scholarship, these are the other ways to contribute."}
+          </p>
         </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-10 mt-10">
           {OTHER_WAYS.map((group, gi) => (
             <Reveal key={group.heading.en} delay={gi * 120}>
-              <div className="border-t-2 border-primary pt-6">
-                <h3 className="text-h3 font-semibold text-primary">{t(group.heading)}</h3>
-                <ul className="mt-5 space-y-3">
+              <div className="border-t border-ink/20 pt-5">
+                <h3 className="text-body font-semibold uppercase tracking-widest text-primary">
+                  {t(group.heading)}
+                </h3>
+                <ul className="mt-4 space-y-3">
                   {group.items.map((item) => (
                     <li key={item.en} className="text-body text-ink/80 flex gap-3">
                       <span
@@ -364,23 +352,18 @@ export default function GetInvolved() {
             <h1 className="text-display font-light">
               {lang === "es" ? (
                 <>
-                  Tú financias.
+                  Los patrocinadores financian,
                   <br />
-                  <em className="italic font-semibold">Nosotros encontramos el talento.</em>
+                  <em className="italic font-semibold">Lumen forma.</em>
                 </>
               ) : (
                 <>
-                  You fund it.
+                  Sponsors fund,
                   <br />
-                  <em className="italic font-semibold">We find the talent.</em>
+                  <em className="italic font-semibold">Lumen fosters.</em>
                 </>
               )}
             </h1>
-            <p className="text-lead font-light text-primary-foreground/75 mt-6 max-w-3xl">
-              {lang === "es"
-                ? "Un Lumen cuesta US$50K: diez semestres, una sesión de verano y el sostenimiento. Nosotros elegimos entre miles de aspirantes, los formamos durante cinco años y los conectamos con las empresas que contratan en su campo. Otros aportan tiempo y acceso. Aquí está cómo funciona cada camino."
-                : "One Lumen costs US$50K: ten semesters, a summer session, and the living stipend. We select from thousands of applicants, develop them for five years, and connect them to the companies hiring in their field. Others give time and access. Here is how each route works."}
-            </p>
           </Reveal>
         </div>
       </section>
