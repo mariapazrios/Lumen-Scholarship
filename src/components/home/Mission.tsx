@@ -7,9 +7,10 @@ const PILLARS: Array<{ n: string; title: L; body: L }> = [
   {
     n: "01",
     title: { en: "Robust financial aid", es: "Apoyo financiero integral" },
+    // {andes} is replaced by a link to uniandes.edu.co when the card renders.
     body: {
-      en: "A 95% full-ride scholarship, which includes 10 semesters, a summer session, and a $1M COP living stipend every semester.",
-      es: "Una beca del 95% que cubre 10 semestres y una sesión de verano, más un apoyo de sostenimiento de $1M COP por semestre.",
+      en: "A 95% full-ride scholarship to {andes}, Colombia's top private university, which includes 10 semesters, a summer session, and a $1M COP living stipend every semester.",
+      es: "Una beca del 95% para {andes}, la mejor universidad privada de Colombia, que cubre 10 semestres y una sesión de verano, más un apoyo de sostenimiento de $1M COP por semestre.",
     },
   },
   {
@@ -37,6 +38,30 @@ const VALUES: L[] = [
   { en: "Community", es: "Comunidad" },
 ]
 
+/**
+ * Splits a pillar body on the {andes} placeholder and links that half. Keeping
+ * the marker inside the translated string means the link lands in the right
+ * place in both languages, where Spanish word order puts it earlier.
+ */
+function AndesLink({ text }: { text: string }) {
+  const [before, after] = text.split("{andes}")
+  if (after === undefined) return <>{text}</>
+  return (
+    <>
+      {before}
+      <a
+        href="https://www.uniandes.edu.co/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline underline-offset-2 decoration-accent/40 hover:decoration-accent hover:text-foreground transition-colors duration-200"
+      >
+        Los Andes
+      </a>
+      {after}
+    </>
+  )
+}
+
 export default function Mission() {
   const { lang, t } = useLang()
 
@@ -63,7 +88,9 @@ export default function Mission() {
                 <h3 className="font-semibold text-primary mt-4 leading-tight text-[clamp(1.25rem,1.6vw,1.6rem)] md:min-h-[2.4em] lg:min-h-0 lg:whitespace-nowrap">
                   {t(p.title)}
                 </h3>
-                <p className="text-body text-ink/75 mt-3">{t(p.body)}</p>
+                <p className="text-body text-ink/75 mt-3">
+                  <AndesLink text={t(p.body)} />
+                </p>
               </div>
             </Reveal>
           ))}

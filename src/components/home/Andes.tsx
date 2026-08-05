@@ -21,9 +21,19 @@ export default function Andes() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 lg:gap-24 items-center">
           <Reveal>
             <div>
-              <div className="text-meta uppercase tracking-widest text-muted mb-4">
+              <div className="text-meta uppercase tracking-widest text-muted mb-5">
                 {lang === "es" ? "Aliado institucional" : "Institutional partner"}
               </div>
+              {/* The partner's own mark, once, where the section names them.
+                  Navy and white variants ship separately, the same convention
+                  the Lumen logos use, because currentColor cannot reach an
+                  <img>. Extracted from the 2024 annual report's vector artwork. */}
+              <img
+                src="/uniandes-navy.svg"
+                alt="Universidad de los Andes"
+                className="h-12 md:h-14 w-auto mb-6"
+                loading="lazy"
+              />
               <h2 className="text-h2 font-semibold text-primary">
                 <a
                   href="https://www.uniandes.edu.co/"

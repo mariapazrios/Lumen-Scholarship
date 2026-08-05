@@ -29,7 +29,7 @@ export default function Footer() {
                 href="#/sponsors"
                 className="text-meta uppercase tracking-widest text-primary-foreground/60 hover:text-primary-foreground transition-colors duration-200"
               >
-                {lang === "es" ? "Patrocinadores" : "For sponsors"}
+                {lang === "es" ? "Acceso patrocinadores" : "Sponsor login"}
               </a>
             </nav>
             <div className="flex items-center gap-3">

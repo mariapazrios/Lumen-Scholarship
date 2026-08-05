@@ -446,7 +446,7 @@ export default function SponsorPortal() {
   return (
     <PasscodeGate
       role="sponsor"
-      eyebrow={{ en: "For sponsors", es: "Para patrocinadores" }}
+      eyebrow={{ en: "Sponsor login", es: "Acceso patrocinadores" }}
       heading={{
         en: "Enter the sponsor access code.",
         es: "Ingresa el código de acceso de patrocinadores.",

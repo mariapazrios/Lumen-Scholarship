@@ -85,8 +85,8 @@ function GpaByMajor() {
       <div className="flex flex-wrap items-baseline justify-between gap-3 mb-5">
         <h3 className="text-body font-semibold text-primary">
           {lang === "es"
-            ? "Promedio por carrera: Lumen vs promedio total de la carrera"
-            : "GPA by major: Lumen vs total major average"}
+            ? "Promedio por carrera: Lumen vs el promedio de Los Andes"
+            : "GPA by major: Lumen vs the Andes average"}
         </h3>
         <div className="flex items-center gap-5 text-meta text-muted">
           <span className="flex items-center gap-2">
@@ -95,7 +95,7 @@ function GpaByMajor() {
           </span>
           <span className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: CONTEXT }} />
-            {lang === "es" ? "Promedio de la carrera" : "Major average"}
+            {lang === "es" ? "Promedio Los Andes" : "Andes average"}
           </span>
         </div>
       </div>
