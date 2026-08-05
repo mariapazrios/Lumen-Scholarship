@@ -114,6 +114,20 @@ export async function saveRating(candidate: string, member: string, rating: Rati
   if (!res.ok) throw new Error(`rating save failed: ${res.status}`)
 }
 
+/**
+ * Clear one member's rating for one candidate. Scoped to the pair on both
+ * sides of the wire: a member removes their own read, not the board's.
+ */
+export async function deleteRating(candidate: string, member: string) {
+  const res = await fetch("/api/ratings", {
+    method: "DELETE",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ candidate, member }),
+  })
+  if (res.status === 401) throw new SessionExpired()
+  if (!res.ok) throw new Error(`rating delete failed: ${res.status}`)
+}
+
 // (emptyRating, the all-3s default, is gone: a pre-filled form let one stray
 // Save record a complete rating nobody chose. Drafts now start unset — see
 // BoardPortal's Draft type.)

@@ -8,7 +8,13 @@ export const config = { runtime: "edge" }
  *
  * This is the piece that could not work in the browser: a consolidated view
  * needs every member's scores in one place. GET returns all ratings for the
- * active cycle; POST upserts the caller's rating for one candidate.
+ * active cycle, POST upserts one member's rating for one candidate, and DELETE
+ * removes one.
+ *
+ * DELETE takes a member as well as a candidate and removes exactly that pair,
+ * so a member clears their own read and nobody else's. One shared board
+ * passcode means the server cannot verify who is asking, which is the same
+ * reason POST trusts the member name the client sends.
  */
 export default async function handler(req: Request): Promise<Response> {
   const role = await readSession(req)
@@ -70,6 +76,30 @@ export default async function handler(req: Request): Promise<Response> {
             updated_at = NOW()
     `
     return json({ ok: true })
+  }
+
+  if (req.method === "DELETE") {
+    let body: { candidate?: string; member?: string }
+    try {
+      body = await req.json()
+    } catch {
+      return json({ error: "bad request" }, { status: 400 })
+    }
+
+    const { candidate, member } = body
+    // Both are required: without the member this would clear the whole board's
+    // reads on a candidate, which is not a thing any button should be able to do.
+    if (!candidate || !member) return json({ error: "bad request" }, { status: 400 })
+
+    // RETURNING rather than rowCount: the Neon HTTP driver leaves rowCount
+    // undefined on a DELETE, so counting the returned rows is what actually
+    // reports whether anything was removed.
+    const { rows } = await sql`
+      DELETE FROM lumen_ratings
+      WHERE candidate = ${candidate} AND member = ${member}
+      RETURNING candidate
+    `
+    return json({ ok: true, deleted: rows.length })
   }
 
   return json({ error: "method not allowed" }, { status: 405 })

@@ -17,6 +17,7 @@ import {
   SessionExpired,
   VALUES,
   consolidate,
+  deleteRating,
   fetchRatings,
   loadMember,
   readOfScores,
@@ -97,6 +98,9 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const [status, setStatus] = useState<"loading" | "ready" | "saving" | "error">("loading")
   const [filters, setFilters] = useState({ department: "", program: "", gender: "" })
   const [sort, setSort] = useState<"name" | "saber-desc" | "saber-asc">("name")
+  // Arms the second click on "Delete my rating". Reset whenever the target
+  // changes, so a confirm armed on one candidate cannot fire on the next.
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const refresh = useCallback(async () => {
     try {
@@ -198,12 +202,14 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     setActive(first?.slug ?? "")
     setDraft(first ? (store[first.slug]?.[member] ?? emptyDraft()) : emptyDraft())
     setSaved(false)
+    setConfirmDelete(false)
   }
 
   const pick = (slug: string) => {
     setActive(slug)
     setDraft(store[slug]?.[member] ?? emptyDraft())
     setSaved(false)
+    setConfirmDelete(false)
   }
 
   const chooseMember = (slug: string) => {
@@ -211,6 +217,23 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     saveMember(slug)
     setDraft(store[active]?.[slug] ?? emptyDraft())
     setSaved(false)
+    setConfirmDelete(false)
+  }
+
+  /** Clears this member's own saved rating for the candidate on screen. */
+  const removeMyRating = async () => {
+    if (!member || !store[active]?.[member] || status === "saving") return
+    setStatus("saving")
+    try {
+      await deleteRating(active, member)
+      await refresh()
+      setDraft(emptyDraft())
+      setSaved(false)
+      setConfirmDelete(false)
+    } catch (e) {
+      if (e instanceof SessionExpired) onSessionLost()
+      else setStatus("error")
+    }
   }
 
   const commit = async () => {
@@ -758,6 +781,32 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                                     ? "Califica los cuatro valores y elige una recomendación."
                                     : "Score all four values and pick a recommendation."}
                               </span>
+                            )}
+
+                            {/* Only once this member has something saved to remove.
+                                Two clicks, because it is not recoverable and the
+                                button sits next to Save. */}
+                            {member && store[active]?.[member] && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  confirmDelete ? removeMyRating() : setConfirmDelete(true)
+                                }
+                                disabled={status === "saving"}
+                                className={`ml-auto text-meta uppercase tracking-widest rounded-sm px-4 py-2.5 border cursor-pointer transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${
+                                  confirmDelete
+                                    ? "border-accent text-accent font-semibold"
+                                    : "border-ink/15 text-muted hover:border-accent/50 hover:text-accent"
+                                }`}
+                              >
+                                {confirmDelete
+                                  ? lang === "es"
+                                    ? "¿Seguro? Eliminar"
+                                    : "Sure? Delete"
+                                  : lang === "es"
+                                    ? "Eliminar mi calificación"
+                                    : "Delete my rating"}
+                              </button>
                             )}
                             {saved && status === "ready" && (
                               <span role="status" className="text-body text-accent">
