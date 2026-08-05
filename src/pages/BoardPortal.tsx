@@ -115,7 +115,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
         if (!live) return
         setPeople(roster)
         setStore(ratings)
-        const first = roster.find((a) => a.essay) ?? roster[0]
+        const first = roster.find((a) => a.essay)
         if (first) {
           setActive(first.slug)
           setDraft(ratings[first.slug]?.[loadMember()] ?? emptyDraft())
@@ -152,10 +152,11 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const options = useMemo(() => {
     const uniq = (xs: string[]) => [...new Set(xs.filter(Boolean))].sort()
     return {
-      departments: uniq(people.map((a) => a.department)),
-      programs: uniq(people.map((a) => a.program)),
-      genders: uniq(people.map((a) => a.gender)),
+      departments: uniq(submitted.map((a) => a.department)),
+      programs: uniq(submitted.map((a) => a.program)),
+      genders: uniq(submitted.map((a) => a.gender)),
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [people])
 
   const matches = (f: typeof filters) => (a: Applicant) =>
@@ -181,7 +182,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     })
   }
 
-  const visible = ordered(people.filter(matches(filters)))
+  const visible = ordered(submitted.filter(matches(filters)))
 
   /**
    * Changing a filter can hide the candidate being read, which left the detail
@@ -191,7 +192,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const applyFilter = (key: keyof typeof filters, value: string) => {
     const next = { ...filters, [key]: value }
     setFilters(next)
-    const nextVisible = people.filter(matches(next))
+    const nextVisible = submitted.filter(matches(next))
     if (nextVisible.some((a) => a.slug === active)) return
     const first = nextVisible[0]
     setActive(first?.slug ?? "")
@@ -262,8 +263,8 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
           <p className="text-body text-primary-foreground/70 mt-5 max-w-2xl">
             {lang === "es"
-              ? `${submitted.length} de ${people.length} candidatos han enviado su ensayo. Las calificaciones se guardan en el servidor y las ve toda la junta.`
-              : `${submitted.length} of ${people.length} candidates have submitted an essay. Ratings save to the server and the whole board sees them.`}
+              ? `Mostramos los ${submitted.length} candidatos que se postularon, de ${people.length} invitados. Las calificaciones se guardan en el servidor y las ve toda la junta.`
+              : `Showing the ${submitted.length} candidates who applied, of ${people.length} invited. Ratings save to the server and the whole board sees them.`}
           </p>
 
           <div className="mt-8">
@@ -322,7 +323,6 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                   {visible.map((a) => (
                     <option key={a.slug} value={a.slug}>
                       {a.name}
-                      {a.essay ? "" : lang === "es" ? " — sin ensayo" : " — no essay"}
                     </option>
                   ))}
                 </select>
@@ -419,7 +419,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                             active === a.slug
                               ? "border-primary bg-surface"
                               : "border-ink/10 hover:border-primary/40"
-                          } ${a.essay ? "" : "opacity-55"}`}
+                          }`}
                         >
                           <div className="text-body font-semibold text-primary flex items-center justify-between gap-2">
                             {a.name}
@@ -441,7 +441,6 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                                     ? "sin ICFES"
                                     : "no ICFES"
                               const parts = [a.program, a.city, saber].filter(Boolean)
-                              if (!a.essay) parts.push(lang === "es" ? "sin ensayo" : "no essay")
                               return parts.join(" · ")
                             })()}
                           </div>
@@ -806,7 +805,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
             </h2>
           </Reveal>
           <div className="mt-8">
-            <ApplicantsMap applicants={people} />
+            <ApplicantsMap applicants={submitted} />
           </div>
         </div>
       </section>
