@@ -53,11 +53,6 @@ export default function Hero() {
               </>
             )}
           </h1>
-          <p className="text-lead font-light text-primary-foreground/75 mt-8 max-w-3xl">
-            {lang === "es"
-              ? "Construimos el camino entre el mejor talento de Colombia y sus mejores empresas."
-              : "Building the path between Colombia's best talent and its best companies."}
-          </p>
         </Reveal>
       </div>
     </section>

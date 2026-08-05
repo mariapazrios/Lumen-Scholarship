@@ -76,8 +76,8 @@ export default function Differentiated() {
           </h2>
           <p className="text-lead font-light text-primary-foreground/75 mt-6">
             {lang === "es"
-              ? "Los estudiantes de bajos recursos, primeros de su familia en llegar a la universidad, llegan sin el conocimiento del sistema, la preparación ni la red que exigen las mejores carreras. Las empresas que contratan para esas carreras nunca los ven. Lumen trabaja en los dos extremos."
-              : "Low-income, first-generation students arrive without the know-how, the preparation, or the network that top-tier careers require. The companies hiring for those careers never see them. Lumen works on both ends."}
+              ? "Los estudiantes de bajos recursos, primeros de su familia en llegar a la universidad, carecen del conocimiento del sistema, la preparación y la red que exigen las mejores carreras. Lumen construye el camino entre el mejor talento de Colombia y sus mejores empresas."
+              : "Low-income, first-generation students lack the know-how, the preparation, and the network that top-tier careers require. Lumen builds the path between Colombia's best talent and its best companies."}
           </p>
         </Reveal>
 

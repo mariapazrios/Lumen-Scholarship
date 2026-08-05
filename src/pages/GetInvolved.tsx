@@ -26,9 +26,9 @@ const PROOF: Array<{ value: L; label: L; sub: L }> = [
 ]
 
 /**
- * Three returns. "First look at hiring" and "direct access to the cohort" were
- * the same promise told twice, so they are one card: the access is what produces
- * the first look.
+ * What a sponsor gets back. "First look at hiring" and "direct access to the
+ * cohort" were the same promise told twice, so they are one card: the access is
+ * what produces the first look.
  */
 const RETURNS: Array<{ n: string; title: L; body: L }> = [
   {
@@ -53,6 +53,14 @@ const RETURNS: Array<{ n: string; title: L; body: L }> = [
     body: {
       en: "An annual report per Lumen: major, GPA against their program, internships, competitions and what they have built.",
       es: "Un informe anual por Lumen: carrera, promedio frente a su programa, prácticas, competencias y lo que ha construido.",
+    },
+  },
+  {
+    n: "04",
+    title: { en: "The Lumen donor network", es: "La red de donantes Lumen" },
+    body: {
+      en: "An exclusive community of sponsors and leading Colombian businesses, convened around a cause that compounds. The people funding this cohort are worth knowing in their own right.",
+      es: "Una comunidad exclusiva de patrocinadores y empresas líderes de Colombia, reunida en torno a una causa que se multiplica. Las personas que financian esta generación valen la pena por sí mismas.",
     },
   },
 ]
@@ -83,9 +91,9 @@ const OTHER_WAYS: Array<{ heading: L; items: L[] }> = [
 ]
 
 /**
- * Tax treatment, reduced to a sticker and one line per jurisdiction. It is the
- * mechanics of a decision already made, so it does not need a headline, a card,
- * or the payment-method detail that used to run alongside it.
+ * Tax treatment, as two banners under the commitment rather than a section of
+ * its own. It is the mechanics of a decision already made, so it does not need
+ * a headline, or the payment-method detail that used to run alongside it.
  */
 const TAX: Array<{ jurisdiction: L; detail: L }> = [
   {
@@ -141,10 +149,10 @@ function SponsorsSection() {
                 <div className="text-stat font-bold text-primary tabular-nums leading-none">
                   {t(p.value)}
                 </div>
-                <div className="text-meta uppercase tracking-widest text-muted mt-4">
+                <div className="text-body font-semibold uppercase tracking-wide text-primary mt-4">
                   {t(p.label)}
                 </div>
-                <div className="text-meta text-muted mt-1.5 tabular-nums">{t(p.sub)}</div>
+                <div className="text-meta text-muted mt-2 tabular-nums">{t(p.sub)}</div>
               </div>
             ))}
           </div>
@@ -152,17 +160,7 @@ function SponsorsSection() {
 
         <Reveal delay={80}>
           <h2 className="text-h2 font-semibold text-primary mt-16">
-            {lang === "es" ? (
-              <>
-                Financia a un Lumen.{" "}
-                <em className="italic font-light">Sigue su carrera hasta la empresa.</em>
-              </>
-            ) : (
-              <>
-                Fund a Lumen.{" "}
-                <em className="italic font-light">Follow their career into the firm.</em>
-              </>
-            )}
+            {lang === "es" ? "Patrocina a un Lumen." : "Sponsor a Lumen."}
           </h2>
         </Reveal>
 
@@ -201,22 +199,26 @@ function SponsorsSection() {
           </p>
         </Reveal>
 
-        {/* Deductibility as a sticker plus one line per jurisdiction. */}
-        <Reveal delay={140}>
-          <div className="mt-10 flex flex-col sm:flex-row sm:items-center gap-x-8 gap-y-5">
-            <span className="self-start sm:self-center shrink-0 -rotate-3 inline-block rounded-full border-2 border-accent text-accent text-meta uppercase tracking-widest font-semibold px-5 py-2">
-              {lang === "es" ? "Deducible de impuestos" : "Tax deductible"}
-            </span>
-            <div className="space-y-1.5">
-              {TAX.map((row) => (
-                <p key={row.jurisdiction.en} className="text-body text-ink/75">
-                  <span className="font-semibold text-primary">{t(row.jurisdiction)}</span>{" "}
-                  {t(row.detail)}
-                </p>
-              ))}
-            </div>
-          </div>
-        </Reveal>
+        {/* Deductibility, as banners: where you file determines the route. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+          {TAX.map((row, i) => (
+            <Reveal key={row.jurisdiction.en} delay={140 + i * 100}>
+              <div className="h-full bg-white border border-ink/10 border-l-2 border-l-primary rounded-sm px-6 py-5">
+                <div className="flex flex-wrap items-baseline gap-x-3">
+                  <span className="text-body font-semibold text-primary">
+                    {t(row.jurisdiction)}
+                  </span>
+                  {/* Louder than the jurisdiction beside it: deductibility is the
+                      reason this banner exists. */}
+                  <span className="text-body font-bold uppercase tracking-wide text-accent">
+                    {lang === "es" ? "Deducible" : "Deductible"}
+                  </span>
+                </div>
+                <p className="text-body text-ink/75 mt-2">{t(row.detail)}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
       </div>
     </section>
   )
@@ -236,31 +238,29 @@ function ReturnsSection() {
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-24 relative">
         <Reveal>
           <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
-            {lang === "es" ? "Lo que regresa" : "What comes back"}
+            {lang === "es" ? "Los patrocinadores reciben" : "Sponsors receive"}
           </div>
           <h2 className="text-h2 font-semibold">
             {lang === "es" ? (
               <>
                 Formamos el talento que{" "}
                 <em className="italic font-light">
-                  impulsa a las mejores empresas de Colombia.
+                  impulsará a las empresas líderes de Colombia.
                 </em>
               </>
             ) : (
               <>
                 Fostering the talent pool that{" "}
-                <em className="italic font-light">propels Colombia's top businesses.</em>
+                <em className="italic font-light">
+                  will propel Colombia's leading businesses.
+                </em>
               </>
             )}
           </h2>
-          <p className="text-lead font-light text-primary-foreground/75 mt-6 max-w-4xl">
-            {lang === "es"
-              ? "Los patrocinadores cubren la beca y nosotros nos encargamos del resto: elegimos a quién se le otorga, acompañamos a cada estudiante durante los cinco años de la carrera y lo presentamos a las empresas donde va a empezar su vida profesional."
-              : "Sponsors cover the scholarship and we take it from there, choosing who receives it, working alongside them through all five years of the degree, and introducing them to the companies where they will start their careers."}
-          </p>
         </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+        {/* Four cards read as a 2x2 rather than a three-up with an orphan. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
           {RETURNS.map((r, i) => (
             <Reveal key={r.n} delay={i * 100}>
               <div className="border border-primary-foreground/15 rounded-sm p-7 md:p-8 h-full bg-primary-foreground/[0.03]">
@@ -298,7 +298,7 @@ function OtherWaysSection() {
               ? "Otras formas de vincularse."
               : "Other ways to get involved."}
           </h2>
-          <p className="text-body text-ink/70 mt-3 max-w-2xl">
+          <p className="text-body text-ink/70 mt-3">
             {lang === "es"
               ? "Patrocinar es lo que sostiene el programa. Para quienes no pueden financiar una beca, estas son las demás formas de aportar."
               : "Sponsorship is what keeps the program running. For those who cannot fund a scholarship, these are the other ways to contribute."}
@@ -354,13 +354,15 @@ export default function GetInvolved() {
                 <>
                   Los patrocinadores financian,
                   <br />
-                  <em className="italic font-semibold">Lumen forma.</em>
+                  Lumen encuentra,
+                  <br />
+                  <em className="italic font-semibold">juntos formamos.</em>
                 </>
               ) : (
                 <>
-                  Sponsors fund,
+                  Sponsors fund, Lumen finds,
                   <br />
-                  <em className="italic font-semibold">Lumen fosters.</em>
+                  <em className="italic font-semibold">together we foster.</em>
                 </>
               )}
             </h1>

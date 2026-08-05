@@ -22,12 +22,10 @@ const PILLARS: Array<{ n: string; title: L; body: L }> = [
   },
   {
     n: "03",
-    // The one pillar that runs both ways: the Lumen gains a career, and the
-    // company gains talent its own hiring was never going to reach.
     title: { en: "Early-career guidance", es: "Orientación profesional" },
     body: {
-      en: "Position Lumens for early-career momentum by offering continued mentorship, helping them identify opportunities, and connecting students with top companies and industry-specific mentors. Those companies gain talent their own hiring would never have reached, which is how Colombia's leading businesses get stronger.",
-      es: "Acompañamos a los Lumens al arrancar su vida profesional: mentoría constante, orientación para descubrir oportunidades y conexiones con empresas líderes y mentores de cada industria. Esas empresas ganan talento que sus propios procesos nunca habrían alcanzado, y así se fortalecen las mejores empresas de Colombia.",
+      en: "Position Lumens for early-career momentum by offering continued mentorship, helping them identify opportunities, and connecting students with top companies and industry-specific mentors.",
+      es: "Acompañamos a los Lumens al arrancar su vida profesional: mentoría constante, orientación para descubrir oportunidades y conexiones con empresas líderes y mentores de cada industria.",
     },
   },
 ]
