@@ -98,16 +98,22 @@ export default function AdmissionsProcess({
               <div className="text-meta uppercase tracking-widest text-muted mb-4">
                 {t(eyebrow)}
               </div>
+              {/* "Selective" rather than "rigorous": the Team page H1 above
+                  this one already says rigorous, and on that page the two sat
+                  a screen apart. The Spanish trades places instead of swapping
+                  the word, since it already ended on "altamente selectivo" and
+                  a straight swap would have said selective twice. "Curado"
+                  matches the body copy directly beneath. */}
               <h2 className="text-h2 font-semibold text-primary">
                 {lang === "es" ? (
                   <>
-                    Un proceso riguroso,
+                    Un proceso selectivo,
                     <br />
-                    <em className="italic font-light">altamente selectivo.</em>
+                    <em className="italic font-light">altamente curado.</em>
                   </>
                 ) : (
                   <>
-                    A rigorous,
+                    A selective,
                     <br />
                     <em className="italic font-light">highly curated process.</em>
                   </>
