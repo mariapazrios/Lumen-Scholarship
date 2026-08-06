@@ -31,6 +31,22 @@ const PILLARS: Array<{ n: string; title: L; body: L }> = [
   },
 ]
 
+/**
+ * What Lumen funds, which is not the same as what the eleven scholars happen to
+ * be studying: no Lumen reads Law yet, and it is on the list because the
+ * programme supports it. Keep in step with the same list in AdmissionsProcess.
+ */
+const MAJORS: L[] = [
+  { en: "Systems and Computing Engineering", es: "Ingeniería de Sistemas y Computación" },
+  { en: "Biomedical Engineering", es: "Ingeniería Biomédica" },
+  { en: "Electronic Engineering", es: "Ingeniería Electrónica" },
+  { en: "Industrial Engineering", es: "Ingeniería Industrial" },
+  { en: "Physics", es: "Física" },
+  { en: "Chemistry", es: "Química" },
+  { en: "Economics", es: "Economía" },
+  { en: "Law", es: "Derecho" },
+]
+
 const VALUES: L[] = [
   { en: "Resilience", es: "Resiliencia" },
   { en: "Excellence", es: "Excelencia" },
@@ -96,6 +112,31 @@ export default function Mission() {
           ))}
         </div>
 
+        {/* Majors, between the pillars and the values */}
+        <Reveal delay={100}>
+          <div className="mt-16">
+            <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-4">
+              {lang === "es" ? "Carreras que apoyamos" : "Majors supported"}
+            </div>
+            <p className="text-body text-ink/75 mb-6">
+              {lang === "es"
+                ? "Lumen es una beca STEM+: ingeniería y ciencias, más economía, administración y derecho."
+                : "Lumen is a STEM+ scholarship: engineering and the sciences, plus economics, business and law."}
+            </p>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-3">
+              {MAJORS.map((m) => (
+                <li key={m.en} className="text-body text-ink/80 flex gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="w-1.5 h-1.5 rounded-full bg-accent mt-2.5 shrink-0"
+                  />
+                  {t(m)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Reveal>
+
         {/* Values */}
         <Reveal delay={120}>
           <div className="mt-16">
@@ -123,13 +164,6 @@ export default function Mission() {
               ))}
             </div>
 
-            {/* What the money actually buys, named. The majors come from the
-                eleven scholars on the roster, not from an eligibility list. */}
-            <p className="text-body text-ink/75 mt-8 max-w-3xl">
-              {lang === "es"
-                ? "Lumen es una beca STEM+: financiamos ingeniería y ciencias, y también economía y administración. Hoy nuestros estudiantes cursan Ingeniería de Sistemas y Computación, Ingeniería Biomédica, Ingeniería Electrónica, Ingeniería Industrial, Física, Química y Economía."
-                : "Lumen is a STEM+ scholarship: we fund engineering and the sciences, and economics and business alongside them. Our scholars are studying Systems and Computing Engineering, Biomedical Engineering, Electronic Engineering, Industrial Engineering, Physics, Chemistry and Economics."}
-            </p>
           </div>
         </Reveal>
       </div>

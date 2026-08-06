@@ -144,11 +144,14 @@ function PartnerWord() {
         <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-8 md:gap-12 items-start">
           {hasPortrait && (
             <Reveal>
+              {/* Framed like a board card: same 5/6 crop, same top anchor, so
+                  she reads as one of the faces on this page rather than a
+                  different kind of object. */}
               <img
                 src="/team/raquel-bernal.jpg"
                 alt="Raquel Bernal"
                 onError={() => setHasPortrait(false)}
-                className="w-28 h-28 md:w-40 md:h-40 rounded-full object-cover object-top ring-1 ring-primary-foreground/25"
+                className="w-40 md:w-48 aspect-[5/6] rounded-sm object-cover object-top"
                 loading="lazy"
               />
             </Reveal>
