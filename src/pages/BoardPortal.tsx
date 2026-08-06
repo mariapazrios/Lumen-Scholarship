@@ -97,7 +97,9 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const [saved, setSaved] = useState(false)
   const [status, setStatus] = useState<"loading" | "ready" | "saving" | "error">("loading")
   const [filters, setFilters] = useState({ department: "", program: "", gender: "" })
-  const [sort, setSort] = useState<"name" | "saber-desc" | "saber-asc">("name")
+  // Ranked by ICFES rather than alphabetically: a shortlist read A-Z puts the
+  // strongest candidate wherever their surname happens to fall.
+  const [sort, setSort] = useState<"name" | "saber-desc" | "saber-asc">("saber-desc")
   // Arms the second click on "Delete my rating". Reset whenever the target
   // changes, so a confirm armed on one candidate cannot fire on the next.
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -333,22 +335,50 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
             <div className="grid grid-cols-1 lg:grid-cols-[17rem_1fr] gap-8 lg:gap-12">
               {/* On a phone the 17-row list means scrolling past everyone to
                   reach the essay; a dropdown jumps straight to a candidate. */}
-              <div className="lg:hidden">
-                <label className="text-meta uppercase tracking-widest text-muted">
-                  {lang === "es" ? "Candidato" : "Candidate"} ({visible.length})
-                </label>
-                <select
-                  value={active}
-                  onChange={(e) => e.target.value && pick(e.target.value)}
-                  className="mt-2 w-full bg-white border border-ink/15 rounded-sm px-3 py-3 text-body text-ink cursor-pointer focus:outline-none focus:border-accent"
-                >
-                  {!active && <option value="">—</option>}
-                  {visible.map((a) => (
-                    <option key={a.slug} value={a.slug}>
-                      {a.name}
+              {/* The sort and the filters live in the sidebar below, which is
+                  hidden under lg. Without a copy of the sort here a phone had
+                  no way to reorder the field at all: it silently inherited the
+                  default and there was no control anywhere on the page. */}
+              <div className="lg:hidden space-y-4">
+                <label className="block">
+                  <span className="text-meta uppercase tracking-widest text-muted">
+                    {lang === "es" ? "Ordenar" : "Sort"}
+                  </span>
+                  <select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value as typeof sort)}
+                    className="mt-2 w-full bg-white border border-ink/15 rounded-sm px-3 py-3 text-body text-ink cursor-pointer focus:outline-none focus:border-accent"
+                  >
+                    <option value="saber-desc">
+                      {lang === "es" ? "ICFES, mayor a menor" : "ICFES, highest first"}
                     </option>
-                  ))}
-                </select>
+                    <option value="saber-asc">
+                      {lang === "es" ? "ICFES, menor a mayor" : "ICFES, lowest first"}
+                    </option>
+                    <option value="name">
+                      {lang === "es" ? "Nombre (A-Z)" : "Name (A-Z)"}
+                    </option>
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="text-meta uppercase tracking-widest text-muted">
+                    {lang === "es" ? "Candidato" : "Candidate"} ({visible.length})
+                  </span>
+                  <select
+                    value={active}
+                    onChange={(e) => e.target.value && pick(e.target.value)}
+                    className="mt-2 w-full bg-white border border-ink/15 rounded-sm px-3 py-3 text-body text-ink cursor-pointer focus:outline-none focus:border-accent"
+                  >
+                    {!active && <option value="">—</option>}
+                    {/* The score rides along so a ranked list reads as ranked;
+                        a bare name list gives no clue why it is in this order. */}
+                    {visible.map((a) => (
+                      <option key={a.slug} value={a.slug}>
+                        {a.saber11 != null ? `${a.name} · ICFES ${a.saber11}` : a.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
 
               <div className="hidden lg:block">
@@ -359,27 +389,27 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 <div className="space-y-2 mb-5">
                   {/* Sort sits above the filters: it changes the reading order of
                       the whole field, where the filters change who is in it. */}
+                  {/* The label was sr-only, which left a control identical to
+                      the filter dropdowns under it, reading "Orden: nombre",
+                      and it went unread as one more filter. Naming it out loud
+                      is what makes it findable. */}
                   <label className="block">
-                    <span className="sr-only">
-                      {lang === "es" ? "Ordenar por" : "Sort by"}
+                    <span className="text-meta uppercase tracking-widest text-muted">
+                      {lang === "es" ? "Ordenar" : "Sort"}
                     </span>
                     <select
                       value={sort}
                       onChange={(e) => setSort(e.target.value as typeof sort)}
-                      className="w-full bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink cursor-pointer focus:outline-none focus:border-accent"
+                      className="mt-1.5 w-full bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink cursor-pointer focus:outline-none focus:border-accent"
                     >
-                      <option value="name">
-                        {lang === "es" ? "Orden: nombre (A-Z)" : "Sort: name (A-Z)"}
-                      </option>
                       <option value="saber-desc">
-                        {lang === "es"
-                          ? "Orden: ICFES, mayor a menor"
-                          : "Sort: ICFES, highest first"}
+                        {lang === "es" ? "ICFES, mayor a menor" : "ICFES, highest first"}
                       </option>
                       <option value="saber-asc">
-                        {lang === "es"
-                          ? "Orden: ICFES, menor a mayor"
-                          : "Sort: ICFES, lowest first"}
+                        {lang === "es" ? "ICFES, menor a mayor" : "ICFES, lowest first"}
+                      </option>
+                      <option value="name">
+                        {lang === "es" ? "Nombre (A-Z)" : "Name (A-Z)"}
                       </option>
                     </select>
                   </label>
@@ -463,7 +493,16 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                                   : lang === "es"
                                     ? "sin ICFES"
                                     : "no ICFES"
-                              const parts = [a.program, a.city, saber].filter(Boolean)
+                              // Ages come off the roster fractional (18.12...),
+                              // so floor rather than round: nobody is 19 the
+                              // day before their nineteenth birthday.
+                              const age =
+                                a.age != null
+                                  ? lang === "es"
+                                    ? `${Math.floor(a.age)} años`
+                                    : `age ${Math.floor(a.age)}`
+                                  : null
+                              const parts = [a.program, a.city, age, saber].filter(Boolean)
                               return parts.join(" · ")
                             })()}
                           </div>
@@ -493,7 +532,17 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                     <div className="flex flex-wrap items-baseline justify-between gap-3">
                       <h2 className="text-h3 font-semibold text-primary">{applicant.name}</h2>
                       <div className="text-meta uppercase tracking-widest text-muted">
-                        {[applicant.program, applicant.city].filter(Boolean).join(" · ")}
+                        {[
+                          applicant.program,
+                          applicant.city,
+                          applicant.age != null
+                            ? lang === "es"
+                              ? `${Math.floor(applicant.age)} años`
+                              : `age ${Math.floor(applicant.age)}`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
                       </div>
                     </div>
                     <div className="text-meta uppercase tracking-widest text-accent mt-2">
@@ -610,14 +659,14 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                       )}
                     </div>
 
-                    {/* Submitted in Spanish, shown verbatim */}
-                    <div className="text-meta uppercase tracking-widest text-muted mt-8">
-                      {lang === "es"
-                        ? "Ensayo, tal como fue enviado"
-                        : "Essay, as submitted (Spanish original)"}
-                    </div>
+                    {/* Submitted in Spanish, shown verbatim. No heading: the
+                        essay is the substance of this page, and labelling it
+                        told the reader what they were plainly already looking
+                        at. */}
                     {applicant.essay ? (
-                      <Prose text={applicant.essay} />
+                      <div className="mt-8">
+                        <Prose text={applicant.essay} />
+                      </div>
                     ) : (
                       <p className="text-body text-ink/70 mt-3">
                         {lang === "es"
