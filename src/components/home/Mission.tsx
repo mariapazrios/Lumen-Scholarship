@@ -69,7 +69,7 @@ const MAJOR_GROUPS: Array<{ heading: L; items: L[] }> = [
     ],
   },
   {
-    heading: { en: "Economics, business and law", es: "Economía, administración y derecho" },
+    heading: { en: "Other", es: "Otras" },
     items: [
       { en: "Economics", es: "Economía" },
       { en: "Business Administration", es: "Administración de Empresas" },
@@ -157,16 +157,23 @@ export default function Mission() {
                   <h3 className="text-body font-semibold text-primary border-t-2 border-accent pt-3">
                     {t(g.heading)}
                   </h3>
+                  {/* Sorted here rather than in the data because the two
+                      languages do not sort the same: Chemistry comes second in
+                      English and Química comes last in Spanish. localeCompare
+                      with the active language also files the accented names
+                      (Física, Química) where a reader expects them. */}
                   <ul className="mt-3 space-y-2">
-                    {g.items.map((m) => (
-                      <li key={m.en} className="text-body text-ink/80 flex gap-3">
-                        <span
-                          aria-hidden="true"
-                          className="w-1.5 h-1.5 rounded-full bg-accent mt-2.5 shrink-0"
-                        />
-                        {t(m)}
-                      </li>
-                    ))}
+                    {[...g.items]
+                      .sort((a, b) => t(a).localeCompare(t(b), lang))
+                      .map((m) => (
+                        <li key={m.en} className="text-body text-ink/80 flex gap-3">
+                          <span
+                            aria-hidden="true"
+                            className="w-1.5 h-1.5 rounded-full bg-accent mt-2.5 shrink-0"
+                          />
+                          {t(m)}
+                        </li>
+                      ))}
                   </ul>
                 </div>
               ))}
