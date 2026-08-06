@@ -50,6 +50,7 @@ revoke access in a hurry.
 Documents are rows in `lumen_documents`, not files. `kind` controls access:
 
 - `scholar-essay` — visible to sponsors and the board
+- `scholar-grades` — visible to sponsors and the board
 - `applicant-essay` — board only
 - `applicant-answers` — board only; the ¿Quién soy? / ¿Quién quiero ser? short
   answers, kept apart from the essay because the board portal shows them apart
@@ -85,6 +86,26 @@ before this backend existed and has been deleted; `SponsorPortal` now fetches
 `kind=scholar-essay` against the session cookie. Their `submitted_at` is null:
 the source file carried no submission dates, and inventing them would be worse
 than leaving the column empty.
+
+### The grades
+
+`kind = 'scholar-grades'`, `subject` the scholar's slug, `title` the degree
+programme, `body` a JSON object: `program`, `asOf`, `cumulative`, `semesters`,
+`terms`, `officialPga`, `complete`, `saber11`. `useScholarGrades()` in
+[src/lib/grades.ts](../src/lib/grades.ts) fetches the whole set in one call and
+parses each row.
+
+These were in `src/data/` until 2026-08-05, which meant every scholar's
+cumulative average, term history and Saber 11 score compiled into the public
+bundle. The passcode gated the page and never the payload. Nothing academic
+about a named student belongs in `src/data/` while the repository is public,
+and it is public.
+
+Term averages are credit-weighted, the way Uniandes computes a PGA. Where a
+recomputed cumulative disagrees with `officialPga` by a hundredth, the
+university's figure is authoritative: they truncate where this rounds. A term
+with `average: null` means the scholar registered and finished nothing
+gradeable, which the chart draws as a gap rather than a zero.
 
 ## The gates
 

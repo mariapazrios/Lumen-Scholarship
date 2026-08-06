@@ -32,19 +32,50 @@ const PILLARS: Array<{ n: string; title: L; body: L }> = [
 ]
 
 /**
- * What Lumen funds, which is not the same as what the eleven scholars happen to
- * be studying: no Lumen reads Law yet, and it is on the list because the
- * programme supports it. Keep in step with the same list in AdmissionsProcess.
+ * What Lumen funds: every science and every engineering at Los Andes, plus
+ * economics, business and law. This is the faculty offering, not the roster,
+ * so most of it has no Lumen in it yet. Taken from the university's own
+ * listings, uniandes.edu.co/es/oferta-academica/pregrados and
+ * ingenieria.uniandes.edu.co/es/programas/pregrado, checked 2026-08-05.
+ *
+ * Medicina sits under the sciences on the university's site and is left off:
+ * it runs past the ten semesters and one summer the scholarship covers.
  */
-const MAJORS: L[] = [
-  { en: "Systems and Computing Engineering", es: "Ingeniería de Sistemas y Computación" },
-  { en: "Biomedical Engineering", es: "Ingeniería Biomédica" },
-  { en: "Electronic Engineering", es: "Ingeniería Electrónica" },
-  { en: "Industrial Engineering", es: "Ingeniería Industrial" },
-  { en: "Physics", es: "Física" },
-  { en: "Chemistry", es: "Química" },
-  { en: "Economics", es: "Economía" },
-  { en: "Law", es: "Derecho" },
+const MAJOR_GROUPS: Array<{ heading: L; items: L[] }> = [
+  {
+    heading: { en: "Sciences", es: "Ciencias" },
+    items: [
+      { en: "Biology", es: "Biología" },
+      { en: "Physics", es: "Física" },
+      { en: "Geosciences", es: "Geociencias" },
+      { en: "Mathematics", es: "Matemáticas" },
+      { en: "Microbiology", es: "Microbiología" },
+      { en: "Chemistry", es: "Química" },
+    ],
+  },
+  {
+    heading: { en: "Engineering", es: "Ingeniería" },
+    items: [
+      { en: "Environmental Engineering", es: "Ingeniería Ambiental" },
+      { en: "Biomedical Engineering", es: "Ingeniería Biomédica" },
+      { en: "Civil Engineering", es: "Ingeniería Civil" },
+      { en: "Systems and Computing Engineering", es: "Ingeniería de Sistemas y Computación" },
+      { en: "Electrical Engineering", es: "Ingeniería Eléctrica" },
+      { en: "Electronic Engineering", es: "Ingeniería Electrónica" },
+      { en: "Industrial Engineering", es: "Ingeniería Industrial" },
+      { en: "Mechanical Engineering", es: "Ingeniería Mecánica" },
+      { en: "Chemical Engineering", es: "Ingeniería Química" },
+      { en: "Data Science", es: "Ciencia de Datos" },
+    ],
+  },
+  {
+    heading: { en: "Economics, business and law", es: "Economía, administración y derecho" },
+    items: [
+      { en: "Economics", es: "Economía" },
+      { en: "Business Administration", es: "Administración de Empresas" },
+      { en: "Law", es: "Derecho" },
+    ],
+  },
 ]
 
 const VALUES: L[] = [
@@ -115,25 +146,31 @@ export default function Mission() {
         {/* Majors, between the pillars and the values */}
         <Reveal delay={100}>
           <div className="mt-16">
-            <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-4">
+            <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-6">
               {lang === "es" ? "Carreras que apoyamos" : "Majors supported"}
             </div>
-            <p className="text-body text-ink/75 mb-6">
-              {lang === "es"
-                ? "Lumen es una beca STEM+: ingeniería y ciencias, más economía, administración y derecho."
-                : "Lumen is a STEM+ scholarship: engineering and the sciences, plus economics, business and law."}
-            </p>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-3">
-              {MAJORS.map((m) => (
-                <li key={m.en} className="text-body text-ink/80 flex gap-3">
-                  <span
-                    aria-hidden="true"
-                    className="w-1.5 h-1.5 rounded-full bg-accent mt-2.5 shrink-0"
-                  />
-                  {t(m)}
-                </li>
+            {/* Grouped rather than one flat run: nineteen bullets in a grid
+                read as a wall, three headed columns read as a scope. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-8">
+              {MAJOR_GROUPS.map((g) => (
+                <div key={g.heading.en}>
+                  <h3 className="text-body font-semibold text-primary border-t-2 border-accent pt-3">
+                    {t(g.heading)}
+                  </h3>
+                  <ul className="mt-3 space-y-2">
+                    {g.items.map((m) => (
+                      <li key={m.en} className="text-body text-ink/80 flex gap-3">
+                        <span
+                          aria-hidden="true"
+                          className="w-1.5 h-1.5 rounded-full bg-accent mt-2.5 shrink-0"
+                        />
+                        {t(m)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         </Reveal>
 

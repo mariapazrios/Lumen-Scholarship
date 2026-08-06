@@ -127,6 +127,23 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
  * The portrait hides itself if the file is missing, so the band still works
  * as logo plus quote until the photograph is in place.
  */
+/**
+ * Sets the programme's name apart inside the quote. Her sentence turns on it,
+ * and in a long light-weight blockquote the word otherwise passes unread.
+ * Upright and at full strength against the surrounding light italic-free text.
+ */
+function LumenWord({ text }: { text: string }) {
+  const at = text.indexOf("Lumen")
+  if (at === -1) return <>{text}</>
+  return (
+    <>
+      {text.slice(0, at)}
+      <strong className="font-bold text-white">Lumen</strong>
+      {text.slice(at + "Lumen".length)}
+    </>
+  )
+}
+
 function PartnerWord() {
   const { lang } = useLang()
   const [hasPortrait, setHasPortrait] = useState(true)
@@ -137,7 +154,9 @@ function PartnerWord() {
       <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-16 md:py-24 relative">
         <Reveal>
           <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-8">
-            {lang === "es" ? "Desde nuestro aliado" : "A word from our partner"}
+            {lang === "es"
+              ? "Un mensaje de nuestros aliados"
+              : "A message from our partners"}
           </div>
         </Reveal>
 
@@ -160,9 +179,13 @@ function PartnerWord() {
           <Reveal delay={80}>
             <div>
               <blockquote className="text-lead md:text-h3 font-light leading-relaxed max-w-4xl">
-                {lang === "es"
-                  ? "La educación de excelencia es el gran motor de la equidad, el crecimiento y la justicia. Lumen lo entiende bien, pero sabe que el acceso no basta. Por eso, acompaña y potencia a estudiantes con la determinación de dejar huella. El resultado es transformador: una vida inimaginada para el joven, insospechada para su familia e invaluable para la sociedad."
-                  : "Top-tier education is the greatest driver of equity, growth, and justice. Lumen understands this well, but knows that access alone is not enough. That is why it guides, mentors, and empowers students who are determined to leave a mark. The result is transformative: a life unimaginable for the student, unexpected for their family, and invaluable to society."}
+                <LumenWord
+                  text={
+                    lang === "es"
+                      ? "La educación de excelencia es el gran motor de la equidad, el crecimiento y la justicia. Lumen lo entiende bien, pero sabe que el acceso no basta. Por eso, acompaña y potencia a estudiantes con la determinación de dejar huella. El resultado es transformador: una vida inimaginada para el joven, insospechada para su familia e invaluable para la sociedad."
+                      : "Top-tier education is the greatest driver of equity, growth, and justice. Lumen understands this well, but knows that access alone is not enough. That is why it guides, mentors, and empowers students who are determined to leave a mark. The result is transformative: a life unimaginable for the student, unexpected for their family, and invaluable to society."
+                  }
+                />
               </blockquote>
 
               <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
@@ -207,14 +230,25 @@ export default function Team() {
             <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
               {lang === "es" ? "Equipo y proceso" : "Team and process"}
             </div>
+            {/* Not "the Lumen team": the point is that a demanding process is
+                only as good as who runs it. "Rigorous" is left to the process
+                section's own H2 further down rather than said twice. */}
             <h1 className="text-display font-light">
               {lang === "es" ? (
                 <>
-                  El <em className="italic font-semibold">equipo Lumen.</em>
+                  Un proceso exigente,
+                  <br />
+                  <em className="italic font-semibold">
+                    en manos de un equipo de primer nivel.
+                  </em>
                 </>
               ) : (
                 <>
-                  The <em className="italic font-semibold">Lumen team.</em>
+                  A demanding process,
+                  <br />
+                  <em className="italic font-semibold">
+                    in the hands of a first-rate team.
+                  </em>
                 </>
               )}
             </h1>

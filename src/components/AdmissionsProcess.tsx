@@ -120,8 +120,8 @@ export default function AdmissionsProcess({
               </p>
               <p className="text-body text-ink/75 mt-4 max-w-lg">
                 {lang === "es"
-                  ? "Es una beca STEM+: ingeniería y ciencias, más economía, administración y derecho. Apoyamos Ingeniería de Sistemas y Computación, Ingeniería Biomédica, Ingeniería Electrónica, Ingeniería Industrial, Física, Química, Economía y Derecho."
-                  : "It is a STEM+ scholarship: engineering and the sciences, plus economics, business and law. We support Systems and Computing Engineering, Biomedical Engineering, Electronic Engineering, Industrial Engineering, Physics, Chemistry, Economics and Law."}
+                  ? "Es una beca STEM+: cubre todas las ciencias y todas las ingenierías de Los Andes, más economía, administración y derecho."
+                  : "It is a STEM+ scholarship: it covers every science and every engineering at Los Andes, plus economics, business and law."}
               </p>
             </Reveal>
 

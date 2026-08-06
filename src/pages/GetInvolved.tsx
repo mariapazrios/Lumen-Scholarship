@@ -349,23 +349,33 @@ export default function GetInvolved() {
             <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
               {lang === "es" ? "Vincúlate" : "Get involved"}
             </div>
+            {/* The headline makes the business case; "Sponsors fund, Lumen
+                finds, together we foster" keeps its words but steps down into
+                the lead, where it opens the argument instead of being it. */}
             <h1 className="text-display font-light">
               {lang === "es" ? (
                 <>
-                  Los patrocinadores financian,
+                  Invierte en el talento
                   <br />
-                  Lumen encuentra,
-                  <br />
-                  <em className="italic font-semibold">juntos formamos.</em>
+                  <em className="italic font-semibold">
+                    por el que competirá tu industria.
+                  </em>
                 </>
               ) : (
                 <>
-                  Sponsors fund, Lumen finds,
+                  Invest in the talent
                   <br />
-                  <em className="italic font-semibold">together we foster.</em>
+                  <em className="italic font-semibold">
+                    your industry will compete for.
+                  </em>
                 </>
               )}
             </h1>
+            <p className="text-lead font-light text-primary-foreground/75 mt-6 max-w-2xl">
+              {lang === "es"
+                ? "Los patrocinadores financian, Lumen encuentra, juntos formamos. El resultado es un grupo pequeño y conocido de los mejores estudiantes del país, identificados con años de anticipación y al alcance de tu equipo mucho antes de que el mercado compita por ellos."
+                : "Sponsors fund, Lumen finds, together we foster. What that produces is a small, known group of the country's strongest students, identified years early and open to your team long before the market competes for them."}
+            </p>
           </Reveal>
         </div>
       </section>
