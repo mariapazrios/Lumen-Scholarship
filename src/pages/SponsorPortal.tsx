@@ -7,8 +7,7 @@ import { SCHOLARS } from "../data/scholars"
 import { useLang, type L } from "../lib/i18n"
 
 import GpaTrend from "../components/GpaTrend"
-import { SCHOLAR_GRADES, SCHOLAR_SABER11 } from "../data/scholarGrades"
-import { SCHOLAR_TERMS } from "../data/scholarTerms"
+import { useScholarGrades } from "../lib/grades"
 
 /**
  * Admissions essays, served only to an authenticated session. Fetched once for
@@ -77,6 +76,7 @@ function Portal() {
   const [open, setOpen] = useState<string | null>(SCHOLARS[0]?.slug ?? null)
   const [essayOpen, setEssayOpen] = useState<string | null>(null)
   const essays = useScholarEssays()
+  const grades = useScholarGrades()
 
   return (
     <>
@@ -234,7 +234,7 @@ function Portal() {
                     {cohort.map((s) => {
                       const isOpen = open === s.slug
               const record = {
-                grades: SCHOLAR_GRADES[s.slug],
+                grades: grades?.[s.slug],
                 essay: essays?.[s.slug],
               }
               return (
@@ -271,25 +271,28 @@ function Portal() {
                           story and quote. This view is the detail sponsors cannot get
                           elsewhere. */}
                       {/* Trend first: this is the view sponsors come here for */}
-                      {SCHOLAR_TERMS[s.slug] && (
+                      {(record.grades || grades === null) && (
                         <div className="bg-surface rounded-sm p-4 sm:p-5 mb-6">
                           <div className="flex flex-wrap items-baseline justify-between gap-3 mb-3">
                             <div className="text-meta uppercase tracking-widest text-muted">
                               {lang === "es" ? "Promedio por semestre" : "Average by term"}
                             </div>
-                            {SCHOLAR_TERMS[s.slug].officialPga && (
+                            {record.grades?.officialPga && (
                               <div className="text-meta text-muted">
                                 {lang === "es" ? "PGA acumulado oficial" : "Official cumulative PGA"}{" "}
                                 <strong className="text-primary tabular-nums">
-                                  {SCHOLAR_TERMS[s.slug].officialPga?.toFixed(2)}
+                                  {record.grades.officialPga.toFixed(2)}
                                 </strong>
                               </div>
                             )}
                           </div>
-                          <GpaTrend
-                            record={SCHOLAR_TERMS[s.slug]}
-                            achievements={tl(s.highlights)}
-                          />
+                          {record.grades ? (
+                            <GpaTrend record={record.grades} achievements={tl(s.highlights)} />
+                          ) : (
+                            <p role="status" className="text-body text-ink/70">
+                              {lang === "es" ? "Cargando las notas." : "Loading the record."}
+                            </p>
+                          )}
                         </div>
                       )}
 
@@ -362,7 +365,7 @@ function Portal() {
                             <div className="text-meta uppercase tracking-widest text-muted">
                               {lang === "es" ? "Desempeño académico" : "Academic performance"}
                             </div>
-                            {record?.grades ? (
+                            {record.grades ? (
                               <>
                                 <div className="flex flex-wrap items-baseline gap-x-3 mt-2">
                                   <div className="text-h3 font-bold text-primary tabular-nums">
@@ -390,6 +393,10 @@ function Portal() {
                                   ))}
                                 </div>
                               </>
+                            ) : grades === null ? (
+                              <p role="status" className="text-body text-ink/70 mt-2">
+                                {lang === "es" ? "Cargando las notas." : "Loading the record."}
+                              </p>
                             ) : (
                               <p className="text-body text-ink/70 mt-2">
                                 {lang === "es"
@@ -401,16 +408,20 @@ function Portal() {
                               <div className="text-meta uppercase tracking-widest text-muted">
                                 Saber 11
                               </div>
-                              {SCHOLAR_SABER11[s.slug] ? (
+                              {record.grades?.saber11 ? (
                                 <div className="text-body font-semibold text-primary tabular-nums">
-                                  {SCHOLAR_SABER11[s.slug]!.score}
+                                  {record.grades.saber11.score}
                                   <span className="text-meta font-normal text-muted">/500</span>
-                                  {SCHOLAR_SABER11[s.slug]!.selfReported && (
+                                  {record.grades.saber11.selfReported && (
                                     <span className="text-meta font-normal text-muted">
                                       {" "}
                                       · {lang === "es" ? "autorreportado" : "self-reported"}
                                     </span>
                                   )}
+                                </div>
+                              ) : grades === null ? (
+                                <div className="text-meta text-muted">
+                                  {lang === "es" ? "Cargando." : "Loading."}
                                 </div>
                               ) : (
                                 <div className="text-meta text-muted">

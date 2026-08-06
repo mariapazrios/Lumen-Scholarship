@@ -28,3 +28,8 @@ src/data/private/
 
 # Local Claude Code state: worktrees and the dev-server launch config.
 .claude/
+
+# Vercel CLI link state. Carries the project and team IDs, and `vercel env pull`
+# drops the database URL next to it. The repo is public.
+.vercel
+.env*

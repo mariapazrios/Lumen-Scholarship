@@ -21,7 +21,8 @@ CREATE INDEX IF NOT EXISTS lumen_ratings_candidate ON lumen_ratings (candidate);
 -- in the client bundle. `kind` drives access: applicant-* is board only.
 CREATE TABLE IF NOT EXISTS lumen_documents (
   id           BIGSERIAL PRIMARY KEY,
-  -- 'scholar-essay' | 'applicant-essay' | 'applicant-answers' | 'report'.
+  -- 'scholar-essay' | 'scholar-grades' | 'applicant-essay' | 'applicant-answers'
+  -- | 'report'.
   -- Anything matching 'applicant%' is board only, so a new applicant-* kind
   -- inherits the right gate without touching api/documents.ts.
   kind         TEXT        NOT NULL,

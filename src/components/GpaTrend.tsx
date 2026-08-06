@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useLang } from "../lib/i18n"
 import { useIsNarrow } from "../lib/viewport"
-import type { ScholarTermRecord } from "../data/scholarTerms"
+import type { ScholarTermRecord } from "../lib/grades"
 
 const ACCENT = "var(--color-cobalt)"
 
