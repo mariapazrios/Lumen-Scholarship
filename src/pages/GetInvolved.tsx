@@ -349,32 +349,45 @@ export default function GetInvolved() {
             <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
               {lang === "es" ? "Vincúlate" : "Get involved"}
             </div>
-            {/* The headline makes the business case; "Sponsors fund, Lumen
-                finds, together we foster" keeps its words but steps down into
-                the lead, where it opens the argument instead of being it. */}
+            {/* Three tiers, each doing a different job: the headline says how
+                closed the group is and who gets in, the line under it says what
+                kind of decision this is, and the paragraph says what you get.
+                "Sponsors fund, Lumen finds, together we foster" keeps its words
+                but sits in the paragraph now, opening the case instead of being
+                the whole of it. */}
             <h1 className="text-display font-light">
               {lang === "es" ? (
                 <>
-                  Invierte en el talento
+                  El talento más selectivo de Colombia,
                   <br />
                   <em className="italic font-semibold">
-                    por el que competirá tu industria.
+                    abierto a quienes lo hacen posible.
                   </em>
                 </>
               ) : (
                 <>
-                  Invest in the talent
+                  Colombia's most selective talent,
                   <br />
                   <em className="italic font-semibold">
-                    your industry will compete for.
+                    open to those who sponsor it.
                   </em>
                 </>
               )}
             </h1>
-            <p className="text-lead font-light text-primary-foreground/75 mt-6 max-w-2xl">
+            <p className="text-h3 font-semibold mt-6">
               {lang === "es"
-                ? "Los patrocinadores financian, Lumen encuentra, juntos formamos. El resultado es un grupo pequeño y conocido de los mejores estudiantes del país, identificados con años de anticipación y al alcance de tu equipo mucho antes de que el mercado compita por ellos."
-                : "Sponsors fund, Lumen finds, together we foster. What that produces is a small, known group of the country's strongest students, identified years early and open to your team long before the market competes for them."}
+                ? "Invierte en una generación, no solo en una causa."
+                : "Invest in a cohort, not just a cause."}
+            </p>
+            {/* Body size on a phone, lead size from sm up. text-h3 clamps to
+                22px on a narrow screen and text-lead is a flat 22px, so leaving
+                this at lead size put the line above it and this paragraph at
+                exactly the same size: the middle tier stopped reading as one.
+                It also ran the hero past a single phone screen. */}
+            <p className="text-body sm:text-lead font-light text-primary-foreground/75 mt-5 max-w-2xl">
+              {lang === "es"
+                ? "Los patrocinadores financian, Lumen encuentra, juntos formamos. El resultado es un grupo reducido y bien conocido de los mejores estudiantes del país, y patrocinar es lo que te abre sus puertas: una relación permanente con cada Lumen, desde el año en que llega a Los Andes hasta el año en que se gradúa hacia las empresas que lo necesitan."
+                : "Sponsors fund, Lumen finds, together we foster. What that produces is a small and closely known group of the country's strongest students, and sponsorship is what puts you inside it: a standing relationship with every Lumen, from the year they arrive at Los Andes to the year they graduate into the companies that need them."}
             </p>
           </Reveal>
         </div>
