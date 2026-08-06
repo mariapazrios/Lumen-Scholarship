@@ -1,4 +1,6 @@
 import Reveal from "../components/primitives/Reveal"
+import Watermark from "../components/primitives/Watermark"
+import { useState } from "react"
 import AdmissionsProcess from "../components/AdmissionsProcess"
 import { BOARD, type TeamMember } from "../data/team"
 import { useLang } from "../lib/i18n"
@@ -117,6 +119,74 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
   )
 }
 
+/**
+ * A word from Los Andes, closing the page. Navy so it reads as a distinct
+ * voice rather than more Lumen copy, and it carries the partner's own mark.
+ *
+ * The Spanish is Raquel Bernal's, verbatim. The English is a translation.
+ * The portrait hides itself if the file is missing, so the band still works
+ * as logo plus quote until the photograph is in place.
+ */
+function PartnerWord() {
+  const { lang } = useLang()
+  const [hasPortrait, setHasPortrait] = useState(true)
+
+  return (
+    <section className="bg-primary text-primary-foreground relative overflow-hidden">
+      <Watermark onDark className="-left-32 -bottom-32 w-[26rem]" />
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-16 md:py-24 relative">
+        <Reveal>
+          <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-8">
+            {lang === "es" ? "Desde nuestro aliado" : "A word from our partner"}
+          </div>
+        </Reveal>
+
+        <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-8 md:gap-12 items-start">
+          {hasPortrait && (
+            <Reveal>
+              <img
+                src="/team/raquel-bernal.jpg"
+                alt="Raquel Bernal"
+                onError={() => setHasPortrait(false)}
+                className="w-28 h-28 md:w-40 md:h-40 rounded-full object-cover object-top ring-1 ring-primary-foreground/25"
+                loading="lazy"
+              />
+            </Reveal>
+          )}
+
+          <Reveal delay={80}>
+            <div>
+              <blockquote className="text-lead md:text-h3 font-light leading-relaxed max-w-4xl">
+                {lang === "es"
+                  ? "La educación de excelencia es el gran motor de la equidad, el crecimiento y la justicia. Lumen lo entiende bien, pero sabe que el acceso no basta. Por eso, acompaña y potencia a estudiantes con la determinación de dejar huella. El resultado es transformador: una vida inimaginada para el joven, insospechada para su familia e invaluable para la sociedad."
+                  : "Top-tier education is the greatest driver of equity, growth, and justice. Lumen understands this well, but knows that access alone is not enough. That is why it guides, mentors, and empowers students who are determined to leave a mark. The result is transformative: a life unimaginable for the student, unexpected for their family, and invaluable to society."}
+              </blockquote>
+
+              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
+                <div>
+                  <div className="text-body font-semibold">Raquel Bernal</div>
+                  <div className="text-meta text-primary-foreground/70">
+                    {lang === "es"
+                      ? "Rectora, Universidad de los Andes"
+                      : "Rector, Universidad de los Andes"}
+                  </div>
+                </div>
+                <span aria-hidden="true" className="hidden sm:block w-px h-10 bg-primary-foreground/25" />
+                <img
+                  src="/uniandes-white.svg"
+                  alt="Universidad de los Andes"
+                  className="h-9 w-auto opacity-90"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function Team() {
   const { lang } = useLang()
 
@@ -178,6 +248,8 @@ export default function Team() {
         tone="soft"
         eyebrow={{ en: "The admissions process", es: "El proceso de admisión" }}
       />
+
+      <PartnerWord />
     </>
   )
 }
