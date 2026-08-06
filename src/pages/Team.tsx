@@ -230,25 +230,20 @@ export default function Team() {
             <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
               {lang === "es" ? "Equipo y proceso" : "Team and process"}
             </div>
-            {/* Not "the Lumen team": the point is that a demanding process is
-                only as good as who runs it. "Rigorous" is left to the process
-                section's own H2 further down rather than said twice. */}
             <h1 className="text-display font-light">
               {lang === "es" ? (
                 <>
-                  Un proceso exigente,
+                  Un proceso riguroso,
                   <br />
                   <em className="italic font-semibold">
-                    en manos de un equipo de primer nivel.
+                    impulsado por un equipo de primer nivel.
                   </em>
                 </>
               ) : (
                 <>
-                  A demanding process,
+                  A rigorous process,
                   <br />
-                  <em className="italic font-semibold">
-                    in the hands of a first-rate team.
-                  </em>
+                  <em className="italic font-semibold">driven by a best-in-class team.</em>
                 </>
               )}
             </h1>

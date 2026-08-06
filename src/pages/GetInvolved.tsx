@@ -224,7 +224,7 @@ function SponsorsSection() {
   )
 }
 
-/** What a sponsor gets back, framed as a talent portfolio. */
+/** What a sponsor gets back, stated plainly rather than as a claim to sell. */
 function ReturnsSection() {
   const { lang, t } = useLang()
   return (
@@ -238,24 +238,13 @@ function ReturnsSection() {
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-24 relative">
         <Reveal>
           <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
-            {lang === "es" ? "Los patrocinadores reciben" : "Sponsors receive"}
+            {lang === "es" ? "Para patrocinadores" : "For sponsors"}
           </div>
+          {/* Direct rather than a claim: the eyebrow named who this is for, and
+              the four cards right below already carry the specifics, so the
+              title's job is just to say what it is. */}
           <h2 className="text-h2 font-semibold">
-            {lang === "es" ? (
-              <>
-                Formamos el talento que{" "}
-                <em className="italic font-light">
-                  impulsará a las empresas líderes de Colombia.
-                </em>
-              </>
-            ) : (
-              <>
-                Fostering the talent pool that{" "}
-                <em className="italic font-light">
-                  will propel Colombia's leading businesses.
-                </em>
-              </>
-            )}
+            {lang === "es" ? "Lo que reciben los patrocinadores." : "What sponsors receive."}
           </h2>
         </Reveal>
 
@@ -349,12 +338,10 @@ export default function GetInvolved() {
             <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
               {lang === "es" ? "Vincúlate" : "Get involved"}
             </div>
-            {/* Three tiers, each doing a different job: the headline says how
-                closed the group is and who gets in, the line under it says what
-                kind of decision this is, and the paragraph says what you get.
-                "Sponsors fund, Lumen finds, together we foster" keeps its words
-                but sits in the paragraph now, opening the case instead of being
-                the whole of it. */}
+            {/* Two tiers: the headline says how closed the group is and who
+                gets in, the line under it says what kind of decision this is.
+                The explanatory paragraph that used to sit here is gone; the
+                stats immediately below make the same case in numbers. */}
             <h1 className="text-display font-light">
               {lang === "es" ? (
                 <>
@@ -376,18 +363,8 @@ export default function GetInvolved() {
             </h1>
             <p className="text-h3 font-semibold mt-6">
               {lang === "es"
-                ? "Invierte en una generación, no solo en una causa."
-                : "Invest in a cohort, not just a cause."}
-            </p>
-            {/* Body size on a phone, lead size from sm up. text-h3 clamps to
-                22px on a narrow screen and text-lead is a flat 22px, so leaving
-                this at lead size put the line above it and this paragraph at
-                exactly the same size: the middle tier stopped reading as one.
-                It also ran the hero past a single phone screen. */}
-            <p className="text-body sm:text-lead font-light text-primary-foreground/75 mt-5 max-w-2xl">
-              {lang === "es"
-                ? "Los patrocinadores financian, Lumen encuentra, juntos formamos. El resultado es un grupo reducido y bien conocido de los mejores estudiantes del país, y patrocinar es lo que te abre sus puertas: una relación permanente con cada Lumen, desde el año en que llega a Los Andes hasta el año en que se gradúa hacia las empresas que lo necesitan."
-                : "Sponsors fund, Lumen finds, together we foster. What that produces is a small and closely known group of the country's strongest students, and sponsorship is what puts you inside it: a standing relationship with every Lumen, from the year they arrive at Los Andes to the year they graduate into the companies that need them."}
+                ? "Invierte en un pool de talento, no solo una causa."
+                : "Invest in a talent pool, not just a cause."}
             </p>
           </Reveal>
         </div>
