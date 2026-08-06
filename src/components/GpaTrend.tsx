@@ -131,9 +131,15 @@ export default function GpaTrend({
       </div>
 
       <p className="text-[11px] text-muted mt-3">
+        {/* These were straight means while the source report embedded its term
+            tables as images and carried no credit counts. The 2026-1 report
+            carries them, so the bars are now weighted the same way Uniandes
+            weights the cumulative. The intersemestral note is here because the
+            cumulative takes those in and the bars do not, so the two cannot be
+            reconciled by eye without it. */}
         {lang === "es"
-          ? "Promedio simple de las notas del semestre, leído del reporte de notas de Uniandes. El PGA acumulado oficial se pondera por créditos."
-          : "Straight mean of the term's course grades, read from the Uniandes grade report. The official cumulative PGA is credit weighted."}
+          ? "Promedio del semestre ponderado por créditos, leído del reporte de notas de Uniandes, en la misma base que el PGA acumulado oficial. El acumulado incluye además los intersemestrales, que no aparecen como barra."
+          : "Credit-weighted average for the term, read from the Uniandes grade report, on the same basis as the official cumulative PGA. The cumulative also takes in the intersemestral sessions, which are not shown as bars."}
         {!record.complete && (
           <>
             {" "}
