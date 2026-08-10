@@ -103,6 +103,8 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   // Arms the second click on "Delete my rating". Reset whenever the target
   // changes, so a confirm armed on one candidate cannot fire on the next.
   const [confirmDelete, setConfirmDelete] = useState(false)
+  // Narrows the consolidated section to one candidate. Null shows everyone.
+  const [focus, setFocus] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     try {
@@ -277,20 +279,20 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 )}
               </h1>
             </div>
-            <button
-              type="button"
-              onClick={() => signOut().then(onSessionLost)}
-              className="text-meta uppercase tracking-widest text-primary-foreground/70 border border-primary-foreground/25 rounded-sm px-4 py-2 cursor-pointer transition-colors duration-200 hover:text-white hover:border-primary-foreground/60"
-            >
-              {lang === "es" ? "Cerrar sesión" : "Sign out"}
-            </button>
+            {/* Map and sign-out share the top right. The map is decoration at
+                this size, not a control: the readable version with the city
+                list is still further down the page. */}
+            <div className="flex items-start gap-5">
+              <ApplicantsMap applicants={submitted} compact />
+              <button
+                type="button"
+                onClick={() => signOut().then(onSessionLost)}
+                className="text-meta uppercase tracking-widest text-primary-foreground/70 border border-primary-foreground/25 rounded-sm px-4 py-2 cursor-pointer transition-colors duration-200 hover:text-white hover:border-primary-foreground/60"
+              >
+                {lang === "es" ? "Cerrar sesión" : "Sign out"}
+              </button>
+            </div>
           </div>
-
-          <p className="text-body text-primary-foreground/70 mt-5 max-w-2xl">
-            {lang === "es"
-              ? `Mostramos los ${submitted.length} candidatos que se postularon, de ${people.length} invitados. Las calificaciones se guardan en el servidor y las ve toda la junta.`
-              : `Showing the ${submitted.length} candidates who applied, of ${people.length} invited. Ratings save to the server and the whole board sees them.`}
-          </p>
 
           <div className="mt-8">
             <label className="text-meta uppercase tracking-widest text-primary-foreground/60">
@@ -956,10 +958,27 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
               </thead>
               <tbody>
                 {ratedRows.map((row, i) => (
-                  <tr key={row.candidate} className="border-b border-ink/5">
+                  <tr
+                    key={row.candidate}
+                    className={`border-b border-ink/5 ${
+                      focus === row.candidate ? "bg-accent/5" : ""
+                    }`}
+                  >
                     <td className="py-3 pr-4 text-body tabular-nums text-muted">{i + 1}</td>
                     <td className="py-3 pr-4 text-body font-semibold text-primary">
-                      {nameOf(row.candidate)}
+                      {/* Clicking a name narrows everything below to that one
+                          candidate. Clicking the same name again clears it. */}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFocus(focus === row.candidate ? null : row.candidate)
+                        }
+                        className={`text-left cursor-pointer underline-offset-4 hover:underline decoration-accent/50 ${
+                          focus === row.candidate ? "underline decoration-accent" : ""
+                        }`}
+                      >
+                        {nameOf(row.candidate)}
+                      </button>
                     </td>
                     <td className="py-3 pr-4 text-body tabular-nums font-bold text-primary">
                       {row.valuesAvg.toFixed(2)}
@@ -1016,40 +1035,79 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
             </p>
           )}
 
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {ratedRows.map((row) => (
-              <div key={row.candidate} className="bg-white border border-ink/10 rounded-sm p-6">
-                <div className="flex items-baseline justify-between gap-3">
-                  <div className="text-body font-semibold text-primary">
-                    {nameOf(row.candidate)}
-                  </div>
-                  <div className="text-meta tabular-nums text-muted">
-                    {row.raters ? row.score.toFixed(2) : "·"}
-                  </div>
-                </div>
-                <p className="text-body text-ink/75 mt-2">{readOfScores(row, lang)}</p>
-                {row.raters > 0 && (
-                  <div className="mt-5 border-t border-ink/10 pt-5 space-y-5">
-                    {Object.entries(store[row.candidate] ?? {}).map(([slug, r]) => (
-                      <div key={slug}>
-                        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                          <div className="text-body font-semibold text-primary">
-                            {BOARD.find((m) => m.slug === slug)?.name ?? slug}
-                          </div>
-                          <div className="text-meta text-muted tabular-nums whitespace-nowrap">
-                            {lang === "es" ? "Valores" : "Values"}{" "}
-                            <strong className="text-ink/80">{valuesAverage(r).toFixed(1)}</strong>{" "}
-                            · {lang === "es" ? "Recomendación" : "Rec"}{" "}
-                            <strong className="text-ink/80">{r.recommendation}/5</strong>
-                          </div>
-                        </div>
-                        {r.comments && <p className="text-body text-ink/75 mt-2">{r.comments}</p>}
+          {focus && (
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <span className="text-body text-ink/75">
+                {lang === "es" ? "Mostrando solo " : "Showing only "}
+                <strong className="text-primary">{nameOf(focus)}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => setFocus(null)}
+                className="text-meta uppercase tracking-widest text-accent cursor-pointer"
+              >
+                {lang === "es" ? "Ver todos" : "Show all"}
+              </button>
+            </div>
+          )}
+
+          {/* One column when focused: with a single card there is nothing to
+              compare against, and the comments get the full width. */}
+          <div className={`mt-6 grid grid-cols-1 gap-4 ${focus ? "" : "md:grid-cols-2"}`}>
+            {ratedRows
+              .filter((row) => !focus || row.candidate === focus)
+              .map((row) => (
+                <div
+                  key={row.candidate}
+                  className="bg-white border border-ink/10 rounded-sm overflow-hidden"
+                >
+                  {/* The candidate. A cream band, so the person being judged is
+                      visibly a different kind of thing from the judgements. */}
+                  <div className="bg-surface px-6 py-5 border-b border-ink/10">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <div className="text-h3 font-semibold text-primary">
+                        {nameOf(row.candidate)}
                       </div>
-                    ))}
+                      <div className="text-body tabular-nums font-bold text-primary">
+                        {row.raters ? row.score.toFixed(2) : "·"}
+                      </div>
+                    </div>
+                    <p className="text-body text-ink/75 mt-2">{readOfScores(row, lang)}</p>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {/* The board. Labelled, and each member's read carries its own
+                      rule so several of them do not run together as one wall. */}
+                  {row.raters > 0 && (
+                    <div className="px-6 py-5">
+                      <div className="text-meta uppercase tracking-widest text-muted mb-4">
+                        {lang === "es" ? `La junta (${row.raters})` : `The board (${row.raters})`}
+                      </div>
+                      <div className="space-y-4">
+                        {Object.entries(store[row.candidate] ?? {}).map(([slug, r]) => (
+                          <div key={slug} className="border-l-2 border-accent/40 pl-4">
+                            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                              <div className="text-body font-semibold text-primary">
+                                {BOARD.find((m) => m.slug === slug)?.name ?? slug}
+                              </div>
+                              <div className="text-meta text-muted tabular-nums whitespace-nowrap">
+                                {lang === "es" ? "Valores" : "Values"}{" "}
+                                <strong className="text-ink/80">
+                                  {valuesAverage(r).toFixed(1)}
+                                </strong>{" "}
+                                · {lang === "es" ? "Recomendación" : "Rec"}{" "}
+                                <strong className="text-ink/80">{r.recommendation}/5</strong>
+                              </div>
+                            </div>
+                            {r.comments && (
+                              <p className="text-body text-ink/75 mt-1.5">{r.comments}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
           </div>
 
           <p className="text-meta text-muted mt-8 max-w-3xl">
@@ -1057,6 +1115,111 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
               ? "El puesto y la lectura se calculan con las calificaciones que la junta ha ingresado."
               : "Rank and read are computed from the ratings the board has entered."}
           </p>
+
+          {/* Who still owes what. Candidates down the side, members across the
+              top: the row reads as "who has this candidate left to score" and
+              the column as "what this member has left", which is the same
+              question asked from either end. */}
+          <div className="mt-16">
+            <div className="text-meta uppercase tracking-widest text-muted mb-3">
+              {lang === "es" ? "Cobertura" : "Coverage"}
+            </div>
+            <h3 className="text-h3 font-semibold text-primary">
+              {lang === "es" ? "Quién falta por calificar a quién." : "Who still has whom to score."}
+            </h3>
+
+            <p className="md:hidden text-meta uppercase tracking-widest text-muted mt-6">
+              {lang === "es" ? "Desliza para ver la tabla →" : "Swipe to see the table →"}
+            </p>
+            <div className="mt-4 md:mt-8 overflow-x-auto">
+              <table className="w-full min-w-[44rem] text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-ink/15">
+                    <th className="text-meta uppercase tracking-widest text-muted font-semibold py-3 pr-4">
+                      {lang === "es" ? "Candidato" : "Candidate"}
+                    </th>
+                    {BOARD.map((m) => (
+                      <th
+                        key={m.slug}
+                        className="text-meta uppercase tracking-widest text-muted font-semibold py-3 px-2 text-center"
+                      >
+                        {/* First name only: six full names will not fit a row. */}
+                        {m.name.split(" ")[0]}
+                      </th>
+                    ))}
+                    <th className="text-meta uppercase tracking-widest text-muted font-semibold py-3 pl-4 text-right">
+                      {lang === "es" ? "Faltan" : "Missing"}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => {
+                    const missing = BOARD.filter((m) => !store[row.candidate]?.[m.slug])
+                    return (
+                      <tr key={row.candidate} className="border-b border-ink/5">
+                        <td className="py-2.5 pr-4 text-body text-primary font-semibold whitespace-nowrap">
+                          {nameOf(row.candidate)}
+                        </td>
+                        {BOARD.map((m) => {
+                          const done = Boolean(store[row.candidate]?.[m.slug])
+                          return (
+                            <td key={m.slug} className="py-2.5 px-2 text-center">
+                              <span
+                                title={`${m.name} · ${nameOf(row.candidate)}`}
+                                className={
+                                  done
+                                    ? "text-accent font-bold"
+                                    : "text-ink/20"
+                                }
+                              >
+                                {done ? "✓" : "·"}
+                              </span>
+                            </td>
+                          )
+                        })}
+                        <td
+                          className={`py-2.5 pl-4 text-meta tabular-nums text-right ${
+                            missing.length === 0 ? "text-accent font-semibold" : "text-muted"
+                          }`}
+                        >
+                          {missing.length === 0
+                            ? lang === "es"
+                              ? "completo"
+                              : "complete"
+                            : missing.length}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-ink/15">
+                    <td className="py-3 pr-4 text-meta uppercase tracking-widest text-muted font-semibold">
+                      {lang === "es" ? "Calificados" : "Scored"}
+                    </td>
+                    {BOARD.map((m) => {
+                      const done = rows.filter((r) => store[r.candidate]?.[m.slug]).length
+                      return (
+                        <td
+                          key={m.slug}
+                          className={`py-3 px-2 text-center text-meta tabular-nums font-semibold ${
+                            done === rows.length && rows.length > 0
+                              ? "text-accent"
+                              : done === 0
+                                ? "text-ink/30"
+                                : "text-primary"
+                          }`}
+                        >
+                          {done}/{rows.length}
+                        </td>
+                      )
+                    })}
+                    <td />
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
     </>
