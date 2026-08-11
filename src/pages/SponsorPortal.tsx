@@ -626,7 +626,8 @@ function Portal() {
                                   : "No grade record imported."}
                               </p>
                             )}
-                            <div className="mt-4 pt-4 border-t border-ink/10 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <div className="mt-4 pt-4 border-t border-ink/10">
+                              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                               <div className="text-meta uppercase tracking-widest text-muted">
                                 Saber 11
                               </div>
@@ -634,6 +635,15 @@ function Portal() {
                                 <div className="text-body font-semibold text-primary tabular-nums">
                                   {record.grades.saber11.score}
                                   <span className="text-meta font-normal text-muted">/500</span>
+                                  {record.grades.saber11.percentile !== undefined && (
+                                    <span className="text-meta font-normal text-accent">
+                                      {" "}
+                                      ·{" "}
+                                      {lang === "es"
+                                        ? `percentil ${record.grades.saber11.percentile}`
+                                        : `${record.grades.saber11.percentile}th percentile`}
+                                    </span>
+                                  )}
                                   {record.grades.saber11.selfReported && (
                                     <span className="text-meta font-normal text-muted">
                                       {" "}
@@ -650,6 +660,44 @@ function Portal() {
                                   {lang === "es"
                                     ? "Admisión por desempeño escolar, sin puntaje en el registro"
                                     : "Admitted on school performance; no score on record"}
+                                </div>
+                              )}
+                              </div>
+                              {/* The five tests, read off the scholar's own ICFES
+                                  report. Present only where the document is on
+                                  file, so a self-reported global carries no
+                                  breakdown it cannot support. */}
+                              {record.grades?.saber11?.subjects && (
+                                <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-x-3 gap-y-2">
+                                  {(
+                                    [
+                                      ["lecturaCritica", "Lectura crítica", "Critical reading"],
+                                      ["matematicas", "Matemáticas", "Mathematics"],
+                                      ["socialesCiudadanas", "Sociales", "Social studies"],
+                                      ["cienciasNaturales", "Ciencias", "Natural sciences"],
+                                      ["ingles", "Inglés", "English"],
+                                    ] as const
+                                  ).map(([key, es, en]) => {
+                                    const test = record.grades!.saber11!.subjects![key]
+                                    return (
+                                      <div key={key}>
+                                        <div className="text-meta uppercase tracking-widest text-muted leading-tight">
+                                          {lang === "es" ? es : en}
+                                        </div>
+                                        <div className="text-body font-semibold text-primary tabular-nums">
+                                          {test.score}
+                                          <span className="text-meta font-normal text-muted">
+                                            /100
+                                          </span>
+                                        </div>
+                                        <div className="text-meta text-accent tabular-nums">
+                                          {lang === "es"
+                                            ? `p${test.percentile}`
+                                            : `${test.percentile}th pct`}
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
                                 </div>
                               )}
                             </div>

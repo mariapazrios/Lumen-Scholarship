@@ -18,7 +18,30 @@ import { useEffect, useState } from "react"
  */
 export type ScholarTerm = { term: string; average: number | null; courses: number | null }
 
-export type Saber11 = { score: number; selfReported?: boolean }
+/** One of the five Saber 11 tests, scored 0-100 with its own national percentile. */
+export type Saber11Test = { score: number; percentile: number }
+
+/**
+ * `percentile` and `subjects` come from the scholar's own ICFES report PDF, so
+ * they are absent on a self-reported score: Daniel Álzate quotes his 432 in his
+ * essay but has never sent the document, and a percentile nobody can check
+ * should not render as though ICFES issued it.
+ */
+export type Saber11 = {
+  score: number
+  selfReported?: boolean
+  percentile?: number
+  /** ICFES registration number, the audit trail back to the source report. */
+  registro?: string
+  examDate?: string
+  subjects?: {
+    lecturaCritica: Saber11Test
+    matematicas: Saber11Test
+    socialesCiudadanas: Saber11Test
+    cienciasNaturales: Saber11Test
+    ingles: Saber11Test
+  }
+}
 
 /** The slice GpaTrend needs. */
 export type ScholarTermRecord = {
