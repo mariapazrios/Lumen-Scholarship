@@ -8,6 +8,7 @@ import { useLang, type L } from "../lib/i18n"
 
 import GpaTrend from "../components/GpaTrend"
 import { useScholarGrades } from "../lib/grades"
+import { useScholarJournals } from "../lib/journals"
 
 /**
  * Admissions essays, served only to an authenticated session. Fetched once for
@@ -73,10 +74,14 @@ const GENERATIONS = ["2024", "2025"] as const
 
 function Portal() {
   const { lang, t, tl } = useLang()
-  const [open, setOpen] = useState<string | null>(SCHOLARS[0]?.slug ?? null)
+  // Cards start closed: the grid is the overview now, and defaulting one open
+  // buried the other ten under a full detail panel.
+  const [open, setOpen] = useState<string | null>(null)
   const [essayOpen, setEssayOpen] = useState<string | null>(null)
+  const [journalOpen, setJournalOpen] = useState<string | null>(null)
   const essays = useScholarEssays()
   const grades = useScholarGrades()
+  const journals = useScholarJournals()
 
   return (
     <>
@@ -230,43 +235,96 @@ function Portal() {
                     </span>
                     <span aria-hidden="true" className="flex-1 h-px bg-ink/15 min-w-8" />
                   </div>
-                  <div className="space-y-3">
+                  {/* A grid of cards, not a stack of rows: eleven scholars read as a
+                      cohort you scan, and the one you pick expands in place to full
+                      width rather than pushing the others off screen. */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
                     {cohort.map((s) => {
                       const isOpen = open === s.slug
               const record = {
                 grades: grades?.[s.slug],
                 essay: essays?.[s.slug],
+                journal: journals?.[s.slug],
               }
               return (
                 <div
                   key={s.slug}
                   id={`scholar-${s.slug}`}
-                  className="bg-white border border-ink/10 rounded-sm overflow-hidden scroll-mt-24"
+                  className={`bg-white border rounded-sm overflow-hidden scroll-mt-24 transition-colors duration-200 ${
+                    isOpen
+                      ? "md:col-span-2 xl:col-span-3 border-accent/40"
+                      : "border-ink/10 hover:border-accent/40"
+                  }`}
                 >
                   <button
                     type="button"
                     aria-expanded={isOpen}
+                    aria-controls={`scholar-panel-${s.slug}`}
                     onClick={() => setOpen(isOpen ? null : s.slug)}
-                    className="w-full text-left px-4 sm:px-6 py-4 sm:py-5 flex flex-wrap items-center gap-x-6 gap-y-2 cursor-pointer hover:bg-surface/60 transition-colors duration-200"
+                    className="w-full text-left px-4 sm:px-6 py-4 sm:py-5 cursor-pointer hover:bg-surface/60 transition-colors duration-200"
                   >
-                    <img
-                      src={`/scholars/${s.slug}.jpg`}
-                      alt=""
-                      className="w-11 h-11 rounded-full object-cover object-[center_15%] shrink-0"
-                      loading="lazy"
-                    />
-                    <span className="text-body font-semibold text-primary">{s.name}</span>
-                    <span className="text-meta text-muted">{t(s.major)}</span>
-                    <span className="text-meta uppercase tracking-widest text-muted ml-auto">
-                      {lang === "es"
-                        ? `Generación ${s.generation}`
-                        : `${s.generation} Generation`}{" "}
-                      · {s.hometown}
-                    </span>
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={`/scholars/${s.slug}.jpg`}
+                        alt=""
+                        className="w-14 h-14 rounded-full object-cover object-[center_15%] shrink-0"
+                        loading="lazy"
+                      />
+                      <div className="min-w-0">
+                        <div className="text-body font-semibold text-primary">{s.name}</div>
+                        <div className="text-meta text-muted">{t(s.major)}</div>
+                      </div>
+                      <span className="text-meta uppercase tracking-widest text-accent ml-auto shrink-0">
+                        {isOpen
+                          ? lang === "es"
+                            ? "Cerrar"
+                            : "Close"
+                          : lang === "es"
+                            ? "Explorar"
+                            : "Explore"}
+                      </span>
+                    </div>
+
+                    {/* Collapsed face carries enough to choose from: who they are in a
+                        line, and what is actually inside before you spend a click. */}
+                    {!isOpen && (
+                      <>
+                        <p className="text-body text-ink/70 mt-3 line-clamp-3">{t(s.short)}</p>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-4 pt-3 border-t border-ink/10">
+                          <span className="text-meta uppercase tracking-widest text-muted">
+                            {lang === "es"
+                              ? `Generación ${s.generation}`
+                              : `${s.generation} Generation`}{" "}
+                            · {s.hometown}
+                          </span>
+                          {record.grades?.cumulative && (
+                            <span className="text-meta text-muted tabular-nums ml-auto">
+                              {lang === "es" ? "PGA" : "GPA"}{" "}
+                              <strong className="text-primary">
+                                {record.grades.cumulative.toFixed(2)}
+                              </strong>
+                            </span>
+                          )}
+                        </div>
+                        {record.journal && (
+                          <div className="text-meta uppercase tracking-widest text-accent mt-2">
+                            {lang === "es"
+                              ? `Journal ${record.journal.term}`
+                              : `${record.journal.term} journal`}{" "}
+                            · {record.journal.words}{" "}
+                            {lang === "es" ? "palabras" : "words"}
+                          </div>
+                        )}
+                      </>
+                    )}
                   </button>
 
                   {isOpen && (
-                    <div className="px-4 sm:px-6 pb-6 pt-2 border-t border-ink/10">
+                    <div
+                      id={`scholar-panel-${s.slug}`}
+                      role="region"
+                      className="px-4 sm:px-6 pb-6 pt-2 border-t border-ink/10"
+                    >
                       {/* No overview here: the public scholars page already carries the
                           story and quote. This view is the detail sponsors cannot get
                           elsewhere. */}
@@ -295,6 +353,72 @@ function Portal() {
                           )}
                         </div>
                       )}
+
+                      {/* The journal sits above the essay on purpose: the essay is who
+                          they were applying, the journal is who they are now. */}
+                      <div className="bg-surface rounded-sm p-4 sm:p-5 mb-6">
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+                          <div className="text-meta uppercase tracking-widest text-muted">
+                            {lang === "es"
+                              ? "Journal, en sus propias palabras"
+                              : "Journal, in their own words"}
+                          </div>
+                          {record.journal && (
+                            <div className="flex items-baseline gap-3">
+                              <span className="text-meta text-muted">
+                                {record.journal.title} · {record.journal.submittedAt}
+                              </span>
+                              {journalOpen === s.slug && (
+                                <button
+                                  type="button"
+                                  onClick={() => setJournalOpen(null)}
+                                  className="text-meta uppercase tracking-widest text-accent cursor-pointer shrink-0"
+                                >
+                                  {lang === "es" ? "Contraer" : "Collapse"}
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        {record.journal ? (
+                          <>
+                            <div
+                              className={`mt-3 space-y-3 ${journalOpen === s.slug ? "" : "max-h-64 overflow-hidden"}`}
+                            >
+                              {record.journal.body.split("\n\n").map((p) => (
+                                <p key={p.slice(0, 24)} className="text-body text-ink/80">
+                                  {p}
+                                </p>
+                              ))}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setJournalOpen(journalOpen === s.slug ? null : s.slug)
+                              }
+                              className="text-meta uppercase tracking-widest text-accent mt-3 cursor-pointer"
+                            >
+                              {journalOpen === s.slug
+                                ? lang === "es"
+                                  ? "Contraer"
+                                  : "Collapse"
+                                : lang === "es"
+                                  ? `Leer completo, ${record.journal.words} palabras`
+                                  : `Read in full, ${record.journal.words} words`}
+                            </button>
+                          </>
+                        ) : journals === null ? (
+                          <p role="status" className="text-body text-ink/70 mt-2">
+                            {lang === "es" ? "Cargando el journal." : "Loading the journal."}
+                          </p>
+                        ) : (
+                          <p className="text-body text-ink/70 mt-2">
+                            {lang === "es"
+                              ? "Todavía no ha enviado su journal de 2026."
+                              : "Has not sent a 2026 journal yet."}
+                          </p>
+                        )}
+                      </div>
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Achievements are not listed here: they appear as callouts
