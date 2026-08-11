@@ -7,6 +7,7 @@ import { SCHOLARS } from "../data/scholars"
 import { useLang, type L } from "../lib/i18n"
 
 import GpaTrend from "../components/GpaTrend"
+import IcfesGpaScatter from "../components/IcfesGpaScatter"
 import { useScholarGrades } from "../lib/grades"
 import { useScholarJournals } from "../lib/journals"
 
@@ -163,6 +164,34 @@ function Portal() {
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Cohort view, before the individual profiles: the question of whether
+          the entrance score predicts the degree is about the group, and it
+          reads badly one scholar at a time. */}
+      <section className="bg-surface">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
+          <Reveal>
+            <div className="text-meta uppercase tracking-widest text-muted mb-4">
+              {lang === "es" ? "La cohorte" : "The cohort"}
+            </div>
+            <h2 className="text-h3 font-semibold text-primary">
+              {lang === "es"
+                ? "El puntaje de entrada no predice la carrera."
+                : "The entrance score does not predict the degree."}
+            </h2>
+            <p className="text-body text-ink/75 mt-3 max-w-2xl">
+              {lang === "es"
+                ? "Saber 11 contra el promedio acumulado a 2026-1, un punto por estudiante."
+                : "Saber 11 against cumulative GPA as of 2026-1, one dot per scholar."}
+            </p>
+          </Reveal>
+          <Reveal delay={110}>
+            <div className="bg-surface-soft rounded-sm p-5 sm:p-8 mt-8">
+              <IcfesGpaScatter grades={grades} />
+            </div>
+          </Reveal>
         </div>
       </section>
 
