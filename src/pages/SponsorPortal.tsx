@@ -311,8 +311,17 @@ function Portal() {
                             {lang === "es"
                               ? `Journal ${record.journal.term}`
                               : `${record.journal.term} journal`}{" "}
-                            · {record.journal.words}{" "}
-                            {lang === "es" ? "palabras" : "words"}
+                            ·{" "}
+                            {Math.max(1, Math.round(record.journal.words / 200))}{" "}
+                            {lang === "es" ? "min" : "min"}
+                            {(() => {
+                              const n = record.journal.achievements.reduce(
+                                (sum, a) => sum + a.items.length,
+                                0,
+                              )
+                              if (n === 0) return null
+                              return ` · ${n} ${lang === "es" ? "logros" : n === 1 ? "achievement" : "achievements"}`
+                            })()}
                           </div>
                         )}
                       </>
@@ -355,48 +364,68 @@ function Portal() {
                       )}
 
                       {/* The journal sits above the essay on purpose: the essay is who
-                          they were applying, the journal is who they are now. */}
-                      <div className="bg-surface rounded-sm p-4 sm:p-5 mb-6">
-                        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-                          <div className="text-meta uppercase tracking-widest text-muted">
-                            {lang === "es"
-                              ? "Journal, en sus propias palabras"
-                              : "Journal, in their own words"}
-                          </div>
-                          {record.journal && (
-                            <div className="flex items-baseline gap-3">
-                              <span className="text-meta text-muted">
-                                {record.journal.title} · {record.journal.submittedAt}
-                              </span>
-                              {journalOpen === s.slug && (
-                                <button
-                                  type="button"
-                                  onClick={() => setJournalOpen(null)}
-                                  className="text-meta uppercase tracking-widest text-accent cursor-pointer shrink-0"
-                                >
-                                  {lang === "es" ? "Contraer" : "Collapse"}
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                          they were applying, the journal is who they are now.
+
+                          It is set as a newspaper column rather than one long
+                          measure. A thousand words across the full width of an
+                          expanded card runs to about 200 characters a line, which
+                          is roughly three times what anyone can track back to the
+                          start of. Columns keep the measure honest and let the
+                          whole entry sit in one screen. */}
+                      <div className="bg-surface rounded-sm p-5 sm:p-8 mb-6">
                         {record.journal ? (
                           <>
-                            <div
-                              className={`mt-3 space-y-3 ${journalOpen === s.slug ? "" : "max-h-64 overflow-hidden"}`}
-                            >
-                              {record.journal.body.split("\n\n").map((p) => (
-                                <p key={p.slice(0, 24)} className="text-body text-ink/80">
-                                  {p}
-                                </p>
-                              ))}
+                            <div className="border-b border-ink/15 pb-4 mb-6">
+                              <div className="text-meta uppercase tracking-widest text-muted">
+                                {lang === "es"
+                                  ? "Journal, en sus propias palabras"
+                                  : "Journal, in their own words"}
+                              </div>
+                              <h4 className="text-h3 font-semibold text-primary italic mt-2">
+                                {record.journal.title}
+                              </h4>
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-meta uppercase tracking-widest text-muted">
+                                <span>{s.name}</span>
+                                <span aria-hidden="true">·</span>
+                                <span className="tabular-nums">
+                                  {record.journal.submittedAt}
+                                </span>
+                                <span aria-hidden="true">·</span>
+                                <span className="tabular-nums">
+                                  {Math.max(1, Math.round(record.journal.words / 200))}{" "}
+                                  {lang === "es" ? "min de lectura" : "min read"}
+                                </span>
+                              </div>
                             </div>
+
+                            <div className="relative">
+                              <div
+                                className={`text-body text-ink/85 leading-relaxed lg:columns-2 2xl:columns-3 gap-10 [&>p]:mb-4 [&>p:first-of-type::first-letter]:float-left [&>p:first-of-type::first-letter]:mr-2 [&>p:first-of-type::first-letter]:mt-1 [&>p:first-of-type::first-letter]:text-[3.25rem] [&>p:first-of-type::first-letter]:leading-[0.8] [&>p:first-of-type::first-letter]:font-bold [&>p:first-of-type::first-letter]:text-primary ${
+                                  journalOpen === s.slug
+                                    ? ""
+                                    : "max-h-72 overflow-hidden"
+                                }`}
+                              >
+                                {record.journal.body.split("\n\n").map((p) => (
+                                  <p key={p.slice(0, 24)}>{p}</p>
+                                ))}
+                              </div>
+                              {/* Fade rather than a hard cut, so it reads as "there is
+                                  more" instead of a sentence that broke. */}
+                              {journalOpen !== s.slug && (
+                                <div
+                                  aria-hidden="true"
+                                  className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-surface to-transparent"
+                                />
+                              )}
+                            </div>
+
                             <button
                               type="button"
                               onClick={() =>
                                 setJournalOpen(journalOpen === s.slug ? null : s.slug)
                               }
-                              className="text-meta uppercase tracking-widest text-accent mt-3 cursor-pointer"
+                              className="text-meta uppercase tracking-widest text-accent mt-4 cursor-pointer"
                             >
                               {journalOpen === s.slug
                                 ? lang === "es"
@@ -406,17 +435,86 @@ function Portal() {
                                   ? `Leer completo, ${record.journal.words} palabras`
                                   : `Read in full, ${record.journal.words} words`}
                             </button>
+
+                            {/* Achievements: the scholars grouped these by semester
+                                themselves, so they are shown that way rather than
+                                flattened into one list. */}
+                            {(record.journal.achievements.length > 0 ||
+                              record.journal.achievementsNote) && (
+                              <div className="mt-8 pt-6 border-t border-ink/15">
+                                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-4">
+                                  <div className="text-meta uppercase tracking-widest text-muted">
+                                    {lang === "es"
+                                      ? "Logros y actividades extracurriculares"
+                                      : "Extracurriculars and achievements"}
+                                  </div>
+                                  <div className="text-meta text-muted">
+                                    {lang === "es"
+                                      ? record.journal.achievementsSource === "email"
+                                        ? "Según su correo de envío"
+                                        : "Según su journal"
+                                      : record.journal.achievementsSource === "email"
+                                        ? "As listed in their covering email"
+                                        : "As listed in their journal"}
+                                  </div>
+                                </div>
+                                {record.journal.achievementsNote && (
+                                  <p className="text-body text-ink/70 italic mb-4">
+                                    {lang === "es"
+                                      ? record.journal.achievementsNote.es
+                                      : record.journal.achievementsNote.en}
+                                  </p>
+                                )}
+                                {record.journal.achievements.length > 0 && (
+                                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-5">
+                                    {record.journal.achievements.map((a) => (
+                                      <div
+                                        key={a.label.en + (a.code ?? "")}
+                                        className="border-l-2 border-accent pl-4"
+                                      >
+                                        <div className="text-meta uppercase tracking-widest text-primary font-semibold">
+                                          {lang === "es" ? a.label.es : a.label.en}
+                                          {a.code && (
+                                            <span className="font-normal text-muted tabular-nums">
+                                              {" "}
+                                              {a.code}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <ul className="mt-2 space-y-2">
+                                          {a.items.map((it) => (
+                                            <li
+                                              key={it.en.slice(0, 24)}
+                                              className="text-body text-ink/80"
+                                            >
+                                              {lang === "es" ? it.es : it.en}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </>
                         ) : journals === null ? (
-                          <p role="status" className="text-body text-ink/70 mt-2">
+                          <p role="status" className="text-body text-ink/70">
                             {lang === "es" ? "Cargando el journal." : "Loading the journal."}
                           </p>
                         ) : (
-                          <p className="text-body text-ink/70 mt-2">
-                            {lang === "es"
-                              ? "Todavía no ha enviado su journal de 2026."
-                              : "Has not sent a 2026 journal yet."}
-                          </p>
+                          <>
+                            <div className="text-meta uppercase tracking-widest text-muted">
+                              {lang === "es"
+                                ? "Journal, en sus propias palabras"
+                                : "Journal, in their own words"}
+                            </div>
+                            <p className="text-body text-ink/70 mt-2">
+                              {lang === "es"
+                                ? "Todavía no ha enviado su journal de 2026."
+                                : "Has not sent a 2026 journal yet."}
+                            </p>
+                          </>
                         )}
                       </div>
 
