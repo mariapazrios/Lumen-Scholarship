@@ -34,6 +34,8 @@ export type Applicant = {
   essay: string | null
   answers: string | null
   submitted_at: string | null
+  /** Whether the candidate's own Saber 11 report is on file, verifying the roster's number. */
+  icfes_report: boolean
 }
 
 export async function fetchApplicants(): Promise<Applicant[]> {

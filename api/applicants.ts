@@ -23,12 +23,15 @@ export default async function handler(req: Request): Promise<Response> {
            a.siblings, a.housing, a.estrato, a.sisben, a.school, a.school_type,
            a.graduated, a.saber11, a.plc, a.pma, a.psc, a.pcn, a.pin, a.invited,
            e.body AS essay, e.submitted_at,
-           q.body AS answers
+           q.body AS answers,
+           (i.subject IS NOT NULL) AS icfes_report
     FROM lumen_applicants a
     LEFT JOIN lumen_documents e
       ON e.kind = 'applicant-essay'   AND e.subject = a.slug
     LEFT JOIN lumen_documents q
       ON q.kind = 'applicant-answers' AND q.subject = a.slug
+    LEFT JOIN lumen_documents i
+      ON i.kind = 'applicant-icfes'   AND i.subject = a.slug
     ORDER BY (e.body IS NULL), e.submitted_at, a.name
   `
 

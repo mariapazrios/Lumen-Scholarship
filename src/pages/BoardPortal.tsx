@@ -587,6 +587,21 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                               {applicant.saber11}
                               <span className="text-body font-normal text-muted">/500</span>
                             </div>
+                            {/* The number above came from Uniandes's spreadsheet, not
+                                the candidate. This is the source document, for whoever
+                                wants to check it rather than take the number on faith. */}
+                            {applicant.icfes_report && (
+                              <a
+                                href={`/api/applicant-icfes?subject=${applicant.slug}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-meta uppercase tracking-widest text-accent hover:text-ink transition-colors"
+                              >
+                                {lang === "es"
+                                  ? "Verificado, ver reporte ICFES"
+                                  : "Verified, view ICFES report"}
+                              </a>
+                            )}
                           </div>
                           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-4 mt-5">
                             {[
