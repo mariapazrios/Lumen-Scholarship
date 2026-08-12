@@ -613,7 +613,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                                 wants to check it rather than take the number on faith. */}
                             {applicant.icfes_report && (
                               <a
-                                href={`/api/applicant-icfes?subject=${applicant.slug}`}
+                                href={`/api/applicant-doc?kind=applicant-icfes&subject=${applicant.slug}`}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="text-meta uppercase tracking-widest text-accent hover:text-ink transition-colors"
@@ -666,6 +666,61 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                             ))}
                           </div>
                         </>
+                      )}
+
+                      {/* School results, where the candidate has sent their
+                          report. Colombian secondary marks run 0 to 5 on each
+                          school's own scale, so the rank travels with the
+                          average: 4.15 says little alone, first of thirty-six
+                          says a great deal. */}
+                      {(applicant.school_grades?.length || applicant.transcript) && (
+                        <div className="mt-5 pt-5 border-t border-ink/10">
+                          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-3">
+                            <div className="text-meta uppercase tracking-widest text-muted">
+                              {lang === "es" ? "Notas del colegio" : "School results"}
+                            </div>
+                            {applicant.transcript && (
+                              <a
+                                href={`/api/applicant-doc?kind=applicant-transcript&subject=${applicant.slug}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-meta uppercase tracking-widest text-accent hover:text-ink transition-colors"
+                              >
+                                {lang === "es" ? "Ver boletín" : "View transcript"}
+                              </a>
+                            )}
+                          </div>
+                          {applicant.school_grades?.length ? (
+                            <div className="flex flex-wrap gap-x-10 gap-y-4">
+                              {applicant.school_grades.map((g) => (
+                                <div key={g.year}>
+                                  <div className="text-meta uppercase tracking-widest text-muted">
+                                    {(lang === "es" ? g.grade.es : g.grade.en) + " · " + g.year}
+                                  </div>
+                                  <div className="text-body font-semibold text-ink/80 tabular-nums mt-1">
+                                    {g.average.toFixed(2)}
+                                    <span className="text-meta font-normal text-muted">/5.00</span>
+                                    {g.rank != null && g.of != null && (
+                                      <span className="text-meta font-normal text-muted">
+                                        {" "}
+                                        ·{" "}
+                                        {lang === "es"
+                                          ? `puesto ${g.rank} de ${g.of}`
+                                          : `${g.rank} of ${g.of}`}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-body text-ink/70">
+                              {lang === "es"
+                                ? "Boletín en archivo, sin resumen capturado."
+                                : "Transcript on file, no summary captured."}
+                            </p>
+                          )}
+                        </div>
                       )}
 
                       {(applicant.school || applicant.estrato) && (

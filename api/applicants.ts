@@ -23,9 +23,11 @@ export default async function handler(req: Request): Promise<Response> {
            a.siblings, a.housing, a.estrato, a.sisben, a.school, a.school_type,
            a.graduated, a.saber11, a.plc, a.pma, a.psc, a.pcn, a.pin, a.invited,
            a.saber11_pct, a.plc_pct, a.pma_pct, a.psc_pct, a.pcn_pct, a.pin_pct,
+           a.school_grades,
            e.body AS essay, e.submitted_at,
            q.body AS answers,
-           (i.subject IS NOT NULL) AS icfes_report
+           (i.subject IS NOT NULL) AS icfes_report,
+           (s.subject IS NOT NULL) AS transcript
     FROM lumen_applicants a
     LEFT JOIN lumen_documents e
       ON e.kind = 'applicant-essay'   AND e.subject = a.slug
@@ -33,6 +35,8 @@ export default async function handler(req: Request): Promise<Response> {
       ON q.kind = 'applicant-answers' AND q.subject = a.slug
     LEFT JOIN lumen_documents i
       ON i.kind = 'applicant-icfes'   AND i.subject = a.slug
+    LEFT JOIN lumen_documents s
+      ON s.kind = 'applicant-transcript' AND s.subject = a.slug
     ORDER BY (e.body IS NULL), e.submitted_at, a.name
   `
 

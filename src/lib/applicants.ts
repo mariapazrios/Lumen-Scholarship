@@ -47,6 +47,23 @@ export type Applicant = {
   submitted_at: string | null
   /** Whether the candidate's own Saber 11 report is on file, verifying the roster's number. */
   icfes_report: boolean
+  /** Whether their school transcript is on file. */
+  transcript: boolean
+  /**
+   * School-leaving results as the school reported them, newest year first.
+   * Colombian secondary marks run 0 to 5, on each school's own scale, so the
+   * class rank travels with the average: a 4.15 says little on its own, first
+   * of thirty-six says a great deal.
+   */
+  school_grades:
+    | Array<{
+        year: string
+        grade: { es: string; en: string }
+        average: number
+        rank: number | null
+        of: number | null
+      }>
+    | null
 }
 
 export async function fetchApplicants(): Promise<Applicant[]> {
