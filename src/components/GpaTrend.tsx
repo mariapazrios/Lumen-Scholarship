@@ -15,9 +15,17 @@ const ACCENT = "var(--color-cobalt)"
 export default function GpaTrend({
   record,
   achievements,
+  cohort,
 }: {
   record: ScholarTermRecord
   achievements: string[]
+  /**
+   * Uniandes's average for this scholar's programme, indexed by semester, so
+   * `[0]` is first semester. Drawn as a reference line across the bars: a 3.88
+   * reads differently in Ingeniería Industrial than in Física, and the bar
+   * alone cannot say which.
+   */
+  cohort?: number[]
 }) {
   const { lang } = useLang()
   const narrow = useIsNarrow()
@@ -60,6 +68,21 @@ export default function GpaTrend({
     t.average == null ? null : (achievements[nextAchievement++] ?? null),
   )
 
+  /**
+   * The cohort figure for each slot, counted in enrolled semesters rather than
+   * term slots: Uniandes indexes its averages by "semestre 1, 2, 3", so a
+   * scholar who sat a term out is in their third semester, not their fourth.
+   * A term with no bar gets no reference point either.
+   */
+  let nextSemester = 0
+  const cohortAt = terms.map((t) => {
+    if (t.average == null) return null
+    return cohort?.[nextSemester++] ?? null
+  })
+  const cohortPoints = cohortAt
+    .map((v, i) => (v == null ? null : { x: x(i), y: y(v), v, i }))
+    .filter((p): p is { x: number; y: number; v: number; i: number } => p !== null)
+
   return (
     <div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img"
@@ -87,19 +110,27 @@ export default function GpaTrend({
               </text>
             ) : (
               <>
+                {/* Softened deliberately. At full cobalt these read as five
+                    saturated slabs and drown everything around them, including
+                    the cohort line they are supposed to be compared against.
+                    Rounded tops and a lighter fill let the chart be read rather
+                    than just seen; hover still brings one bar forward. */}
                 <rect
                   x={x(i) - barW / 2}
                   y={y(t.average)}
                   width={barW}
                   height={y(0) - y(t.average)}
+                  rx={4}
                   fill={ACCENT}
-                  opacity={active === null || active === i ? 1 : 0.45}
+                  opacity={active === i ? 0.72 : active === null ? 0.42 : 0.22}
                   className="cursor-pointer transition-opacity duration-200"
                   onMouseEnter={() => setActive(i)}
                   onMouseLeave={() => setActive(null)}
                 />
                 <text x={x(i)} y={y(t.average) - OFF.value} textAnchor="middle"
-                  fontSize={FS.value} fontWeight="700" fill="var(--color-navy)" className="tabular-nums">
+                  fontSize={FS.value} fontWeight={active === i ? 700 : 400}
+                  fill="var(--color-navy)" fillOpacity={active === i ? 1 : 0.7}
+                  className="tabular-nums transition-opacity duration-200">
                   {t.average.toFixed(2)}
                 </text>
               </>
@@ -110,7 +141,67 @@ export default function GpaTrend({
             </text>
           </g>
         ))}
+
+        {/* Cohort reference, drawn last so it sits over the bars: muted grey is
+            context on this site, cobalt is Lumen. A line rather than a second
+            set of bars, so the comparison reads as a level to clear rather than
+            two things competing for the same slot. */}
+        {cohortPoints.length > 0 && (
+          <g className="pointer-events-none">
+            {cohortPoints.length > 1 && (
+              <polyline
+                points={cohortPoints.map((p) => `${p.x},${p.y}`).join(" ")}
+                fill="none"
+                stroke="var(--color-muted)"
+                strokeWidth={1.5}
+                strokeOpacity={0.75}
+              />
+            )}
+            {cohortPoints.map((p) => (
+              <g key={p.i}>
+                <line
+                  x1={p.x - barW / 2 - 3}
+                  x2={p.x + barW / 2 + 3}
+                  y1={p.y}
+                  y2={p.y}
+                  stroke="var(--color-muted)"
+                  strokeWidth={2}
+                />
+                {active === p.i && (
+                  <text
+                    x={p.x + barW / 2 + 6}
+                    y={p.y + 3.5}
+                    fontSize={FS.term}
+                    fill="var(--color-muted)"
+                    className="tabular-nums"
+                  >
+                    {p.v.toFixed(2)}
+                  </text>
+                )}
+              </g>
+            ))}
+          </g>
+        )}
       </svg>
+
+      {cohortPoints.length > 0 && (
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1 mt-2">
+          <span className="inline-flex items-center gap-2 text-[11px] text-muted">
+            <svg width="14" height="8" aria-hidden="true">
+              <rect x="2" y="0" width="10" height="8" rx="2" fill={ACCENT} opacity={0.42} />
+            </svg>
+            {lang === "es" ? "Este estudiante" : "This scholar"}
+          </span>
+          <span className="inline-flex items-center gap-2 text-[11px] text-muted">
+            <svg width="14" height="8" aria-hidden="true">
+              <line x1="0" x2="14" y1="4" y2="4" stroke="var(--color-muted)" strokeWidth="2" />
+            </svg>
+            {lang === "es"
+              ? "Promedio de su cohorte en ese semestre"
+              : "Their cohort's average in that semester"}
+          </span>
+        </div>
+      )}
 
       {/* Achievement callouts, tied to the term they land against */}
       <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -140,6 +231,14 @@ export default function GpaTrend({
         {lang === "es"
           ? "Promedio del semestre ponderado por créditos, leído del reporte de notas de Uniandes, en la misma base que el PGA acumulado oficial. El acumulado incluye además los intersemestrales, que no aparecen como barra."
           : "Credit-weighted average for the term, read from the Uniandes grade report, on the same basis as the official cumulative PGA. The cumulative also takes in the intersemestral sessions, which are not shown as bars."}
+        {cohortPoints.length > 0 && (
+          <>
+            {" "}
+            {lang === "es"
+              ? "La línea gris es el promedio de los estudiantes de su misma carrera que van en ese mismo semestre a agosto de 2026, según Uniandes."
+              : "The grey line is the average of the students in the same programme who are in that same semester as of August 2026, as reported by Uniandes."}
+          </>
+        )}
         {!record.complete && (
           <>
             {" "}

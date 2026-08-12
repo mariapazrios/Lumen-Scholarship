@@ -4,6 +4,7 @@ import ArrowButton from "../components/primitives/ArrowButton"
 import Reveal from "../components/primitives/Reveal"
 import { signOut } from "../lib/applicants"
 import { SCHOLARS } from "../data/scholars"
+import { COHORT_AVERAGES, SCHOLAR_COHORT } from "../data/cohortAverages"
 import { useLang, type L } from "../lib/i18n"
 
 import GpaTrend from "../components/GpaTrend"
@@ -383,7 +384,11 @@ function Portal() {
                             )}
                           </div>
                           {record.grades ? (
-                            <GpaTrend record={record.grades} achievements={tl(s.highlights)} />
+                            <GpaTrend
+                              record={record.grades}
+                              achievements={tl(s.highlights)}
+                              cohort={COHORT_AVERAGES[SCHOLAR_COHORT[s.slug]]}
+                            />
                           ) : (
                             <p role="status" className="text-body text-ink/70">
                               {lang === "es" ? "Cargando las notas." : "Loading the record."}
@@ -391,6 +396,67 @@ function Portal() {
                           )}
                         </div>
                       )}
+
+                      {/* Extracurriculars sit directly under the chart, not
+                          inside the journal: they are organised by semester,
+                          which is what the bars above are, so the two read
+                          together. */}
+                      {record.journal &&
+                        (record.journal.achievements.length > 0 ||
+                          record.journal.achievementsNote) && (
+                          <div className="bg-surface rounded-sm p-5 sm:p-8 mb-6">
+                            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-4">
+                              <div className="text-meta uppercase tracking-widest text-muted">
+                                {lang === "es"
+                                  ? "Logros y actividades extracurriculares"
+                                  : "Extracurriculars and achievements"}
+                              </div>
+                              <div className="text-meta text-muted">
+                                {lang === "es"
+                                  ? record.journal.achievementsSource === "email"
+                                    ? "Según su correo de envío"
+                                    : "Según su journal"
+                                  : record.journal.achievementsSource === "email"
+                                    ? "As listed in their covering email"
+                                    : "As listed in their journal"}
+                              </div>
+                            </div>
+                            {record.journal.achievementsNote && (
+                              <p className="text-body text-ink/70 italic mb-4">
+                                {lang === "es"
+                                  ? record.journal.achievementsNote.es
+                                  : record.journal.achievementsNote.en}
+                              </p>
+                            )}
+                            {record.journal.achievements.length > 0 && (
+                              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-5">
+                                {record.journal.achievements.map((a) => (
+                                  <div
+                                    key={a.label.en + (a.code ?? "")}
+                                    className="border-l-2 border-accent/40 pl-4"
+                                  >
+                                    <div className="text-meta uppercase tracking-widest text-primary font-semibold">
+                                      {lang === "es" ? a.label.es : a.label.en}
+                                      {a.code && (
+                                        <span className="font-normal text-muted tabular-nums">
+                                          {" "}
+                                          {a.code}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <ul className="mt-2 space-y-2">
+                                      {a.items.map((it) => (
+                                        <li key={it.en.slice(0, 24)} className="text-body text-ink/80">
+                                          {lang === "es" ? it.es : it.en}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                       {/* The journal sits above the essay on purpose: the essay is who
                           they were applying, the journal is who they are now.
@@ -465,67 +531,6 @@ function Portal() {
                                   : `Read in full, ${record.journal.words} words`}
                             </button>
 
-                            {/* Achievements: the scholars grouped these by semester
-                                themselves, so they are shown that way rather than
-                                flattened into one list. */}
-                            {(record.journal.achievements.length > 0 ||
-                              record.journal.achievementsNote) && (
-                              <div className="mt-8 pt-6 border-t border-ink/15">
-                                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-4">
-                                  <div className="text-meta uppercase tracking-widest text-muted">
-                                    {lang === "es"
-                                      ? "Logros y actividades extracurriculares"
-                                      : "Extracurriculars and achievements"}
-                                  </div>
-                                  <div className="text-meta text-muted">
-                                    {lang === "es"
-                                      ? record.journal.achievementsSource === "email"
-                                        ? "Según su correo de envío"
-                                        : "Según su journal"
-                                      : record.journal.achievementsSource === "email"
-                                        ? "As listed in their covering email"
-                                        : "As listed in their journal"}
-                                  </div>
-                                </div>
-                                {record.journal.achievementsNote && (
-                                  <p className="text-body text-ink/70 italic mb-4">
-                                    {lang === "es"
-                                      ? record.journal.achievementsNote.es
-                                      : record.journal.achievementsNote.en}
-                                  </p>
-                                )}
-                                {record.journal.achievements.length > 0 && (
-                                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-5">
-                                    {record.journal.achievements.map((a) => (
-                                      <div
-                                        key={a.label.en + (a.code ?? "")}
-                                        className="border-l-2 border-accent pl-4"
-                                      >
-                                        <div className="text-meta uppercase tracking-widest text-primary font-semibold">
-                                          {lang === "es" ? a.label.es : a.label.en}
-                                          {a.code && (
-                                            <span className="font-normal text-muted tabular-nums">
-                                              {" "}
-                                              {a.code}
-                                            </span>
-                                          )}
-                                        </div>
-                                        <ul className="mt-2 space-y-2">
-                                          {a.items.map((it) => (
-                                            <li
-                                              key={it.en.slice(0, 24)}
-                                              className="text-body text-ink/80"
-                                            >
-                                              {lang === "es" ? it.es : it.en}
-                                            </li>
-                                          ))}
-                                        </ul>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            )}
                           </>
                         ) : journals === null ? (
                           <p role="status" className="text-body text-ink/70">
