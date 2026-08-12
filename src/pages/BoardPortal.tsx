@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import ApplicantsMap from "../components/ApplicantsMap"
 import PasscodeGate from "../components/PasscodeGate"
 import Reveal from "../components/primitives/Reveal"
@@ -93,6 +93,10 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const [people, setPeople] = useState<Applicant[]>([])
   const [store, setStore] = useState<RatingStore>({})
   const [active, setActive] = useState<string>("")
+  // Scroll target for the detail pane: picking a candidate from the list
+  // brings their name and scores back into view instead of leaving the
+  // reader scrolled to wherever in the list they clicked from.
+  const detailRef = useRef<HTMLDivElement>(null)
   const [draft, setDraft] = useState<Draft>(emptyDraft)
   const [saved, setSaved] = useState(false)
   const [status, setStatus] = useState<"loading" | "ready" | "saving" | "error">("loading")
@@ -214,6 +218,10 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     setDraft(store[slug]?.[member] ?? emptyDraft())
     setSaved(false)
     setConfirmDelete(false)
+    // The list can run long enough to scroll well past the detail pane's own
+    // top, so picking a name from partway down it left the name and scores
+    // it just switched to sitting off-screen above the fold.
+    detailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
   const chooseMember = (slug: string) => {
@@ -522,7 +530,11 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 </ul>
               </div>
 
-              <div>
+              {/* scroll-mt clears the sticky header (67px): without it,
+                  scrolling this into view puts the candidate's name directly
+                  behind the nav bar, which is the thing the scroll exists to
+                  show. */}
+              <div ref={detailRef} className="scroll-mt-24">
                 {!applicant && (
                   <p className="text-body text-muted">
                     {lang === "es" ? "Ningún candidato seleccionado." : "No candidate selected."}
