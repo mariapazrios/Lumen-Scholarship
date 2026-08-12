@@ -587,6 +587,15 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                               {applicant.saber11}
                               <span className="text-body font-normal text-muted">/500</span>
                             </div>
+                            {/* Percentile only exists where the candidate's own report
+                                does: read off that PDF, not derived from the score. */}
+                            {applicant.saber11_pct != null && (
+                              <div className="text-body text-muted tabular-nums">
+                                {lang === "es"
+                                  ? `percentil ${applicant.saber11_pct}`
+                                  : `${applicant.saber11_pct}th percentile`}
+                              </div>
+                            )}
                             {/* The number above came from Uniandes's spreadsheet, not
                                 the candidate. This is the source document, for whoever
                                 wants to check it rather than take the number on faith. */}
@@ -605,11 +614,27 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                           </div>
                           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-4 gap-y-4 mt-5">
                             {[
-                              { k: lang === "es" ? "Lectura crítica" : "Critical reading", v: applicant.plc },
-                              { k: lang === "es" ? "Matemáticas" : "Mathematics", v: applicant.pma },
-                              { k: lang === "es" ? "Sociales" : "Social studies", v: applicant.psc },
-                              { k: lang === "es" ? "Ciencias" : "Sciences", v: applicant.pcn },
-                              { k: lang === "es" ? "Inglés" : "English", v: applicant.pin },
+                              {
+                                k: lang === "es" ? "Lectura crítica" : "Critical reading",
+                                v: applicant.plc,
+                                pct: applicant.plc_pct,
+                              },
+                              {
+                                k: lang === "es" ? "Matemáticas" : "Mathematics",
+                                v: applicant.pma,
+                                pct: applicant.pma_pct,
+                              },
+                              {
+                                k: lang === "es" ? "Sociales" : "Social studies",
+                                v: applicant.psc,
+                                pct: applicant.psc_pct,
+                              },
+                              {
+                                k: lang === "es" ? "Ciencias" : "Sciences",
+                                v: applicant.pcn,
+                                pct: applicant.pcn_pct,
+                              },
+                              { k: lang === "es" ? "Inglés" : "English", v: applicant.pin, pct: applicant.pin_pct },
                             ].map((cell) => (
                               <div key={cell.k} className="flex flex-col">
                                 <div className="text-meta uppercase tracking-widest text-muted min-h-[2.6em]">
@@ -618,6 +643,12 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                                 <div className="text-body font-semibold text-ink/80 tabular-nums mt-auto">
                                   {cell.v ?? "—"}
                                   <span className="text-meta font-normal text-muted">/100</span>
+                                  {cell.pct != null && (
+                                    <span className="text-meta font-normal text-muted">
+                                      {" "}
+                                      · {lang === "es" ? `p${cell.pct}` : `${cell.pct}th pct`}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             ))}

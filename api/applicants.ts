@@ -22,6 +22,7 @@ export default async function handler(req: Request): Promise<Response> {
     SELECT a.slug, a.name, a.program, a.gender, a.city, a.department, a.age,
            a.siblings, a.housing, a.estrato, a.sisben, a.school, a.school_type,
            a.graduated, a.saber11, a.plc, a.pma, a.psc, a.pcn, a.pin, a.invited,
+           a.saber11_pct, a.plc_pct, a.pma_pct, a.psc_pct, a.pcn_pct, a.pin_pct,
            e.body AS essay, e.submitted_at,
            q.body AS answers,
            (i.subject IS NOT NULL) AS icfes_report

@@ -30,6 +30,17 @@ export type Applicant = {
   psc: number | null
   pcn: number | null
   pin: number | null
+  /**
+   * National percentile for each score, read off the candidate's own ICFES
+   * report rather than computed: null whenever `icfes_report` is false, since
+   * there is no source document to have read it from.
+   */
+  saber11_pct: number | null
+  plc_pct: number | null
+  pma_pct: number | null
+  psc_pct: number | null
+  pcn_pct: number | null
+  pin_pct: number | null
   invited: boolean
   essay: string | null
   answers: string | null
