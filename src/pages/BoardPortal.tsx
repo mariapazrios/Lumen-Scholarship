@@ -1222,31 +1222,43 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
           .filter((row) => !focus || row.candidate === focus)
           .map((row) => {
             const applicant = people.find((p) => p.slug === row.candidate)
-            const meta = applicant
-              ? (() => {
-                  const age =
-                    applicant.age != null
+            /**
+             * One labelled cell per fact rather than one dot-joined line. Run
+             * together, "INGENIERÍA INDUSTRIAL · BOGOTÁ · 19 · 377 · 4.15/5"
+             * makes the reader work out which number is which every time; the
+             * labels do that once.
+             */
+            const facts: Array<{ label: string; value: string }> = []
+            if (applicant) {
+              const push = (label: string, value: string | null | undefined) => {
+                if (value) facts.push({ label, value })
+              }
+              push(lang === "es" ? "Carrera" : "Major", applicant.program)
+              push(lang === "es" ? "Ciudad" : "City", applicant.city)
+              // Ages come off the roster fractional, so floor rather than round.
+              push(
+                lang === "es" ? "Edad" : "Age",
+                applicant.age != null ? String(Math.floor(applicant.age)) : null,
+              )
+              push("ICFES", applicant.saber11 != null ? `${applicant.saber11}/500` : null)
+              const g = applicant.school_grades?.[0]
+              if (g) {
+                const rank =
+                  g.rank == null
+                    ? ""
+                    : g.of != null
                       ? lang === "es"
-                        ? `${Math.floor(applicant.age)} años`
-                        : `age ${Math.floor(applicant.age)}`
-                      : null
-                  const icfes = applicant.saber11 != null ? `ICFES ${applicant.saber11}` : null
-                  const g = applicant.school_grades?.[0]
-                  const gpa = g
-                    ? `${g.average.toFixed(2)}/${(g.scale ?? 5).toFixed(0)}` +
-                      (g.rank != null
-                        ? g.of != null
-                          ? lang === "es"
-                            ? ` (puesto ${g.rank} de ${g.of})`
-                            : ` (rank ${g.rank} of ${g.of})`
-                          : lang === "es"
-                            ? ` (puesto ${g.rank})`
-                            : ` (rank ${g.rank})`
-                        : "")
-                    : null
-                  return [applicant.program, applicant.city, age, icfes, gpa].filter(Boolean).join(" · ")
-                })()
-              : null
+                        ? ` · puesto ${g.rank} de ${g.of}`
+                        : ` · rank ${g.rank} of ${g.of}`
+                      : lang === "es"
+                        ? ` · puesto ${g.rank}`
+                        : ` · rank ${g.rank}`
+                push(
+                  lang === "es" ? "Colegio" : "School",
+                  `${g.average.toFixed(2)}/${(g.scale ?? 5).toFixed(0)}${rank}`,
+                )
+              }
+            }
 
             return (
               <div
@@ -1256,25 +1268,48 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 {/* The candidate. A cream band, so the person being judged is
                     visibly a different kind of thing from the judgements. */}
                 <div className="bg-surface px-6 py-5 border-b border-ink/10">
-                  <div className="flex items-baseline justify-between gap-3">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                     <div className="text-h3 font-semibold text-primary">
                       {nameOf(row.candidate)}
                     </div>
-                    <div className="text-body tabular-nums font-bold text-primary">
+                    <div className="text-h3 tabular-nums font-bold text-primary">
                       {row.raters ? row.score.toFixed(2) : "·"}
                     </div>
                   </div>
-                  <p className="text-meta uppercase tracking-widest text-muted mt-2">
-                    {row.raters}{" "}
-                    {lang === "es"
-                      ? row.raters === 1
-                        ? "lectura"
-                        : "lecturas"
-                      : row.raters === 1
-                        ? "read"
-                        : "reads"}
-                  </p>
-                  {meta && <p className="text-meta text-muted mt-2">{meta}</p>}
+
+                  {/* What the essay was actually about, drawn from the essay
+                      itself. Seventeen candidates blur together by the third
+                      one; "sign-language app" or "thyroid cancer at 15" is
+                      what a board member actually recalls a person by. The
+                      read count that used to sit here is gone, since the
+                      board list below is headed with the same number. */}
+                  {applicant?.essay_themes && applicant.essay_themes.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {applicant.essay_themes.map((th) => (
+                        <span
+                          key={th.en}
+                          className="text-meta bg-accent/10 text-accent rounded-full px-3 py-1"
+                        >
+                          {lang === "es" ? th.es : th.en}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {facts.length > 0 && (
+                    <div className="flex flex-wrap gap-x-8 gap-y-3 mt-4">
+                      {facts.map((f) => (
+                        <div key={f.label}>
+                          <div className="text-meta uppercase tracking-widest text-muted leading-tight">
+                            {f.label}
+                          </div>
+                          <div className="text-body text-ink/85 tabular-nums mt-0.5">
+                            {f.value}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* The board. Labelled, and each member's read carries its own

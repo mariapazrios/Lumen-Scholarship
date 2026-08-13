@@ -9,8 +9,10 @@ import { useLang, type L } from "../lib/i18n"
 
 import GpaTrend from "../components/GpaTrend"
 import IcfesGpaScatter from "../components/IcfesGpaScatter"
+import CohortRanking from "../components/CohortRanking"
 import { useScholarGrades } from "../lib/grades"
 import { useScholarJournals } from "../lib/journals"
+import { useScholarRanking } from "../lib/ranking"
 
 /**
  * Admissions essays, served only to an authenticated session. Fetched once for
@@ -75,15 +77,20 @@ const REPORTS: Array<{ year: string; title: L; note: L; pages: number; size: L }
 const GENERATIONS = ["2024", "2025"] as const
 
 function Portal() {
-  const { lang, t, tl } = useLang()
+  const { lang, t } = useLang()
   // Cards start closed: the grid is the overview now, and defaulting one open
   // buried the other ten under a full detail panel.
   const [open, setOpen] = useState<string | null>(null)
   const [essayOpen, setEssayOpen] = useState<string | null>(null)
   const [journalOpen, setJournalOpen] = useState<string | null>(null)
+  // Term code highlighted across the chart and the extracurricular list. One
+  // piece of state for both, since only one scholar card is open at a time and
+  // the whole point is that the two halves agree on which term you are on.
+  const [activeTerm, setActiveTerm] = useState<string | null>(null)
   const essays = useScholarEssays()
   const grades = useScholarGrades()
   const journals = useScholarJournals()
+  const ranking = useScholarRanking()
 
   return (
     <>
@@ -182,17 +189,41 @@ function Portal() {
                 ? "El puntaje de entrada no predice la carrera."
                 : "The entrance score does not predict the degree."}
             </h2>
-            <p className="text-body text-ink/75 mt-3 max-w-2xl">
-              {lang === "es"
-                ? "Saber 11 contra el promedio acumulado a 2026-1, un punto por estudiante."
-                : "Saber 11 against cumulative GPA as of 2026-1, one dot per scholar."}
-            </p>
           </Reveal>
-          <Reveal delay={110}>
-            <div className="bg-surface-soft rounded-sm p-5 sm:p-8 mt-8">
-              <IcfesGpaScatter grades={grades} />
-            </div>
-          </Reveal>
+
+          {/* Two readings of the same cohort side by side. The scatter answers
+              whether the entrance score bought anything, which is a question
+              about the group. The ranking answers who needs a call this month,
+              which is a question about people. They belong on one screen
+              because the second is what you do about the first. */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mt-8 items-start">
+            <Reveal>
+              <div className="bg-surface-soft rounded-sm p-5 sm:p-8">
+                <p className="text-body text-ink/75 mb-6">
+                  {lang === "es"
+                    ? "Saber 11 contra el promedio acumulado a 2026-1, un punto por estudiante."
+                    : "Saber 11 against cumulative GPA as of 2026-1, one dot per scholar."}
+                </p>
+                <IcfesGpaScatter grades={grades} />
+              </div>
+            </Reveal>
+
+            <Reveal delay={110}>
+              <div className="bg-surface-soft rounded-sm p-5 sm:p-8">
+                <p className="text-body text-ink/75 mb-2">
+                  {lang === "es"
+                    ? "Cada generación ordenada por crecimiento, reflexión, potencial, notas frente a sus pares de carrera y actividades extracurriculares."
+                    : "Each generation ordered on growth, insight, potential, grades against their programme peers, and extracurricular record."}
+                </p>
+                <p className="text-meta text-muted mb-6">
+                  {lang === "es"
+                    ? "Las generaciones se ordenan por separado: una lista conjunta ordenaría antigüedad, no desempeño."
+                    : "Generations are ranked separately: one combined list would be ranking seniority, not performance."}
+                </p>
+                <CohortRanking ranking={ranking} generations={GENERATIONS} />
+              </div>
+            </Reveal>
+          </div>
         </div>
       </section>
 
@@ -315,46 +346,27 @@ function Portal() {
                       </span>
                     </div>
 
-                    {/* Collapsed face carries enough to choose from: who they are in a
-                        line, and what is actually inside before you spend a click. */}
+                    {/* Collapsed face is deliberately thin: name, major, where
+                        they are from, and the one number that matters. The
+                        bio preview and the journal line were both restating
+                        what opening the card shows in full. */}
                     {!isOpen && (
-                      <>
-                        <p className="text-body text-ink/70 mt-3 line-clamp-3">{t(s.short)}</p>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-4 pt-3 border-t border-ink/10">
-                          <span className="text-meta uppercase tracking-widest text-muted">
-                            {lang === "es"
-                              ? `Generación ${s.generation}`
-                              : `${s.generation} Generation`}{" "}
-                            · {s.hometown}
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-4 pt-3 border-t border-ink/10">
+                        <span className="text-meta uppercase tracking-widest text-muted">
+                          {lang === "es"
+                            ? `Generación ${s.generation}`
+                            : `${s.generation} Generation`}{" "}
+                          · {s.hometown}
+                        </span>
+                        {record.grades?.cumulative && (
+                          <span className="text-meta text-muted tabular-nums ml-auto">
+                            {lang === "es" ? "PGA" : "GPA"}{" "}
+                            <strong className="text-primary">
+                              {record.grades.cumulative.toFixed(2)}
+                            </strong>
                           </span>
-                          {record.grades?.cumulative && (
-                            <span className="text-meta text-muted tabular-nums ml-auto">
-                              {lang === "es" ? "PGA" : "GPA"}{" "}
-                              <strong className="text-primary">
-                                {record.grades.cumulative.toFixed(2)}
-                              </strong>
-                            </span>
-                          )}
-                        </div>
-                        {record.journal && (
-                          <div className="text-meta uppercase tracking-widest text-accent mt-2">
-                            {lang === "es"
-                              ? `Journal ${record.journal.term}`
-                              : `${record.journal.term} journal`}{" "}
-                            ·{" "}
-                            {Math.max(1, Math.round(record.journal.words / 200))}{" "}
-                            {lang === "es" ? "min" : "min"}
-                            {(() => {
-                              const n = record.journal.achievements.reduce(
-                                (sum, a) => sum + a.items.length,
-                                0,
-                              )
-                              if (n === 0) return null
-                              return ` · ${n} ${lang === "es" ? "logros" : n === 1 ? "achievement" : "achievements"}`
-                            })()}
-                          </div>
                         )}
-                      </>
+                      </div>
                     )}
                   </button>
 
@@ -370,24 +382,35 @@ function Portal() {
                       {/* Trend first: this is the view sponsors come here for */}
                       {(record.grades || grades === null) && (
                         <div className="bg-surface rounded-sm p-4 sm:p-5 mb-6">
-                          <div className="flex flex-wrap items-baseline justify-between gap-3 mb-3">
+                          {/* The official cumulative is the single number a
+                              sponsor is looking for, and it was set smaller
+                              than the axis labels on the chart beside it.
+                              Given the stat treatment the rest of the site
+                              uses for its headline figures. */}
+                          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3 mb-5">
                             <div className="text-meta uppercase tracking-widest text-muted">
                               {lang === "es" ? "Promedio por semestre" : "Average by term"}
                             </div>
                             {record.grades?.officialPga && (
-                              <div className="text-meta text-muted">
-                                {lang === "es" ? "PGA acumulado oficial" : "Official cumulative PGA"}{" "}
-                                <strong className="text-primary tabular-nums">
+                              <div className="sm:text-right">
+                                <div className="text-meta uppercase tracking-widest text-muted">
+                                  {lang === "es"
+                                    ? "PGA acumulado oficial"
+                                    : "Official cumulative PGA"}
+                                </div>
+                                <div className="text-stat font-semibold text-primary tabular-nums leading-none mt-1">
                                   {record.grades.officialPga.toFixed(2)}
-                                </strong>
+                                  <span className="text-h3 font-light text-muted">/5.00</span>
+                                </div>
                               </div>
                             )}
                           </div>
                           {record.grades ? (
                             <GpaTrend
                               record={record.grades}
-                              achievements={tl(s.highlights)}
                               cohort={COHORT_AVERAGES[SCHOLAR_COHORT[s.slug]]}
+                              active={activeTerm}
+                              onActive={setActiveTerm}
                             />
                           ) : (
                             <p role="status" className="text-body text-ink/70">
@@ -399,8 +422,13 @@ function Portal() {
 
                       {/* Extracurriculars sit directly under the chart, not
                           inside the journal: they are organised by semester,
-                          which is what the bars above are, so the two read
-                          together. */}
+                          which is what the rows above are, so the two read
+                          together. This used to be two lists, one pinned to
+                          the chart and one down here. The pinned one paired
+                          highlights to terms in list order, which was an
+                          invented mapping; these carry the scholar's own term
+                          code, so hovering a term genuinely lights the term it
+                          happened in, in both directions. */}
                       {record.journal &&
                         (record.journal.achievements.length > 0 ||
                           record.journal.achievementsNote) && (
@@ -430,29 +458,46 @@ function Portal() {
                             )}
                             {record.journal.achievements.length > 0 && (
                               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-5">
-                                {record.journal.achievements.map((a) => (
-                                  <div
-                                    key={a.label.en + (a.code ?? "")}
-                                    className="border-l-2 border-accent/40 pl-4"
-                                  >
-                                    <div className="text-meta uppercase tracking-widest text-primary font-semibold">
-                                      {lang === "es" ? a.label.es : a.label.en}
-                                      {a.code && (
-                                        <span className="font-normal text-muted tabular-nums">
-                                          {" "}
-                                          {a.code}
-                                        </span>
-                                      )}
+                                {record.journal.achievements.map((a) => {
+                                  const isActive =
+                                    a.code != null && activeTerm === a.code
+                                  return (
+                                    <div
+                                      key={a.label.en + (a.code ?? "")}
+                                      onMouseEnter={() =>
+                                        a.code && setActiveTerm(a.code)
+                                      }
+                                      onMouseLeave={() =>
+                                        a.code && setActiveTerm(null)
+                                      }
+                                      className={`border-l-2 pl-4 -ml-px rounded-r-sm transition-colors duration-200 ${
+                                        isActive
+                                          ? "border-accent bg-accent/5"
+                                          : "border-accent/40"
+                                      }`}
+                                    >
+                                      <div className="text-meta uppercase tracking-widest text-primary font-semibold">
+                                        {lang === "es" ? a.label.es : a.label.en}
+                                        {a.code && (
+                                          <span className="font-normal text-muted tabular-nums">
+                                            {" "}
+                                            {a.code}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <ul className="mt-2 space-y-2">
+                                        {a.items.map((it) => (
+                                          <li
+                                            key={it.en.slice(0, 24)}
+                                            className="text-body text-ink/80"
+                                          >
+                                            {lang === "es" ? it.es : it.en}
+                                          </li>
+                                        ))}
+                                      </ul>
                                     </div>
-                                    <ul className="mt-2 space-y-2">
-                                      {a.items.map((it) => (
-                                        <li key={it.en.slice(0, 24)} className="text-body text-ink/80">
-                                          {lang === "es" ? it.es : it.en}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                ))}
+                                  )
+                                })}
                               </div>
                             )}
                           </div>
@@ -635,18 +680,14 @@ function Portal() {
                                     {record.grades.asOf}
                                   </div>
                                 </div>
-                                <div className="text-meta text-muted mt-2">
+                                {/* The programme, not a caption. Which degree
+                                    this average was earned in is the thing
+                                    that makes the number mean anything, so it
+                                    is set at reading size. The per-term chips
+                                    that used to sit under it are gone: the
+                                    chart above already lists every term. */}
+                                <div className="text-lead font-light text-ink/85 mt-3">
                                   {record.grades.program}
-                                </div>
-                                <div className="flex flex-wrap gap-1.5 mt-3">
-                                  {record.grades.semesters.map((s) => (
-                                    <span
-                                      key={s}
-                                      className="text-[11px] uppercase tracking-widest text-ink/70 border border-ink/15 rounded-full px-2 py-1 tabular-nums"
-                                    >
-                                      {s}
-                                    </span>
-                                  ))}
                                 </div>
                               </>
                             ) : grades === null ? (

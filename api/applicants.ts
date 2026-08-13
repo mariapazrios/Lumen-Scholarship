@@ -23,7 +23,7 @@ export default async function handler(req: Request): Promise<Response> {
            a.siblings, a.housing, a.estrato, a.sisben, a.school, a.school_type,
            a.graduated, a.saber11, a.plc, a.pma, a.psc, a.pcn, a.pin, a.invited,
            a.saber11_pct, a.plc_pct, a.pma_pct, a.psc_pct, a.pcn_pct, a.pin_pct,
-           a.school_grades,
+           a.school_grades, a.essay_themes,
            e.body AS essay, e.submitted_at,
            q.body AS answers,
            (i.subject IS NOT NULL) AS icfes_report,

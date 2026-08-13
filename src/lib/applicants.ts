@@ -58,6 +58,15 @@ export type Applicant = {
    * first of thirty-six says a great deal. Some rows are a school year, others
    * a single term where that is the finest-grained figure the school gave.
    */
+  /**
+   * Two to four short tags naming what the essay is actually about, derived
+   * from the essay itself. They exist for recall: a board member scanning
+   * seventeen cards needs to remember which one was the sign-language app and
+   * which one was the drummer. Deliberately not rubric words, since
+   * "resilience" is true of every essay in the pool and so distinguishes none
+   * of them.
+   */
+  essay_themes: Array<{ es: string; en: string }> | null
   school_grades:
     | Array<{
         year: string
