@@ -127,52 +127,74 @@ export default function Mission() {
       <Tricolor className="absolute inset-x-0 top-0 h-1" />
       <Watermark className="-right-36 top-16 w-[28rem]" />
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 pt-16 md:pt-24 pb-16 md:pb-20 relative">
-        {/* Mission */}
-        <Reveal>
-          <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-6">
-            {lang === "es" ? "Nuestra misión" : "Our mission"}
-          </div>
-        </Reveal>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {PILLARS.map((p, i) => (
-            <Reveal key={p.n} delay={i * 120}>
-              {/* Titles only. The bodies restated what the sections below
-                  already cover in full, and the concrete terms they carried
-                  now sit in the coverage figures under these cards, where a
-                  number is easier to find than a sentence.
-
-                  White with a cobalt top rule rather than the cream fill:
-                  three tan slabs read heavier than the three words on them
-                  now warrant. */}
-              <div className="bg-background border border-ink/10 border-t-2 border-t-accent rounded-sm p-8 md:p-10 h-full">
-                <div className="text-meta uppercase tracking-widest text-accent font-semibold">
-                  {p.n}
-                </div>
-                {/* One line at desktop; reserves two lines only where wrapping is possible */}
-                <h3 className="font-semibold text-primary mt-4 leading-tight text-[clamp(1.25rem,1.6vw,1.6rem)] md:min-h-[2.4em] lg:min-h-0 lg:whitespace-nowrap">
-                  {t(p.title)}
-                </h3>
+        {/* The section had four blocks stacked at equal weight, each opening
+            with the same cobalt eyebrow and separated by nothing but a wide
+            margin, so it read as four unrelated notices rather than one
+            argument. It now runs statement, terms, scope: the mission gets a
+            heading to anchor it, the pillars sit beside that heading as a
+            ruled list instead of three mostly-empty boxes, and the majors
+            collapse from a nineteen-bullet wall into three lines. Hairline
+            rules do the separating that whitespace was failing at. */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,24rem)_1fr] gap-x-16 gap-y-10 items-start">
+          <Reveal>
+            <div>
+              <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-5">
+                {lang === "es" ? "Nuestra misión" : "Our mission"}
               </div>
-            </Reveal>
-          ))}
+              <h2 className="text-h3 font-semibold text-primary leading-tight">
+                {lang === "es" ? (
+                  <>
+                    Tres compromisos,{" "}
+                    <em className="italic font-light">
+                      de la admisión al primer empleo.
+                    </em>
+                  </>
+                ) : (
+                  <>
+                    Three commitments,{" "}
+                    <em className="italic font-light">
+                      from admission to first job.
+                    </em>
+                  </>
+                )}
+              </h2>
+            </div>
+          </Reveal>
+
+          <Reveal delay={120}>
+            <ul className="border-t border-ink/10">
+              {PILLARS.map((p) => (
+                <li
+                  key={p.n}
+                  className="flex items-baseline gap-6 border-b border-ink/10 py-5"
+                >
+                  <span className="text-meta tabular-nums text-accent font-semibold shrink-0">
+                    {p.n}
+                  </span>
+                  <span className="text-h3 font-semibold text-primary leading-tight">
+                    {t(p.title)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
         </div>
 
-        {/* The terms, directly under the pillars they belong to. Figures
-            rather than prose: "95%" and "$2M COP" are what a reader is
-            scanning for, and a number set large is found in one pass where
-            the same fact inside a sentence is not. */}
-        <Reveal delay={360}>
-          <div className="mt-10 pt-10 border-t border-ink/10">
-            <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-8">
+        {/* The terms as a single ruled strip rather than three figures
+            floating on white: divided cells read as one specification, which
+            is what they are. */}
+        <Reveal delay={200}>
+          <div className="mt-14">
+            <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-6">
               {lang === "es" ? "Qué cubre la beca" : "What the scholarship covers"}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-10 gap-y-10">
+            <div className="border border-ink/10 rounded-sm grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-ink/10">
               {COVERAGE.map((c) => (
-                <div key={c.figure.en}>
-                  <div className="text-stat font-semibold text-primary leading-none tabular-nums">
+                <div key={c.figure.en} className="px-6 sm:px-8 py-7">
+                  <div className="text-h2 font-semibold text-primary leading-none tabular-nums">
                     {t(c.figure)}
                   </div>
-                  <p className="text-body text-ink/75 mt-4 max-w-xs">
+                  <p className="text-body text-ink/70 mt-4">
                     <AndesLink text={t(c.label)} />
                   </p>
                 </div>
@@ -181,41 +203,34 @@ export default function Mission() {
           </div>
         </Reveal>
 
-        {/* Majors, between the pillars and the values */}
-        <Reveal delay={100}>
-          <div className="mt-16">
+        {/* Majors. Nineteen bulleted items in three columns was an inventory;
+            the point is the breadth, so each group is one flowing line. */}
+        <Reveal delay={260}>
+          <div className="mt-14">
             <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-6">
               {lang === "es" ? "Carreras que apoyamos" : "Majors supported"}
             </div>
-            {/* Grouped rather than one flat run: nineteen bullets in a grid
-                read as a wall, three headed columns read as a scope. */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-8">
+            <dl className="border-t border-ink/10">
               {MAJOR_GROUPS.map((g) => (
-                <div key={g.heading.en}>
-                  <h3 className="text-body font-semibold text-primary border-t-2 border-accent pt-3">
-                    {t(g.heading)}
-                  </h3>
+                <div
+                  key={g.heading.en}
+                  className="grid grid-cols-1 sm:grid-cols-[9rem_1fr] gap-x-8 gap-y-1 border-b border-ink/10 py-4"
+                >
+                  <dt className="text-body font-semibold text-primary">{t(g.heading)}</dt>
                   {/* Sorted here rather than in the data because the two
                       languages do not sort the same: Chemistry comes second in
                       English and Química comes last in Spanish. localeCompare
                       with the active language also files the accented names
                       (Física, Química) where a reader expects them. */}
-                  <ul className="mt-3 space-y-2">
+                  <dd className="text-body text-ink/75">
                     {[...g.items]
                       .sort((a, b) => t(a).localeCompare(t(b), lang))
-                      .map((m) => (
-                        <li key={m.en} className="text-body text-ink/80 flex gap-3">
-                          <span
-                            aria-hidden="true"
-                            className="w-1.5 h-1.5 rounded-full bg-accent mt-2.5 shrink-0"
-                          />
-                          {t(m)}
-                        </li>
-                      ))}
-                  </ul>
+                      .map((m) => t(m))
+                      .join(" · ")}
+                  </dd>
                 </div>
               ))}
-            </div>
+            </dl>
           </div>
         </Reveal>
 
