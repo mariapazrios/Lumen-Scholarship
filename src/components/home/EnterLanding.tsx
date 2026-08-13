@@ -111,7 +111,7 @@ export default function EnterLanding({ onEntered }: Props) {
       style={{ background: "#141c28" }}
       aria-label={lang === "es" ? "Entrar a Lumen" : "Enter Lumen"}
     >
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 max-md:-translate-y-16">
         <LumenMark3D onTogether={onTogether} />
       </div>
       <div className="absolute top-5 right-6 z-10" data-no-enter>
