@@ -50,16 +50,21 @@ export type Applicant = {
   /** Whether their school transcript is on file. */
   transcript: boolean
   /**
-   * School-leaving results as the school reported them, newest year first.
-   * Colombian secondary marks run 0 to 5, on each school's own scale, so the
-   * class rank travels with the average: a 4.15 says little on its own, first
-   * of thirty-six says a great deal.
+   * School-leaving results as the school reported them, newest first. Most run
+   * 0 to 5, but the two IB schools in this cohort (Colegio Mayor de los Andes,
+   * Gimnasio del Norte) report 0 to 7, hence `scale`. Each school also grades
+   * on its own scale in the literal sense, which is why rank travels with the
+   * average wherever the source stated one: a 4.15 says little on its own,
+   * first of thirty-six says a great deal. Some rows are a school year, others
+   * a single term where that is the finest-grained figure the school gave.
    */
   school_grades:
     | Array<{
         year: string
         grade: { es: string; en: string }
         average: number
+        /** Denominator the average is out of. Omitted means the standard 5. */
+        scale?: number
         rank: number | null
         of: number | null
       }>

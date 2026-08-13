@@ -699,14 +699,20 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                                   </div>
                                   <div className="text-body font-semibold text-ink/80 tabular-nums mt-1">
                                     {g.average.toFixed(2)}
-                                    <span className="text-meta font-normal text-muted">/5.00</span>
-                                    {g.rank != null && g.of != null && (
+                                    <span className="text-meta font-normal text-muted">
+                                      /{(g.scale ?? 5).toFixed(2)}
+                                    </span>
+                                    {g.rank != null && (
                                       <span className="text-meta font-normal text-muted">
                                         {" "}
                                         ·{" "}
-                                        {lang === "es"
-                                          ? `puesto ${g.rank} de ${g.of}`
-                                          : `${g.rank} of ${g.of}`}
+                                        {g.of != null
+                                          ? lang === "es"
+                                            ? `puesto ${g.rank} de ${g.of}`
+                                            : `${g.rank} of ${g.of}`
+                                          : lang === "es"
+                                            ? `puesto ${g.rank}`
+                                            : `rank ${g.rank}`}
                                       </span>
                                     )}
                                   </div>
