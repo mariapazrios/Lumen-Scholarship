@@ -117,18 +117,20 @@ function Portal() {
           <h1 className="text-h2 font-semibold">
             {lang === "es" ? (
               <>
-                Tus estudiantes, <em className="italic font-light">uno a uno.</em>
+                Tomándole el pulso a las{" "}
+                <em className="italic font-light">generaciones Lumen.</em>
               </>
             ) : (
               <>
-                Your scholars, <em className="italic font-light">one by one.</em>
+                Keeping a pulse on the{" "}
+                <em className="italic font-light">Lumen generations.</em>
               </>
             )}
           </h1>
           <p className="text-lead font-light text-primary-foreground/75 mt-5 max-w-2xl">
             {lang === "es"
-              ? "Once estudiantes, dos generaciones, cinco más en camino. Los informes y el perfil de cada Lumen."
-              : "Eleven scholars, two generations, five more incoming. The reports and a profile for every Lumen."}
+              ? "Una lectura de las dos generaciones, y del desarrollo de cada estudiante semestre a semestre."
+              : "Insights across both generations, and how every scholar is developing term by term."}
           </p>
         </div>
       </section>
