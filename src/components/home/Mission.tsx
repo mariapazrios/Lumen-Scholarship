@@ -3,40 +3,10 @@ import Tricolor from "../primitives/Tricolor"
 import Watermark from "../primitives/Watermark"
 import { useLang, type L } from "../../lib/i18n"
 
-/**
- * `{andes}` is replaced by a link to uniandes.edu.co when the card renders.
- *
- * Bodies are deliberately one line each. The figures below carry the terms,
- * so a card repeating "10 semesters, a summer session and a stipend" was
- * spending three lines to say what the numbers say better.
- */
-const PILLARS: Array<{ n: string; title: L; body: L }> = [
-  {
-    n: "01",
-    title: { en: "Robust financial aid", es: "Apoyo financiero integral" },
-    // Deliberately not the terms again: the figures below state them, and
-    // this card sitting inches above them said almost the same words.
-    body: {
-      en: "Cost is not what decides whether a Lumen finishes at {andes}.",
-      es: "El costo no decide si un Lumen termina en {andes}.",
-    },
-  },
-  {
-    n: "02",
-    title: { en: "Identity-driven community", es: "Comunidad con identidad" },
-    body: {
-      en: "Mentorship from the Board, peer study, and a cohort that sets the standard.",
-      es: "Mentoría de la Junta, estudio entre compañeros y una cohorte que marca el estándar.",
-    },
-  },
-  {
-    n: "03",
-    title: { en: "Early-career guidance", es: "Orientación profesional" },
-    body: {
-      en: "Continued mentorship, and introductions to the companies hiring this profile.",
-      es: "Mentoría continua y presentación ante las empresas que buscan este perfil.",
-    },
-  },
+const PILLARS: Array<{ n: string; title: L }> = [
+  { n: "01", title: { en: "Robust financial aid", es: "Apoyo financiero integral" } },
+  { n: "02", title: { en: "Identity-driven community", es: "Comunidad con identidad" } },
+  { n: "03", title: { en: "Early-career guidance", es: "Orientación profesional" } },
 ]
 
 /**
@@ -158,6 +128,7 @@ export default function Mission() {
   const { lang, t } = useLang()
 
   return (
+    <>
     <section className="bg-background relative overflow-hidden">
       {/* Colombian tricolor, closing the hero */}
       <Tricolor className="absolute inset-x-0 top-0 h-1" />
@@ -172,58 +143,55 @@ export default function Mission() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {PILLARS.map((p, i) => (
             <Reveal key={p.n} delay={i * 120}>
-              {/* Burgundy rule rather than cobalt: on cream the warm accent
-                  reads as a deliberate mark, where cobalt on cream competes
-                  with every link on the page. */}
-              <div className="bg-surface border-t-2 border-accent-warm rounded-sm p-8 md:p-10 h-full">
-                <div className="text-meta uppercase tracking-widest text-accent-warm font-semibold">
+              <div className="bg-surface border-t-2 border-accent rounded-sm p-8 md:p-10 h-full">
+                <div className="text-meta uppercase tracking-widest text-accent font-semibold">
                   {p.n}
                 </div>
                 {/* One line at desktop; reserves two lines only where wrapping is possible */}
                 <h3 className="font-semibold text-primary mt-4 leading-tight text-[clamp(1.25rem,1.6vw,1.6rem)] md:min-h-[2.4em] lg:min-h-0 lg:whitespace-nowrap">
                   {t(p.title)}
                 </h3>
-                <p className="text-body text-ink/75 mt-3">
-                  <AndesLink text={t(p.body)} />
-                </p>
               </div>
             </Reveal>
           ))}
         </div>
+      </div>
+    </section>
 
-        {/* The terms and the scope both go navy. They are the two blocks a
-            reader is scanning for rather than reading, and on a white page
-            they were the two that floated. Set as dark panels they read as
-            reference, and the section gets a rhythm instead of one flat
-            expanse. */}
-        <Reveal delay={200}>
-          <div className="mt-14 bg-primary text-primary-foreground rounded-sm p-6 sm:p-10">
-            <div className="text-meta uppercase tracking-widest text-primary-foreground/60 font-semibold mb-8">
-              {lang === "es" ? "Qué cubre la beca" : "What the scholarship covers"}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/15">
-              {COVERAGE.map((c, i) => (
-                <div
-                  key={c.figure.en}
-                  className={`py-6 sm:py-0 ${i === 0 ? "sm:pr-8" : i === COVERAGE.length - 1 ? "sm:pl-8" : "sm:px-8"}`}
-                >
-                  <div className="text-h2 font-semibold leading-none tabular-nums">
-                    {t(c.figure)}
-                  </div>
-                  <p className="text-body text-primary-foreground/70 mt-4">
-                    <AndesLink text={t(c.label)} onDark />
-                  </p>
+    {/* The terms and the scope get the full-bleed navy band and the logo
+        splash, the same treatment as "We strive to be more than tuition".
+        They are the two blocks a reader scans rather than reads, and inset
+        panels on white left them floating inside the mission rather than
+        reading as their own statement. */}
+    <section className="relative bg-primary text-primary-foreground overflow-hidden">
+      <Watermark onDark className="-left-36 -bottom-36 w-[28rem]" />
+      <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-28 relative">
+        <Reveal>
+          <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-8">
+            {lang === "es" ? "Qué cubre la beca" : "What the scholarship covers"}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/15">
+            {COVERAGE.map((c, i) => (
+              <div
+                key={c.figure.en}
+                className={`py-6 sm:py-0 ${i === 0 ? "sm:pr-8" : i === COVERAGE.length - 1 ? "sm:pl-8" : "sm:px-8"}`}
+              >
+                <div className="text-h2 font-semibold leading-none tabular-nums">
+                  {t(c.figure)}
                 </div>
-              ))}
-            </div>
+                <p className="text-body text-primary-foreground/70 mt-4">
+                  <AndesLink text={t(c.label)} onDark />
+                </p>
+              </div>
+            ))}
           </div>
         </Reveal>
 
         {/* Majors. Nineteen bulleted items in three columns was an inventory;
             the point is the breadth, so each group is one flowing line. */}
-        <Reveal delay={260}>
-          <div className="mt-6 bg-primary text-primary-foreground rounded-sm p-6 sm:p-10">
-            <div className="text-meta uppercase tracking-widest text-primary-foreground/60 font-semibold mb-8">
+        <Reveal delay={140}>
+          <div className="mt-16 md:mt-20">
+            <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-8">
               {lang === "es" ? "Carreras que apoyamos" : "Majors supported"}
             </div>
             <dl className="border-t border-white/15">
@@ -249,10 +217,14 @@ export default function Mission() {
             </dl>
           </div>
         </Reveal>
+      </div>
+    </section>
 
+    <section className="bg-background relative overflow-hidden">
+      <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-20 relative">
         {/* Values */}
         <Reveal delay={120}>
-          <div className="mt-16">
+          <div>
             <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-8">
               {lang === "es" ? "Nuestros valores" : "Our values"}
             </div>
@@ -281,5 +253,6 @@ export default function Mission() {
         </Reveal>
       </div>
     </section>
+    </>
   )
 }
