@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react"
+import { lazy, Suspense, useEffect, useState } from "react"
 import Header from "./components/Header"
-import EnterLanding from "./components/home/EnterLanding"
 import Footer from "./components/Footer"
 import Home from "./pages/Home"
 import Scholars from "./pages/Scholars"
@@ -10,6 +9,8 @@ import Apply from "./pages/Apply"
 import BoardPortal from "./pages/BoardPortal"
 import SponsorPortal from "./pages/SponsorPortal"
 import { initialLang, LANG_STORAGE_KEY, LangContext, type Lang } from "./lib/i18n"
+
+const EnterLanding = lazy(() => import("./components/home/EnterLanding"))
 
 /**
  * Dependency-free hash router.
@@ -100,7 +101,11 @@ export default function App() {
         >
           {lang === "es" ? "Ir al contenido" : "Skip to content"}
         </a>
-        {isHome && splash && <EnterLanding onEntered={() => setSplash(false)} />}
+        {isHome && splash && (
+          <Suspense fallback={<div className="fixed inset-0 z-[60]" style={{ background: "#141c28" }} />}>
+            <EnterLanding onEntered={() => setSplash(false)} />
+          </Suspense>
+        )}
         {!(isHome && splash) && <Header route={route in pages ? route : ""} />}
         <main id="main" className="flex-1">
           {pages[route] ?? <Home />}
