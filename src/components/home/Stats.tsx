@@ -326,32 +326,10 @@ export default function Stats() {
                 </>
               )}
             </h2>
-            {/* The claim moved up into the heading, so the paragraph now
-                carries the evidence for it and the standard-of-excellence
-                line that used to be the heading. */}
             <p className="text-lead font-light text-ink/80 mt-6">
-              {lang === "es" ? (
-                <>
-                  <strong className="font-bold text-primary">
-                    Por encima de los programas con y sin apoyo financiero,
-                  </strong>{" "}
-                  y todos los Lumens se ubicaron en el 1% superior del ICFES a nivel
-                  nacional. Seleccionamos con rigor y marcamos el estándar de excelencia
-                  dentro y fuera del aula, en lo académico y en los valores, poniendo a
-                  cada Lumen frente a las empresas que compiten por exactamente este
-                  perfil.
-                </>
-              ) : (
-                <>
-                  <strong className="font-bold text-primary">
-                    Ahead of financial aid and non-financial aid programs alike,
-                  </strong>{" "}
-                  and every Lumen ranked in the top 1% of Colombia's national ICFES exam.
-                  We select rigorously and drive the standard for excellence inside and
-                  outside the classroom, across academics and values, putting every Lumen
-                  in front of the companies competing for exactly this profile.
-                </>
-              )}
+              {lang === "es"
+                ? "Estamos marcando el estándar de excelencia dentro y fuera del aula."
+                : "We are driving the standard for excellence inside and outside the classroom."}
             </p>
           </div>
         </Reveal>

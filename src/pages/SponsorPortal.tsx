@@ -12,7 +12,8 @@ import IcfesGpaScatter from "../components/IcfesGpaScatter"
 import CohortVsProgramme from "../components/CohortVsProgramme"
 import CohortRanking from "../components/CohortRanking"
 import { useScholarGrades } from "../lib/grades"
-import { achievementTerm, useScholarJournals } from "../lib/journals"
+import { achievementTerm, themesFor, useScholarJournals } from "../lib/journals"
+import { DRI_FILTERS, driOf, driShort } from "../data/dri"
 import { useScholarRanking } from "../lib/ranking"
 
 /**
@@ -88,10 +89,20 @@ function Portal() {
   // piece of state for both, since only one scholar card is open at a time and
   // the whole point is that the two halves agree on which term you are on.
   const [activeTerm, setActiveTerm] = useState<string | null>(null)
+  const [driFilter, setDriFilter] = useState<string | null>(null)
   const essays = useScholarEssays()
   const grades = useScholarGrades()
   const journals = useScholarJournals()
   const ranking = useScholarRanking()
+
+  const setDri = (next: string | null) => {
+    setDriFilter(next)
+    if (open && next && driOf(open) !== next) {
+      setOpen(null)
+      setEssayOpen(null)
+      setJournalOpen(null)
+    }
+  }
 
   return (
     <>
@@ -215,13 +226,8 @@ function Portal() {
       <section className="bg-background">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
           <Reveal>
-            <div className="text-meta uppercase tracking-widest text-muted mb-4">
-              {lang === "es" ? "Situación" : "Standing"}
-            </div>
             <h2 className="text-h3 font-semibold text-primary">
-              {lang === "es"
-                ? "Quién va en marcha, y a quién hay que llamar."
-                : "Who is thriving, and who needs a call."}
+              {lang === "es" ? "Chequeos de salud estudiantil" : "Student health checks"}
             </h2>
           </Reveal>
           <div className="mt-8">
@@ -238,6 +244,34 @@ function Portal() {
               {lang === "es" ? "Perfiles" : "Profiles"}
             </h2>
           </Reveal>
+
+          <div className="flex flex-wrap gap-2 mt-6">
+            <button
+              type="button"
+              onClick={() => setDri(null)}
+              className={`text-meta uppercase tracking-widest rounded-full px-3 py-1.5 cursor-pointer transition-colors duration-200 ${
+                driFilter === null
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-white text-muted border border-ink/15 hover:border-accent/40"
+              }`}
+            >
+              {lang === "es" ? "Todos" : "All"}
+            </button>
+            {DRI_FILTERS.map((d) => (
+              <button
+                key={d.slug}
+                type="button"
+                onClick={() => setDri(driFilter === d.slug ? null : d.slug)}
+                className={`text-meta uppercase tracking-widest rounded-full px-3 py-1.5 cursor-pointer transition-colors duration-200 ${
+                  driFilter === d.slug
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-white text-muted border border-ink/15 hover:border-accent/40"
+                }`}
+              >
+                {lang === "es" ? d.short.es : d.short.en}
+              </button>
+            ))}
+          </div>
 
           {/* On a phone the accordion is a lot of thumb travel; jump directly. */}
           <div className="lg:hidden mt-6">
@@ -263,18 +297,26 @@ function Portal() {
               <option value="">
                 {lang === "es" ? "Elige un estudiante…" : "Pick a scholar…"}
               </option>
-              {GENERATIONS.map((gen) => (
+              {GENERATIONS.map((gen) => {
+                const options = SCHOLARS.filter(
+                  (s) =>
+                    s.generation === gen &&
+                    (driFilter === null || driOf(s.slug) === driFilter),
+                )
+                if (options.length === 0) return null
+                return (
                 <optgroup
                   key={gen}
                   label={lang === "es" ? `Generación ${gen}` : `${gen} Generation`}
                 >
-                  {SCHOLARS.filter((s) => s.generation === gen).map((s) => (
+                  {options.map((s) => (
                     <option key={s.slug} value={s.slug}>
                       {s.name}
                     </option>
                   ))}
                 </optgroup>
-              ))}
+                )
+              })}
             </select>
           </div>
 
@@ -283,7 +325,11 @@ function Portal() {
               without saying which is which invites the wrong conclusion. */}
           <div className="mt-8 space-y-12">
             {GENERATIONS.map((gen) => {
-              const cohort = SCHOLARS.filter((s) => s.generation === gen)
+              const cohort = SCHOLARS.filter(
+                (s) =>
+                  s.generation === gen &&
+                  (driFilter === null || driOf(s.slug) === driFilter),
+              )
               if (cohort.length === 0) return null
               return (
                 <div key={gen}>
@@ -302,6 +348,8 @@ function Portal() {
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
                     {cohort.map((s) => {
                       const isOpen = open === s.slug
+                      const dri = driOf(s.slug)
+                      const driName = dri ? driShort(dri) : null
               const record = {
                 grades: grades?.[s.slug],
                 essay: essays?.[s.slug],
@@ -332,7 +380,14 @@ function Portal() {
                         loading="lazy"
                       />
                       <div className="min-w-0">
-                        <div className="text-body font-semibold text-primary">{s.name}</div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="text-body font-semibold text-primary">{s.name}</div>
+                          {driName && (
+                            <span className="text-meta bg-accent/10 text-accent rounded-full px-2.5 py-1">
+                              {lang === "es" ? driName.es : driName.en}
+                            </span>
+                          )}
+                        </div>
                         <div className="text-meta text-muted">{t(s.major)}</div>
                       </div>
                       <span className="text-meta uppercase tracking-widest text-accent ml-auto shrink-0">
@@ -530,6 +585,18 @@ function Portal() {
                               <h4 className="text-h3 font-semibold text-primary italic mt-2">
                                 {record.journal.title}
                               </h4>
+                              {themesFor(s.slug, record.journal).length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                  {themesFor(s.slug, record.journal).map((th) => (
+                                    <span
+                                      key={th.en}
+                                      className="text-meta bg-accent/10 text-accent rounded-full px-3 py-1"
+                                    >
+                                      {lang === "es" ? th.es : th.en}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-meta uppercase tracking-widest text-muted">
                                 <span>{s.name}</span>
                                 <span aria-hidden="true">·</span>

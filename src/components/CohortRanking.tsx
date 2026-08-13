@@ -1,5 +1,6 @@
 import { useLang } from "../lib/i18n"
 import { SCHOLARS } from "../data/scholars"
+import { driOf, driShort } from "../data/dri"
 import type { RankingByGeneration, RankSignals, ScholarRank } from "../lib/ranking"
 
 /**
@@ -112,6 +113,8 @@ export default function CohortRanking({
             <ol className="space-y-3">
               {rows.map((r) => {
                 const b = BUCKET[r.bucket]
+                const dri = driOf(r.slug)
+                const driName = dri ? driShort(dri) : null
                 return (
                   <li
                     key={r.slug}
@@ -126,6 +129,11 @@ export default function CohortRanking({
                           <span className="text-body font-semibold text-primary">
                             {nameOf(r.slug)}
                           </span>
+                          {driName && (
+                            <span className="text-meta bg-accent/10 text-accent rounded-full px-2.5 py-1">
+                              {lang === "es" ? driName.es : driName.en}
+                            </span>
+                          )}
                           <span
                             className={`inline-flex items-center gap-1.5 text-meta uppercase tracking-widest rounded-full px-2.5 py-1 ${b.chip}`}
                           >
