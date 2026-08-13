@@ -21,6 +21,48 @@ export type AchievementTerm = {
   items: AchievementItem[]
 }
 
+const ORDINALS = [
+  "first",
+  "second",
+  "third",
+  "fourth",
+  "fifth",
+  "sixth",
+  "seventh",
+  "eighth",
+  "ninth",
+  "tenth",
+]
+
+/**
+ * Which term an achievement group belongs to, so hovering it can light the
+ * matching row on the grade chart.
+ *
+ * Only one scholar of ten wrote the university's term code next to their
+ * achievements; the rest wrote "Primer semestre". But that ordinal is a real
+ * mapping, not a guess: Sebastián Martínez gave both, and his codes run
+ * exactly first-to-2024-1, second-to-2024-2, and so on down his enrolled
+ * terms. So an ordinal label resolves against the terms the scholar was
+ * actually enrolled in, skipping the ones they sat out.
+ *
+ * An explicit code wins where there is one. Labels that name no single term
+ * ("Across the degree", "Between terms") resolve to null and simply do not
+ * highlight, which is the honest outcome: they did not happen in one semester.
+ */
+export function achievementTerm(
+  a: AchievementTerm,
+  enrolledTerms: string[],
+): string | null {
+  if (a.code && enrolledTerms.includes(a.code)) return a.code
+  const label = a.label.en.trim().toLowerCase()
+  if (!label.includes("semester")) return null
+  const n = ORDINALS.findIndex((o) => label.startsWith(o))
+  if (n === -1) return null
+  // An ordinal past the last recovered term (a scholar mid-way through the one
+  // after) has no row to light, and that is fine.
+  return enrolledTerms[n] ?? null
+}
+
 export type ScholarJournal = {
   title: string
   /** The academic term the entry covers, e.g. "2026-1" */

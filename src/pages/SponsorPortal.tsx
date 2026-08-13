@@ -11,7 +11,7 @@ import GpaTrend from "../components/GpaTrend"
 import IcfesGpaScatter from "../components/IcfesGpaScatter"
 import CohortRanking from "../components/CohortRanking"
 import { useScholarGrades } from "../lib/grades"
-import { useScholarJournals } from "../lib/journals"
+import { achievementTerm, useScholarJournals } from "../lib/journals"
 import { useScholarRanking } from "../lib/ranking"
 
 /**
@@ -459,29 +459,35 @@ function Portal() {
                             {record.journal.achievements.length > 0 && (
                               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-5">
                                 {record.journal.achievements.map((a) => {
+                                  const term = achievementTerm(
+                                    a,
+                                    (record.grades?.terms ?? [])
+                                      .filter((t) => t.average != null)
+                                      .map((t) => t.term),
+                                  )
                                   const isActive =
-                                    a.code != null && activeTerm === a.code
+                                    term != null && activeTerm === term
                                   return (
                                     <div
                                       key={a.label.en + (a.code ?? "")}
-                                      onMouseEnter={() =>
-                                        a.code && setActiveTerm(a.code)
-                                      }
-                                      onMouseLeave={() =>
-                                        a.code && setActiveTerm(null)
-                                      }
+                                      onMouseEnter={() => term && setActiveTerm(term)}
+                                      onMouseLeave={() => term && setActiveTerm(null)}
                                       className={`border-l-2 pl-4 -ml-px rounded-r-sm transition-colors duration-200 ${
                                         isActive
                                           ? "border-accent bg-accent/5"
                                           : "border-accent/40"
                                       }`}
                                     >
+                                      {/* The resolved term rides next to the
+                                          scholar's own wording, so the row it
+                                          lights on the chart is named rather
+                                          than left to be inferred. */}
                                       <div className="text-meta uppercase tracking-widest text-primary font-semibold">
                                         {lang === "es" ? a.label.es : a.label.en}
-                                        {a.code && (
+                                        {term && (
                                           <span className="font-normal text-muted tabular-nums">
                                             {" "}
-                                            {a.code}
+                                            {term}
                                           </span>
                                         )}
                                       </div>
