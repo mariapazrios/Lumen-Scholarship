@@ -36,11 +36,10 @@ function fit(points: Point[]) {
  * Saber 11 against cumulative PGA, one dot per scholar.
  *
  * The chart exists to answer a question sponsors ask out loud, which is whether
- * the entrance score predicts how a scholar does once they are in. On this
- * cohort it does not, and the caption says so rather than leaving a downward
- * line to imply something the data cannot carry: nine points, and every one of
- * them inside a 37 point band near the top of a 500 point scale, because that
- * is who Lumen admits. There is no low scoring group here to compare against.
+ * the entrance score predicts how a scholar does once they are in. The fit
+ * numbers sit under the plot. Nine points, all inside a narrow band near the
+ * top of a 500 point scale: that is who Lumen admits, and there is no low
+ * scoring group here to compare against.
  *
  * Colour follows the site's chart convention rather than introducing a second
  * hue: cobalt is Lumen, grey is context. Generation rides on the fill (solid
@@ -65,13 +64,9 @@ export default function IcfesGpaScatter({
   }
 
   const points: Point[] = []
-  let noScore = 0
   for (const s of SCHOLARS) {
     const g = grades[s.slug]
-    if (!g?.saber11 || g.cumulative == null) {
-      if (g) noScore++
-      continue
-    }
+    if (!g?.saber11 || g.cumulative == null) continue
     points.push({
       slug: s.slug,
       name: s.name,
@@ -392,42 +387,6 @@ export default function IcfesGpaScatter({
         </div>
       )}
 
-      {line && (
-        <p className="text-body text-ink/70 mt-4">
-          {lang === "es" ? (
-            <>
-              La relación es débil y va ligeramente hacia abajo: r = {fmtR(line.r)}, r² ={" "}
-              {(line.r * line.r).toFixed(2)}. Con {line.n} estudiantes no es una tendencia
-              confiable, y todos entraron con puntajes dentro de una franja estrecha en la parte
-              alta de una escala de 500, porque es a quienes Lumen admite. No hay un grupo de
-              puntajes bajos con el cual comparar, así que esto no dice que el ICFES no prediga
-              nada: dice que dentro de este grupo no los ordena.
-            </>
-          ) : (
-            <>
-              The relationship is weak and tilts slightly downward: r = {fmtR(line.r)}, r² ={" "}
-              {(line.r * line.r).toFixed(2)}. With {line.n} scholars that is not a reliable trend,
-              and all of them arrived inside a narrow band near the top of a 500 point scale,
-              because that is who Lumen admits. There is no low scoring group here to compare
-              against, so this does not say ICFES predicts nothing: it says that within this group
-              it does not rank them.
-            </>
-          )}
-        </p>
-      )}
-
-      {(flagged.length > 0 || noScore > 0) && (
-        <p className="text-meta text-muted mt-3">
-          {flagged.length > 0 &&
-            (lang === "es"
-              ? `${flagged.map((p) => p.name).join(", ")}: puntaje autorreportado, sin informe del ICFES en archivo, por eso queda fuera del ajuste. `
-              : `${flagged.map((p) => p.name).join(", ")}: score is self-reported with no ICFES report on file, so it sits outside the fit. `)}
-          {noScore > 0 &&
-            (lang === "es"
-              ? `${noScore} ${noScore === 1 ? "estudiante no tiene" : "estudiantes no tienen"} puntaje en archivo y no ${noScore === 1 ? "aparece" : "aparecen"} en la gráfica.`
-              : `${noScore} ${noScore === 1 ? "scholar has" : "scholars have"} no score on file and ${noScore === 1 ? "is" : "are"} not plotted.`)}
-        </p>
-      )}
     </div>
   )
 }

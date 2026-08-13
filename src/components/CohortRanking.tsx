@@ -34,10 +34,12 @@ const BUCKET: Record<
   },
 }
 
-const AXES: Array<{ key: keyof RankSignals; label: { es: string; en: string } }> = [
+const AXES: Array<{
+  key: Exclude<keyof RankSignals, "potential">
+  label: { es: string; en: string }
+}> = [
   { key: "growth", label: { es: "Crecimiento", en: "Growth" } },
   { key: "insight", label: { es: "Reflexión", en: "Insight" } },
-  { key: "potential", label: { es: "Potencial", en: "Potential" } },
   { key: "grades", label: { es: "Notas", en: "Grades" } },
   { key: "extracurricular", label: { es: "Extracurriculares", en: "Extracurricular" } },
 ]
@@ -140,8 +142,8 @@ export default function CohortRanking({
                         {r.sparse ? (
                           <p className="text-meta text-muted italic mt-3">
                             {lang === "es"
-                              ? "Sin journal en archivo, así que no hay con qué calificar reflexión ni potencial. El puesto se apoya solo en notas y actividades."
-                              : "No journal on file, so there is nothing to read insight or potential from. This placing rests on grades and activities alone."}
+                              ? "Sin journal en archivo, así que no hay con qué calificar reflexión. El puesto se apoya solo en notas y actividades."
+                              : "No journal on file, so there is nothing to read insight from. This placing rests on grades and activities alone."}
                           </p>
                         ) : (
                           <Signals signals={r.signals} />

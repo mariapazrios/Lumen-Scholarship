@@ -140,11 +140,8 @@ function Portal() {
       <section className="bg-background">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
           <Reveal>
-            <div className="text-meta uppercase tracking-widest text-muted mb-4">
-              {lang === "es" ? "Informes" : "Reports"}
-            </div>
             <h2 className="text-h3 font-semibold text-primary">
-              {lang === "es" ? "El registro completo." : "The full record."}
+              {lang === "es" ? "Informes" : "Reports"}
             </h2>
           </Reveal>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
@@ -184,35 +181,28 @@ function Portal() {
       <section className="bg-surface">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
           <Reveal>
-            <div className="text-meta uppercase tracking-widest text-muted mb-4">
-              {lang === "es" ? "La cohorte" : "The cohort"}
-            </div>
             <h2 className="text-h3 font-semibold text-primary">
-              {lang === "es"
-                ? "El puntaje de entrada no predice la carrera."
-                : "The entrance score does not predict the degree."}
+              {lang === "es" ? "Analítica" : "Analytics"}
             </h2>
           </Reveal>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mt-8 items-start">
             <Reveal>
               <div className="bg-surface-soft rounded-sm p-5 sm:p-8">
-                <p className="text-body text-ink/75 mb-6">
-                  {lang === "es"
-                    ? "Saber 11 contra el promedio acumulado a 2026-1, un punto por estudiante."
-                    : "Saber 11 against cumulative GPA as of 2026-1, one dot per scholar."}
-                </p>
+                <h3 className="text-body font-semibold text-primary mb-5">
+                  {lang === "es" ? "Saber 11 vs. PGA acumulado" : "Saber 11 vs. cumulative GPA"}
+                </h3>
                 <IcfesGpaScatter grades={grades} />
               </div>
             </Reveal>
 
             <Reveal delay={110}>
               <div className="bg-surface-soft rounded-sm p-5 sm:p-8">
-                <p className="text-body text-ink/75 mb-6">
+                <h3 className="text-body font-semibold text-primary mb-5">
                   {lang === "es"
-                    ? "El mismo grupo, cada uno frente a los estudiantes de su propia carrera en el mismo semestre."
-                    : "The same cohort, each one against the students in their own programme at the same semester."}
-                </p>
+                    ? "PGA vs. promedio de la carrera"
+                    : "GPA vs. programme average"}
+                </h3>
                 <CohortVsProgramme grades={grades} />
               </div>
             </Reveal>
@@ -233,11 +223,6 @@ function Portal() {
                 ? "Quién va en marcha, y a quién hay que llamar."
                 : "Who is thriving, and who needs a call."}
             </h2>
-            <p className="text-body text-ink/75 mt-4 max-w-2xl">
-              {lang === "es"
-                ? "Cada generación ordenada por crecimiento, reflexión, potencial, notas frente a sus pares de carrera y actividades extracurriculares. Las generaciones se ordenan por separado: una lista conjunta ordenaría antigüedad, no desempeño."
-                : "Each generation ordered on growth, insight, potential, grades against their programme peers, and extracurricular record. Generations are ranked separately: one combined list would be ranking seniority, not performance."}
-            </p>
           </Reveal>
           <div className="mt-8">
             <CohortRanking ranking={ranking} generations={GENERATIONS} />
@@ -249,11 +234,8 @@ function Portal() {
       <section className="bg-surface-soft">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
           <Reveal>
-            <div className="text-meta uppercase tracking-widest text-muted mb-4">
-              {lang === "es" ? "Perfiles" : "Profiles"}
-            </div>
             <h2 className="text-h3 font-semibold text-primary">
-              {lang === "es" ? "Un perfil por Lumen." : "A profile per Lumen."}
+              {lang === "es" ? "Perfiles" : "Profiles"}
             </h2>
           </Reveal>
 

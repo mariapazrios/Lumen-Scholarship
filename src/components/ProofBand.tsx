@@ -31,7 +31,7 @@ export default function ProofBand() {
   const { t } = useLang()
   return (
     <section className="bg-surface">
-      <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-24">
+      <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-10 md:py-14">
         <Reveal>
           <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-ink/15">
             {PROOF.map((p) => (

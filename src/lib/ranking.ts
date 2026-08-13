@@ -15,9 +15,10 @@ import { useEffect, useState } from "react"
 export type RankSignals = {
   growth: number
   insight: number
-  potential: number
   grades: number
   extracurricular: number
+  /** Present on stored ranking rows. No longer scored or shown. */
+  potential?: number
 }
 
 export type ScholarRank = {
