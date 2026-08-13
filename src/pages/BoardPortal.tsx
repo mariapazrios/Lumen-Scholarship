@@ -13,11 +13,9 @@ import {
 } from "../lib/applicants"
 import {
   COMMENT_PLACEHOLDER,
-  DISAGREEMENT_THRESHOLD,
   RECOMMENDATIONS,
   SessionExpired,
   VALUES,
-  axisSpreads,
   consolidate,
   deleteRating,
   fetchRatings,
@@ -26,7 +24,6 @@ import {
   saveRating,
   scoreValue,
   valuesAverage,
-  type Consolidated,
   type Rating,
   type RatingStore,
   type Score,
@@ -89,79 +86,6 @@ function Prose({ text }: { text: string }) {
   )
 }
 
-/**
- * Where the board's individual scores land for one candidate, broken out by
- * value and recommendation rather than blended into one sentence. A 4.0
- * average reads as consensus; the same average can hide a 2 sitting next to
- * a 5 on one specific value, which is exactly what a board needs to see
- * before a decision, not a paragraph that already smoothed it away.
- */
-function AxisBreakdown({
-  candidate,
-  store,
-  lang,
-}: {
-  candidate: string
-  store: RatingStore
-  lang: "en" | "es"
-}) {
-  const axes = axisSpreads(candidate, store)
-  const disputed = [...axes]
-    .filter((a) => a.spread >= DISAGREEMENT_THRESHOLD)
-    .sort((a, b) => b.spread - a.spread)
-  const aligned = axes.filter((a) => a.spread < DISAGREEMENT_THRESHOLD)
-  const firstName = (slug: string) => BOARD.find((m) => m.slug === slug)?.name.split(" ")[0] ?? slug
-
-  return (
-    <div className="mt-3 space-y-4">
-      {disputed.length > 0 && (
-        <div>
-          <div className="text-meta uppercase tracking-widest text-accent mb-2">
-            {lang === "es" ? "Donde la junta no coincide" : "Where the board disagrees"}
-          </div>
-          <div className="space-y-1.5">
-            {disputed.map((a) => (
-              <div
-                key={a.key}
-                className="flex flex-wrap items-baseline justify-between gap-x-4 border-l-2 border-accent pl-3"
-              >
-                <span className="text-body font-semibold text-primary">
-                  {lang === "es" ? a.label.es : a.label.en}
-                </span>
-                <span className="text-body tabular-nums text-ink/80">
-                  {a.byMember.map((m) => `${firstName(m.member)} ${m.score}`).join(" · ")}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {aligned.length > 0 && (
-        <div>
-          <div className="text-meta uppercase tracking-widest text-muted mb-2">
-            {lang === "es" ? "Donde la junta coincide" : "Where the board agrees"}
-          </div>
-          <div className="flex flex-wrap gap-x-5 gap-y-1">
-            {aligned.map((a) => {
-              const nums = a.byMember.map((m) => m.score)
-              const lo = Math.min(...nums)
-              const hi = Math.max(...nums)
-              return (
-                <span key={a.key} className="text-body text-ink/75">
-                  <span className="font-semibold text-primary">
-                    {lang === "es" ? a.label.es : a.label.en}
-                  </span>{" "}
-                  <span className="tabular-nums text-muted">{lo === hi ? lo : `${lo}–${hi}`}</span>
-                </span>
-              )
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const { lang } = useLang()
   const [member, setMember] = useState(loadMember)
@@ -190,6 +114,8 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const [tab, setTab] = useState<"per-candidate" | "consolidated" | "discuss">(
     "per-candidate",
   )
+  // How the To discuss cards are ordered.
+  const [discussSort, setDiscussSort] = useState<"score-desc" | "score-asc">("score-desc")
 
   const refresh = useCallback(async () => {
     try {
@@ -1026,22 +952,6 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
   const consolidatedContent = (
     <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
-      <Reveal>
-            <div className="text-meta uppercase tracking-widest text-muted mb-3">
-              {lang === "es" ? "Consolidado" : "Consolidated"}
-            </div>
-            <h2 className="text-h3 font-semibold text-primary">
-              {lang === "es"
-                ? "La lectura de la junta, en conjunto."
-                : "The board's read, taken together."}
-            </h2>
-            <p className="text-body text-ink/70 mt-3">
-              {lang === "es"
-                ? "El promedio de los cuatro valores ordena la lista y define sí, maybe o no. Las calificaciones de cada miembro, su recomendación y sus comentarios están en la pestaña Para discutir. El corte es relativo a la mediana de la junta, así que aparece cuando cada candidato con ensayo tiene al menos una lectura."
-                : "The average of the four values orders the list and sets yes, maybe or no. Each member's scores, recommendation and comments are one tab over, under To discuss. The cut is relative to the board's median, so it appears once every submitted candidate has at least one read."}
-            </p>
-          </Reveal>
-
           {/* Six columns cannot fit a phone, so the table scrolls sideways. Say
               so: cut-off content with no cue reads as a broken layout, and the
               same numbers appear again as cards below. */}
@@ -1266,122 +1176,142 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
   const discussContent = (
     <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
-      <Reveal>
-        <div className="text-meta uppercase tracking-widest text-muted mb-3">
-          {lang === "es" ? "Para discutir" : "To discuss"}
-        </div>
-        <h2 className="text-h3 font-semibold text-primary">
-          {lang === "es"
-            ? "Dónde se separan los votos de la junta."
-            : "Where the board's votes pull apart."}
-        </h2>
-        <p className="text-body text-ink/70 mt-3">
-          {lang === "es"
-            ? "Ordenado según cuánto discrepa la junta, lo más disputado primero. Un valor se marca como en disputa cuando las calificaciones difieren en 2 puntos o más; lo demás es donde la junta ya coincide."
-            : "Sorted by how much the board disagrees, most contested first. A value counts as disputed when scores span 2 points or more; everything else is where the board already agrees."}
-        </p>
-      </Reveal>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        {focus ? (
+          <span className="text-body text-ink/75">
+            {lang === "es" ? "Mostrando solo " : "Showing only "}
+            <strong className="text-primary">{nameOf(focus)}</strong>
+            <button
+              type="button"
+              onClick={() => setFocus(null)}
+              className="ml-4 text-meta uppercase tracking-widest text-accent cursor-pointer"
+            >
+              {lang === "es" ? "Ver todos" : "Show all"}
+            </button>
+          </span>
+        ) : (
+          <span />
+        )}
+        {!focus && (
+          <label className="inline-flex items-center gap-3">
+            <span className="text-meta uppercase tracking-widest text-muted">
+              {lang === "es" ? "Ordenar" : "Sort"}
+            </span>
+            <select
+              value={discussSort}
+              onChange={(e) => setDiscussSort(e.target.value as typeof discussSort)}
+              className="bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink cursor-pointer focus:outline-none focus:border-accent"
+            >
+              <option value="score-desc">
+                {lang === "es" ? "Calificación, mayor a menor" : "Rating, highest first"}
+              </option>
+              <option value="score-asc">
+                {lang === "es" ? "Calificación, menor a mayor" : "Rating, lowest first"}
+              </option>
+            </select>
+          </label>
+        )}
+      </div>
 
-          {focus && (
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <span className="text-body text-ink/75">
-                {lang === "es" ? "Mostrando solo " : "Showing only "}
-                <strong className="text-primary">{nameOf(focus)}</strong>
-              </span>
-              <button
-                type="button"
-                onClick={() => setFocus(null)}
-                className="text-meta uppercase tracking-widest text-accent cursor-pointer"
+      {/* One card per row, full width: room enough for the candidate's
+          academic snapshot alongside the board's individual reads, rather
+          than squeezing both into half the page. */}
+      <div className="mt-6 grid grid-cols-1 gap-4">
+        {[...ratedRows]
+          .sort((a, b) => (discussSort === "score-desc" ? b.score - a.score : a.score - b.score))
+          .filter((row) => !focus || row.candidate === focus)
+          .map((row) => {
+            const applicant = people.find((p) => p.slug === row.candidate)
+            const meta = applicant
+              ? (() => {
+                  const age =
+                    applicant.age != null
+                      ? lang === "es"
+                        ? `${Math.floor(applicant.age)} años`
+                        : `age ${Math.floor(applicant.age)}`
+                      : null
+                  const icfes = applicant.saber11 != null ? `ICFES ${applicant.saber11}` : null
+                  const g = applicant.school_grades?.[0]
+                  const gpa = g
+                    ? `${g.average.toFixed(2)}/${(g.scale ?? 5).toFixed(0)}` +
+                      (g.rank != null
+                        ? g.of != null
+                          ? lang === "es"
+                            ? ` (puesto ${g.rank} de ${g.of})`
+                            : ` (rank ${g.rank} of ${g.of})`
+                          : lang === "es"
+                            ? ` (puesto ${g.rank})`
+                            : ` (rank ${g.rank})`
+                        : "")
+                    : null
+                  return [applicant.program, applicant.city, age, icfes, gpa].filter(Boolean).join(" · ")
+                })()
+              : null
+
+            return (
+              <div
+                key={row.candidate}
+                className="bg-white border border-ink/10 rounded-sm overflow-hidden"
               >
-                {lang === "es" ? "Ver todos" : "Show all"}
-              </button>
-            </div>
-          )}
-
-          {/* One column when focused: with a single card there is nothing to
-              compare against, and the comments get the full width.
-              Sorted by how much the board disagrees, most disputed first:
-              this tab exists to surface exactly that, not to repeat the
-              consolidated table's rank order. */}
-          <div className={`mt-6 grid grid-cols-1 gap-4 ${focus ? "" : "md:grid-cols-2"}`}>
-            {[...ratedRows]
-              .sort((a, b) => {
-                const maxSpread = (r: Consolidated) =>
-                  Math.max(...axisSpreads(r.candidate, store).map((x) => x.spread), 0)
-                return maxSpread(b) - maxSpread(a)
-              })
-              .filter((row) => !focus || row.candidate === focus)
-              .map((row) => (
-                <div
-                  key={row.candidate}
-                  className="bg-white border border-ink/10 rounded-sm overflow-hidden"
-                >
-                  {/* The candidate. A cream band, so the person being judged is
-                      visibly a different kind of thing from the judgements. */}
-                  <div className="bg-surface px-6 py-5 border-b border-ink/10">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <div className="text-h3 font-semibold text-primary">
-                        {nameOf(row.candidate)}
-                      </div>
-                      <div className="text-body tabular-nums font-bold text-primary">
-                        {row.raters ? row.score.toFixed(2) : "·"}
-                      </div>
+                {/* The candidate. A cream band, so the person being judged is
+                    visibly a different kind of thing from the judgements. */}
+                <div className="bg-surface px-6 py-5 border-b border-ink/10">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <div className="text-h3 font-semibold text-primary">
+                      {nameOf(row.candidate)}
                     </div>
-                    <p className="text-meta uppercase tracking-widest text-muted mt-2">
-                      {row.raters}{" "}
-                      {lang === "es"
-                        ? row.raters === 1
-                          ? "lectura"
-                          : "lecturas"
-                        : row.raters === 1
-                          ? "read"
-                          : "reads"}
-                    </p>
-                    {row.raters < 2 ? (
-                      <p className="text-body text-ink/70 mt-2">
-                        {lang === "es"
-                          ? "Solo una lectura por ahora, nada que comparar todavía."
-                          : "Only one read so far, nothing to compare yet."}
-                      </p>
-                    ) : (
-                      <AxisBreakdown candidate={row.candidate} store={store} lang={lang} />
-                    )}
+                    <div className="text-body tabular-nums font-bold text-primary">
+                      {row.raters ? row.score.toFixed(2) : "·"}
+                    </div>
                   </div>
-
-                  {/* The board. Labelled, and each member's read carries its own
-                      rule so several of them do not run together as one wall. */}
-                  {row.raters > 0 && (
-                    <div className="px-6 py-5">
-                      <div className="text-meta uppercase tracking-widest text-muted mb-4">
-                        {lang === "es" ? `La junta (${row.raters})` : `The board (${row.raters})`}
-                      </div>
-                      <div className="space-y-4">
-                        {Object.entries(store[row.candidate] ?? {}).map(([slug, r]) => (
-                          <div key={slug} className="border-l-2 border-accent/40 pl-4">
-                            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                              <div className="text-body font-semibold text-primary">
-                                {BOARD.find((m) => m.slug === slug)?.name ?? slug}
-                              </div>
-                              <div className="text-meta text-muted tabular-nums whitespace-nowrap">
-                                {lang === "es" ? "Valores" : "Values"}{" "}
-                                <strong className="text-ink/80">
-                                  {valuesAverage(r).toFixed(1)}
-                                </strong>{" "}
-                                · {lang === "es" ? "Recomendación" : "Rec"}{" "}
-                                <strong className="text-ink/80">{r.recommendation}/5</strong>
-                              </div>
-                            </div>
-                            {r.comments && (
-                              <p className="text-body text-ink/75 mt-1.5">{r.comments}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <p className="text-meta uppercase tracking-widest text-muted mt-2">
+                    {row.raters}{" "}
+                    {lang === "es"
+                      ? row.raters === 1
+                        ? "lectura"
+                        : "lecturas"
+                      : row.raters === 1
+                        ? "read"
+                        : "reads"}
+                  </p>
+                  {meta && <p className="text-meta text-muted mt-2">{meta}</p>}
                 </div>
-              ))}
-          </div>
+
+                {/* The board. Labelled, and each member's read carries its own
+                    rule so several of them do not run together as one wall. */}
+                {row.raters > 0 && (
+                  <div className="px-6 py-5">
+                    <div className="text-meta uppercase tracking-widest text-muted mb-4">
+                      {lang === "es" ? `La junta (${row.raters})` : `The board (${row.raters})`}
+                    </div>
+                    <div className="space-y-4">
+                      {Object.entries(store[row.candidate] ?? {}).map(([slug, r]) => (
+                        <div key={slug} className="border-l-2 border-accent/40 pl-4">
+                          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                            <div className="text-body font-semibold text-primary">
+                              {BOARD.find((m) => m.slug === slug)?.name ?? slug}
+                            </div>
+                            <div className="text-meta text-muted tabular-nums whitespace-nowrap">
+                              {lang === "es" ? "Valores" : "Values"}{" "}
+                              <strong className="text-ink/80">
+                                {valuesAverage(r).toFixed(1)}
+                              </strong>{" "}
+                              · {lang === "es" ? "Recomendación" : "Rec"}{" "}
+                              <strong className="text-ink/80">{r.recommendation}/5</strong>
+                            </div>
+                          </div>
+                          {r.comments && (
+                            <p className="text-body text-ink/75 mt-1.5">{r.comments}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+      </div>
     </div>
   )
 
