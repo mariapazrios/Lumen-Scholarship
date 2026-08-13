@@ -2,6 +2,7 @@ import Reveal from "../components/primitives/Reveal"
 import Watermark from "../components/primitives/Watermark"
 import { useState } from "react"
 import AdmissionsProcess from "../components/AdmissionsProcess"
+import ProofBand from "../components/ProofBand"
 import { BOARD, type TeamMember } from "../data/team"
 import { useLang } from "../lib/i18n"
 
@@ -274,6 +275,8 @@ export default function Team() {
           </div>
         </div>
       </section>
+
+      <ProofBand />
 
       <AdmissionsProcess
         id="process"

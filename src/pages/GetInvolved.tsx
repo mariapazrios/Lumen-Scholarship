@@ -1,29 +1,8 @@
 import CountUp from "../components/primitives/CountUp"
 import Reveal from "../components/primitives/Reveal"
-import Tricolor from "../components/primitives/Tricolor"
 import { useLang, type L } from "../lib/i18n"
 
 const CONTACT_EMAIL = "hq@lumenedu.org"
-
-/** The case for sponsoring, in three numbers: how narrow the funnel is, what
- *  they scored coming in, and how they perform once they are here. */
-const PROOF: Array<{ value: L; label: L; sub: L }> = [
-  {
-    value: { en: "0.14%", es: "0,14%" },
-    label: { en: "Acceptance rate", es: "Tasa de admisión" },
-    sub: { en: "11 selected from 8,065", es: "11 seleccionados de 8.065" },
-  },
-  {
-    value: { en: "Top 1%", es: "Top 1%" },
-    label: { en: "National ICFES exam", es: "Examen ICFES nacional" },
-    sub: { en: "Every Lumen, both generations", es: "Todos los Lumens, ambas generaciones" },
-  },
-  {
-    value: { en: "+10%", es: "+10%" },
-    label: { en: "GPA above the Andes average", es: "Promedio por encima de Los Andes" },
-    sub: { en: "4.3 against 3.9", es: "4.3 frente a 3.9" },
-  },
-]
 
 /**
  * What a sponsor gets back. "First look at hiring" and "direct access to the
@@ -35,8 +14,8 @@ const RETURNS: Array<{ n: string; title: L; body: L }> = [
     n: "01",
     title: { en: "A pre-vetted talent pool", es: "Un grupo de talento preseleccionado" },
     body: {
-      en: "One Lumen per 733 applicants. Every one ranked in the top 1% of the national exam, and the cohort averages 4.3 against program averages of 3.9.",
-      es: "Un Lumen por cada 733 aspirantes. Todos en el 1% superior del examen nacional, con un promedio de 4.3 frente al 3.9 de sus carreras.",
+      en: "One Lumen per 1,099 applicants. Every one ranked in the top 1% of the national exam, and the cohort averages 4.3 against program averages of 3.9.",
+      es: "Un Lumen por cada 1.099 aspirantes. Todos en el 1% superior del examen nacional, con un promedio de 4.3 frente al 3.9 de sus carreras.",
     },
   },
   {
@@ -139,27 +118,8 @@ function SponsorsSection() {
   return (
     <section id="sponsors" className="bg-surface-soft scroll-mt-24">
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-24">
-        {/* The record leads the page, ahead of any heading. The numbers are the
-            argument; the heading and the tiers are what you do about them. */}
         <Reveal>
-          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-ink/15">
-            {PROOF.map((p) => (
-              <div key={p.label.en} className="py-5 sm:py-0 sm:px-8 sm:first:pl-0 sm:last:pr-0">
-                <Tricolor className="w-7 h-[3px] mb-5" />
-                <div className="text-stat font-bold text-primary tabular-nums leading-none">
-                  {t(p.value)}
-                </div>
-                <div className="text-body font-semibold uppercase tracking-wide text-primary mt-4">
-                  {t(p.label)}
-                </div>
-                <div className="text-meta text-muted mt-2 tabular-nums">{t(p.sub)}</div>
-              </div>
-            ))}
-          </div>
-        </Reveal>
-
-        <Reveal delay={80}>
-          <h2 className="text-h2 font-semibold text-primary mt-16">
+          <h2 className="text-h2 font-semibold text-primary">
             {lang === "es" ? "Patrocina a un Lumen." : "Sponsor a Lumen."}
           </h2>
         </Reveal>
@@ -339,9 +299,7 @@ export default function GetInvolved() {
               {lang === "es" ? "Vincúlate" : "Get involved"}
             </div>
             {/* Two tiers: the headline says how closed the group is and who
-                gets in, the line under it says what kind of decision this is.
-                The explanatory paragraph that used to sit here is gone; the
-                stats immediately below make the same case in numbers. */}
+                gets in, the line under it says what kind of decision this is. */}
             <h1 className="text-display font-light">
               {lang === "es" ? (
                 <>

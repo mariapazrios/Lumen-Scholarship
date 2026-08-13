@@ -40,6 +40,26 @@ export type ScholarRank = {
 /** ranking[generation] = that cohort, already ordered by rank. */
 export type RankingByGeneration = Record<string, ScholarRank[]>
 
+/**
+ * Display corrections on top of `scholar-ranking` until the document itself
+ * is rewritten. Rank order is left as stored; only the bucket moves.
+ */
+const BUCKET_OVERRIDES: Record<string, ScholarRank["bucket"]> = {
+  "sebastian-martinez": "green",
+}
+
+function applyOverrides(ranking: RankingByGeneration): RankingByGeneration {
+  const out: RankingByGeneration = {}
+  for (const [gen, rows] of Object.entries(ranking)) {
+    out[gen] = rows.map((r) => {
+      const bucket = BUCKET_OVERRIDES[r.slug]
+      return bucket && r.bucket !== bucket ? { ...r, bucket } : r
+    })
+  }
+  return out
+}
+
+
 export function useScholarRanking(): RankingByGeneration | null {
   const [ranking, setRanking] = useState<RankingByGeneration | null>(null)
 
@@ -57,7 +77,7 @@ export function useScholarRanking(): RankingByGeneration | null {
             // A malformed row should cost that one cohort, not the whole panel.
           }
         }
-        setRanking(out)
+        setRanking(applyOverrides(out))
       })
       .catch(() => live && setRanking({}))
     return () => {

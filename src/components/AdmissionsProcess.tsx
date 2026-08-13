@@ -2,30 +2,54 @@ import CountUp from "./primitives/CountUp"
 import Reveal from "./primitives/Reveal"
 import { useLang, type L } from "../lib/i18n"
 
-const FUNNEL: Array<{ value: number; label: L; width: string; accent?: boolean }> = [
+/** Uniandes admission cycles, oldest completed generation first. */
+const CYCLES: Array<{ term: string; gen: L }> = [
+  { term: "2024-10", gen: { en: "2024 generation", es: "Generación 2024" } },
+  { term: "2025-10", gen: { en: "2025 generation", es: "Generación 2025" } },
+  { term: "2026-20", gen: { en: "In process", es: "En curso" } },
+]
+
+/**
+ * One row of the filter. `values` align with `CYCLES`. A null is a cycle that
+ * has not reached that stage yet, drawn as an em dash rather than a zero.
+ *
+ * Widths are editorial, not proportional: a true scale would make the last two
+ * rows vanish, and the numbers already carry the compression.
+ */
+const FILTER: Array<{
+  label: L
+  values: Array<number | null>
+  width: string
+  accent?: boolean
+}> = [
   {
-    value: 8065,
     label: { en: "Applications to Los Andes", es: "Solicitudes a Los Andes" },
+    values: [6324, 5764, 4313],
     width: "100%",
   },
   {
-    value: 2534,
-    label: { en: "Financial aid applications", es: "Solicitudes de apoyo financiero" },
-    width: "58%",
+    label: { en: "Admissions", es: "Admisiones" },
+    values: [5059, 4826, 3569],
+    width: "80%",
   },
   {
-    value: 82,
+    label: { en: "Financial aid applications", es: "Solicitudes de apoyo financiero" },
+    values: [1471, 1275, 926],
+    width: "48%",
+  },
+  {
     label: {
       en: "The Lumen pool of applicants",
       es: "El grupo Lumen de aspirantes",
     },
-    width: "26%",
+    values: [11, 46, 27],
+    width: "24%",
     accent: true,
   },
   {
-    value: 11,
     label: { en: "Lumens selected", es: "Lumens seleccionados" },
-    width: "10%",
+    values: [6, 5, null],
+    width: "12%",
     accent: true,
   },
 ]
@@ -79,7 +103,7 @@ type Props = {
   tone?: "white" | "soft"
 }
 
-/** The Lumen admissions funnel, process steps, and financial aid package. */
+/** The Lumen admissions filter across cycles, process steps, and aid package. */
 export default function AdmissionsProcess({
   id = "students",
   eyebrow = { en: "For students", es: "Para estudiantes" },
@@ -92,67 +116,88 @@ export default function AdmissionsProcess({
       className={`${tone === "soft" ? "bg-surface-soft" : "bg-background"} scroll-mt-24`}
     >
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 py-16 md:py-28">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-24">
-          <div>
-            <Reveal>
-              <div className="text-meta uppercase tracking-widest text-muted mb-4">
-                {t(eyebrow)}
-              </div>
-              {/* "Selective" rather than "rigorous": the Team page H1 above
-                  this one already says rigorous, and on that page the two sat
-                  a screen apart. The Spanish trades places instead of swapping
-                  the word, since it already ended on "altamente selectivo" and
-                  a straight swap would have said selective twice. "Curado"
-                  matches the body copy directly beneath. */}
-              <h2 className="text-h2 font-semibold text-primary">
-                {lang === "es" ? (
-                  <>
-                    Un proceso selectivo,
-                    <br />
-                    <em className="italic font-light">altamente curado.</em>
-                  </>
-                ) : (
-                  <>
-                    A selective,
-                    <br />
-                    <em className="italic font-light">highly curated process.</em>
-                  </>
-                )}
-              </h2>
-              <p className="text-body text-ink/75 mt-6 max-w-lg">
-                {lang === "es"
-                  ? "Lumen elige selectivamente de un grupo ya altamente curado: los finalistas de Quiero Estudiar."
-                  : "Lumen cherry-picks from an already highly curated pool: the finalists of Quiero Estudiar."}
-              </p>
-              <p className="text-body text-ink/75 mt-4 max-w-lg">
-                {lang === "es"
-                  ? "Es una beca STEM+: cubre todas las ciencias y todas las ingenierías de Los Andes, más economía, administración y derecho."
-                  : "It is a STEM+ scholarship: it covers every science and every engineering at Los Andes, plus economics, business and law."}
-              </p>
-            </Reveal>
+        <Reveal>
+          <div className="text-meta uppercase tracking-widest text-muted mb-4">
+            {t(eyebrow)}
+          </div>
+          <h2 className="text-h2 font-semibold text-primary">
+            {lang === "es" ? (
+              <>
+                Un proceso selectivo,
+                <br />
+                <em className="italic font-light">altamente curado.</em>
+              </>
+            ) : (
+              <>
+                A selective,
+                <br />
+                <em className="italic font-light">highly curated process.</em>
+              </>
+            )}
+          </h2>
+          <p className="text-body text-ink/75 mt-6 max-w-2xl">
+            {lang === "es"
+              ? "Lumen elige selectivamente de un grupo ya altamente curado: los finalistas de Quiero Estudiar."
+              : "Lumen cherry-picks from an already highly curated pool: the finalists of Quiero Estudiar."}
+          </p>
+          <p className="text-body text-ink/75 mt-4 max-w-2xl">
+            {lang === "es"
+              ? "Es una beca STEM+: cubre todas las ciencias y todas las ingenierías de Los Andes, más economía, administración y derecho."
+              : "It is a STEM+ scholarship: it covers every science and every engineering at Los Andes, plus economics, business and law."}
+          </p>
+        </Reveal>
 
-            {/* Funnel */}
-            <div className="mt-12 space-y-4">
-              {FUNNEL.map((f, i) => (
-                <Reveal key={f.label.en} delay={i * 120}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-24 mt-12">
+          {/* Filter across the three admission cycles */}
+          <div>
+            <div className="grid grid-cols-[minmax(0,1fr)_repeat(3,minmax(3.75rem,auto))] gap-x-3 sm:gap-x-4 items-end mb-2">
+              <div />
+              {CYCLES.map((c) => (
+                <div key={c.term} className="text-right">
+                  <div className="text-meta uppercase tracking-widest font-semibold text-primary tabular-nums">
+                    {c.term}
+                  </div>
+                  <div className="text-meta text-muted mt-1">{t(c.gen)}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-5">
+              {FILTER.map((row, i) => (
+                <Reveal key={row.label.en} delay={i * 100}>
                   <div>
+                    <div className="grid grid-cols-[minmax(0,1fr)_repeat(3,minmax(3.75rem,auto))] gap-x-3 sm:gap-x-4 items-baseline">
+                      <div className="text-meta uppercase tracking-widest text-muted">
+                        {t(row.label)}
+                      </div>
+                      {row.values.map((v, vi) => (
+                        <div
+                          key={CYCLES[vi].term}
+                          className={`text-right text-body font-bold tabular-nums ${
+                            row.accent ? "text-accent" : "text-primary"
+                          }`}
+                        >
+                          {v == null ? (
+                            <span className="text-muted font-semibold">—</span>
+                          ) : (
+                            <CountUp value={v} duration={900 + i * 120} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
                     <div
-                      className={`h-11 rounded-sm flex items-center px-4 min-w-fit ${
-                        f.accent ? "bg-accent" : "bg-primary"
-                      }`}
-                      style={{ width: f.width }}
-                    >
-                      <span className="text-body font-bold text-white tabular-nums whitespace-nowrap">
-                        <CountUp value={f.value} duration={1000 + i * 150} />
-                      </span>
-                    </div>
-                    <div className="text-meta uppercase tracking-widest text-muted mt-1.5">
-                      {t(f.label)}
-                    </div>
+                      className={`h-2 rounded-sm mt-2 ${row.accent ? "bg-accent" : "bg-primary"}`}
+                      style={{ width: row.width }}
+                    />
                   </div>
                 </Reveal>
               ))}
             </div>
+            <p className="text-meta text-muted mt-6">
+              {lang === "es"
+                ? "2026-20 sigue en curso: el grupo Lumen ya está armado, la selección no."
+                : "2026-20 is still underway: the Lumen pool is set, the selection is not."}
+            </p>
           </div>
 
           {/* Steps */}

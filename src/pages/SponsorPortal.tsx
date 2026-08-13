@@ -9,6 +9,7 @@ import { useLang, type L } from "../lib/i18n"
 
 import GpaTrend from "../components/GpaTrend"
 import IcfesGpaScatter from "../components/IcfesGpaScatter"
+import CohortVsProgramme from "../components/CohortVsProgramme"
 import CohortRanking from "../components/CohortRanking"
 import { useScholarGrades } from "../lib/grades"
 import { achievementTerm, useScholarJournals } from "../lib/journals"
@@ -177,9 +178,9 @@ function Portal() {
         </div>
       </section>
 
-      {/* Cohort view, before the individual profiles: the question of whether
-          the entrance score predicts the degree is about the group, and it
-          reads badly one scholar at a time. */}
+      {/* Two analytical readings of the same cohort, side by side. The scatter
+          asks whether the entrance score ordered them. The dumbbell asks
+          whether they are beating the students in their own programme. */}
       <section className="bg-surface">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
           <Reveal>
@@ -193,11 +194,6 @@ function Portal() {
             </h2>
           </Reveal>
 
-          {/* Two readings of the same cohort side by side. The scatter answers
-              whether the entrance score bought anything, which is a question
-              about the group. The ranking answers who needs a call this month,
-              which is a question about people. They belong on one screen
-              because the second is what you do about the first. */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mt-8 items-start">
             <Reveal>
               <div className="bg-surface-soft rounded-sm p-5 sm:p-8">
@@ -212,19 +208,39 @@ function Portal() {
 
             <Reveal delay={110}>
               <div className="bg-surface-soft rounded-sm p-5 sm:p-8">
-                <p className="text-body text-ink/75 mb-2">
+                <p className="text-body text-ink/75 mb-6">
                   {lang === "es"
-                    ? "Cada generación ordenada por crecimiento, reflexión, potencial, notas frente a sus pares de carrera y actividades extracurriculares."
-                    : "Each generation ordered on growth, insight, potential, grades against their programme peers, and extracurricular record."}
+                    ? "El mismo grupo, cada uno frente a los estudiantes de su propia carrera en el mismo semestre."
+                    : "The same cohort, each one against the students in their own programme at the same semester."}
                 </p>
-                <p className="text-meta text-muted mb-6">
-                  {lang === "es"
-                    ? "Las generaciones se ordenan por separado: una lista conjunta ordenaría antigüedad, no desempeño."
-                    : "Generations are ranked separately: one combined list would be ranking seniority, not performance."}
-                </p>
-                <CohortRanking ranking={ranking} generations={GENERATIONS} />
+                <CohortVsProgramme grades={grades} />
               </div>
             </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* Standing is its own section so it can be read as an action list,
+          not as a caption on the charts above. */}
+      <section className="bg-background">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
+          <Reveal>
+            <div className="text-meta uppercase tracking-widest text-muted mb-4">
+              {lang === "es" ? "Situación" : "Standing"}
+            </div>
+            <h2 className="text-h3 font-semibold text-primary">
+              {lang === "es"
+                ? "Quién va en marcha, y a quién hay que llamar."
+                : "Who is thriving, and who needs a call."}
+            </h2>
+            <p className="text-body text-ink/75 mt-4 max-w-2xl">
+              {lang === "es"
+                ? "Cada generación ordenada por crecimiento, reflexión, potencial, notas frente a sus pares de carrera y actividades extracurriculares. Las generaciones se ordenan por separado: una lista conjunta ordenaría antigüedad, no desempeño."
+                : "Each generation ordered on growth, insight, potential, grades against their programme peers, and extracurricular record. Generations are ranked separately: one combined list would be ranking seniority, not performance."}
+            </p>
+          </Reveal>
+          <div className="mt-8">
+            <CohortRanking ranking={ranking} generations={GENERATIONS} />
           </div>
         </div>
       </section>
