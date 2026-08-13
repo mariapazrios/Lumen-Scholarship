@@ -13,18 +13,20 @@ import {
 } from "../lib/applicants"
 import {
   COMMENT_PLACEHOLDER,
+  DISAGREEMENT_THRESHOLD,
   RECOMMENDATIONS,
   SessionExpired,
   VALUES,
+  axisSpreads,
   consolidate,
   deleteRating,
   fetchRatings,
   loadMember,
-  readOfScores,
   saveMember,
   saveRating,
   scoreValue,
   valuesAverage,
+  type Consolidated,
   type Rating,
   type RatingStore,
   type Score,
@@ -87,6 +89,79 @@ function Prose({ text }: { text: string }) {
   )
 }
 
+/**
+ * Where the board's individual scores land for one candidate, broken out by
+ * value and recommendation rather than blended into one sentence. A 4.0
+ * average reads as consensus; the same average can hide a 2 sitting next to
+ * a 5 on one specific value, which is exactly what a board needs to see
+ * before a decision, not a paragraph that already smoothed it away.
+ */
+function AxisBreakdown({
+  candidate,
+  store,
+  lang,
+}: {
+  candidate: string
+  store: RatingStore
+  lang: "en" | "es"
+}) {
+  const axes = axisSpreads(candidate, store)
+  const disputed = [...axes]
+    .filter((a) => a.spread >= DISAGREEMENT_THRESHOLD)
+    .sort((a, b) => b.spread - a.spread)
+  const aligned = axes.filter((a) => a.spread < DISAGREEMENT_THRESHOLD)
+  const firstName = (slug: string) => BOARD.find((m) => m.slug === slug)?.name.split(" ")[0] ?? slug
+
+  return (
+    <div className="mt-3 space-y-4">
+      {disputed.length > 0 && (
+        <div>
+          <div className="text-meta uppercase tracking-widest text-accent mb-2">
+            {lang === "es" ? "Donde la junta no coincide" : "Where the board disagrees"}
+          </div>
+          <div className="space-y-1.5">
+            {disputed.map((a) => (
+              <div
+                key={a.key}
+                className="flex flex-wrap items-baseline justify-between gap-x-4 border-l-2 border-accent pl-3"
+              >
+                <span className="text-body font-semibold text-primary">
+                  {lang === "es" ? a.label.es : a.label.en}
+                </span>
+                <span className="text-body tabular-nums text-ink/80">
+                  {a.byMember.map((m) => `${firstName(m.member)} ${m.score}`).join(" · ")}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {aligned.length > 0 && (
+        <div>
+          <div className="text-meta uppercase tracking-widest text-muted mb-2">
+            {lang === "es" ? "Donde la junta coincide" : "Where the board agrees"}
+          </div>
+          <div className="flex flex-wrap gap-x-5 gap-y-1">
+            {aligned.map((a) => {
+              const nums = a.byMember.map((m) => m.score)
+              const lo = Math.min(...nums)
+              const hi = Math.max(...nums)
+              return (
+                <span key={a.key} className="text-body text-ink/75">
+                  <span className="font-semibold text-primary">
+                    {lang === "es" ? a.label.es : a.label.en}
+                  </span>{" "}
+                  <span className="tabular-nums text-muted">{lo === hi ? lo : `${lo}–${hi}`}</span>
+                </span>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const { lang } = useLang()
   const [member, setMember] = useState(loadMember)
@@ -109,6 +184,12 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   // Narrows the consolidated section to one candidate. Null shows everyone.
   const [focus, setFocus] = useState<string | null>(null)
+  // Which of the three views is on screen. Per-candidate first: that is
+  // the page's primary task (reading an essay and scoring it), and the
+  // other two are what a member checks before or after that, not instead.
+  const [tab, setTab] = useState<"per-candidate" | "consolidated" | "discuss">(
+    "per-candidate",
+  )
 
   const refresh = useCallback(async () => {
     try {
@@ -266,75 +347,8 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const t2 = (map: Record<string, { en: string; es: string }>, k: string) =>
     map[k] ? (lang === "es" ? map[k].es : map[k].en) : k
 
-  return (
-    <>
-      <section className="bg-primary text-primary-foreground">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
-                {lang === "es" ? "Junta de admisiones" : "Board of admissions"}
-              </div>
-              <h1 className="text-h2 font-semibold">
-                {lang === "es" ? (
-                  <>
-                    Centro de Admisiones <em className="italic font-light">Lumen.</em>
-                  </>
-                ) : (
-                  <>
-                    Lumen Admissions <em className="italic font-light">Center.</em>
-                  </>
-                )}
-              </h1>
-            </div>
-            {/* Map and sign-out share the top right. The map is decoration at
-                this size, not a control: the readable version with the city
-                list is still further down the page. */}
-            <div className="flex items-start gap-5">
-              <ApplicantsMap applicants={submitted} compact />
-              <button
-                type="button"
-                onClick={() => signOut().then(onSessionLost)}
-                className="text-meta uppercase tracking-widest text-primary-foreground/70 border border-primary-foreground/25 rounded-sm px-4 py-2 cursor-pointer transition-colors duration-200 hover:text-white hover:border-primary-foreground/60"
-              >
-                {lang === "es" ? "Cerrar sesión" : "Sign out"}
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <label className="text-meta uppercase tracking-widest text-primary-foreground/60">
-              {lang === "es" ? "Estás calificando como" : "You are rating as"}
-            </label>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {BOARD.map((m) => (
-                <button
-                  key={m.slug}
-                  type="button"
-                  onClick={() => chooseMember(m.slug)}
-                  className={`text-body rounded-sm px-4 py-2 cursor-pointer transition-colors duration-200 border ${
-                    member === m.slug
-                      ? "bg-white text-primary border-white font-semibold"
-                      : "border-primary-foreground/25 text-primary-foreground/80 hover:text-white"
-                  }`}
-                >
-                  {m.name}
-                </button>
-              ))}
-            </div>
-            {!member && (
-              <p className="text-body text-primary-foreground/70 mt-3">
-                {lang === "es"
-                  ? "Elige tu nombre para empezar a guardar calificaciones."
-                  : "Pick your name to start saving ratings."}
-              </p>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-background">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
+  const perCandidateContent = (
+    <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
           {status === "loading" && (
             <p role="status" className="text-body text-muted">
               {lang === "es" ? "Cargando candidatos." : "Loading candidates."}
@@ -1007,32 +1021,12 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
               </div>
             </div>
           )}
-        </div>
-      </section>
+    </div>
+  )
 
-      {/* Where the candidates come from */}
-      <section className="bg-background">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
-          <Reveal>
-            <div className="text-meta uppercase tracking-widest text-muted mb-3">
-              {lang === "es" ? "Origen" : "Origin"}
-            </div>
-            <h2 className="text-h3 font-semibold text-primary">
-              {lang === "es"
-                ? "De dónde vienen los candidatos."
-                : "Where the candidates come from."}
-            </h2>
-          </Reveal>
-          <div className="mt-8">
-            <ApplicantsMap applicants={submitted} />
-          </div>
-        </div>
-      </section>
-
-      {/* Consolidated */}
-      <section className="bg-surface-soft">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
-          <Reveal>
+  const consolidatedContent = (
+    <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
+      <Reveal>
             <div className="text-meta uppercase tracking-widest text-muted mb-3">
               {lang === "es" ? "Consolidado" : "Consolidated"}
             </div>
@@ -1043,8 +1037,8 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
             </h2>
             <p className="text-body text-ink/70 mt-3">
               {lang === "es"
-                ? "El promedio de los cuatro valores ordena la lista y define sí, maybe o no. La recomendación y los comentarios de cada miembro se leen aparte, más abajo. El corte es relativo a la mediana de la junta, así que aparece cuando cada candidato con ensayo tiene al menos una lectura."
-                : "The average of the four values orders the list and sets yes, maybe or no. Each member's recommendation and comments read separately, below. The cut is relative to the board's median, so it appears once every submitted candidate has at least one read."}
+                ? "El promedio de los cuatro valores ordena la lista y define sí, maybe o no. Las calificaciones de cada miembro, su recomendación y sus comentarios están en la pestaña Para discutir. El corte es relativo a la mediana de la junta, así que aparece cuando cada candidato con ensayo tiene al menos una lectura."
+                : "The average of the four values orders the list and sets yes, maybe or no. Each member's scores, recommendation and comments are one tab over, under To discuss. The cut is relative to the board's median, so it appears once every submitted candidate has at least one read."}
             </p>
           </Reveal>
 
@@ -1085,13 +1079,17 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                   >
                     <td className="py-3 pr-4 text-body tabular-nums text-muted">{i + 1}</td>
                     <td className="py-3 pr-4 text-body font-semibold text-primary">
-                      {/* Clicking a name narrows everything below to that one
-                          candidate. Clicking the same name again clears it. */}
+                      {/* Clicking a name narrows the To discuss tab to that one
+                          candidate and jumps there, since that is where the
+                          narrowed detail actually lives now. Clicking the same
+                          name again clears the focus without leaving the tab. */}
                       <button
                         type="button"
-                        onClick={() =>
-                          setFocus(focus === row.candidate ? null : row.candidate)
-                        }
+                        onClick={() => {
+                          const next = focus === row.candidate ? null : row.candidate
+                          setFocus(next)
+                          if (next) setTab("discuss")
+                        }}
                         className={`text-left cursor-pointer underline-offset-4 hover:underline decoration-accent/50 ${
                           focus === row.candidate ? "underline decoration-accent" : ""
                         }`}
@@ -1153,82 +1151,6 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 .join(", ")}
             </p>
           )}
-
-          {focus && (
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <span className="text-body text-ink/75">
-                {lang === "es" ? "Mostrando solo " : "Showing only "}
-                <strong className="text-primary">{nameOf(focus)}</strong>
-              </span>
-              <button
-                type="button"
-                onClick={() => setFocus(null)}
-                className="text-meta uppercase tracking-widest text-accent cursor-pointer"
-              >
-                {lang === "es" ? "Ver todos" : "Show all"}
-              </button>
-            </div>
-          )}
-
-          {/* One column when focused: with a single card there is nothing to
-              compare against, and the comments get the full width. */}
-          <div className={`mt-6 grid grid-cols-1 gap-4 ${focus ? "" : "md:grid-cols-2"}`}>
-            {ratedRows
-              .filter((row) => !focus || row.candidate === focus)
-              .map((row) => (
-                <div
-                  key={row.candidate}
-                  className="bg-white border border-ink/10 rounded-sm overflow-hidden"
-                >
-                  {/* The candidate. A cream band, so the person being judged is
-                      visibly a different kind of thing from the judgements. */}
-                  <div className="bg-surface px-6 py-5 border-b border-ink/10">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <div className="text-h3 font-semibold text-primary">
-                        {nameOf(row.candidate)}
-                      </div>
-                      <div className="text-body tabular-nums font-bold text-primary">
-                        {row.raters ? row.score.toFixed(2) : "·"}
-                      </div>
-                    </div>
-                    <p className="text-body text-ink/75 mt-2">{readOfScores(row, lang)}</p>
-                  </div>
-
-                  {/* The board. Labelled, and each member's read carries its own
-                      rule so several of them do not run together as one wall. */}
-                  {row.raters > 0 && (
-                    <div className="px-6 py-5">
-                      <div className="text-meta uppercase tracking-widest text-muted mb-4">
-                        {lang === "es" ? `La junta (${row.raters})` : `The board (${row.raters})`}
-                      </div>
-                      <div className="space-y-4">
-                        {Object.entries(store[row.candidate] ?? {}).map(([slug, r]) => (
-                          <div key={slug} className="border-l-2 border-accent/40 pl-4">
-                            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                              <div className="text-body font-semibold text-primary">
-                                {BOARD.find((m) => m.slug === slug)?.name ?? slug}
-                              </div>
-                              <div className="text-meta text-muted tabular-nums whitespace-nowrap">
-                                {lang === "es" ? "Valores" : "Values"}{" "}
-                                <strong className="text-ink/80">
-                                  {valuesAverage(r).toFixed(1)}
-                                </strong>{" "}
-                                · {lang === "es" ? "Recomendación" : "Rec"}{" "}
-                                <strong className="text-ink/80">{r.recommendation}/5</strong>
-                              </div>
-                            </div>
-                            {r.comments && (
-                              <p className="text-body text-ink/75 mt-1.5">{r.comments}</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-          </div>
-
           <p className="text-meta text-muted mt-8 max-w-3xl">
             {lang === "es"
               ? "El puesto y la lectura se calculan con las calificaciones que la junta ha ingresado."
@@ -1339,11 +1261,247 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
               </table>
             </div>
           </div>
+    </div>
+  )
+
+  const discussContent = (
+    <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
+      <Reveal>
+        <div className="text-meta uppercase tracking-widest text-muted mb-3">
+          {lang === "es" ? "Para discutir" : "To discuss"}
         </div>
+        <h2 className="text-h3 font-semibold text-primary">
+          {lang === "es"
+            ? "Dónde se separan los votos de la junta."
+            : "Where the board's votes pull apart."}
+        </h2>
+        <p className="text-body text-ink/70 mt-3">
+          {lang === "es"
+            ? "Ordenado según cuánto discrepa la junta, lo más disputado primero. Un valor se marca como en disputa cuando las calificaciones difieren en 2 puntos o más; lo demás es donde la junta ya coincide."
+            : "Sorted by how much the board disagrees, most contested first. A value counts as disputed when scores span 2 points or more; everything else is where the board already agrees."}
+        </p>
+      </Reveal>
+
+          {focus && (
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <span className="text-body text-ink/75">
+                {lang === "es" ? "Mostrando solo " : "Showing only "}
+                <strong className="text-primary">{nameOf(focus)}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => setFocus(null)}
+                className="text-meta uppercase tracking-widest text-accent cursor-pointer"
+              >
+                {lang === "es" ? "Ver todos" : "Show all"}
+              </button>
+            </div>
+          )}
+
+          {/* One column when focused: with a single card there is nothing to
+              compare against, and the comments get the full width.
+              Sorted by how much the board disagrees, most disputed first:
+              this tab exists to surface exactly that, not to repeat the
+              consolidated table's rank order. */}
+          <div className={`mt-6 grid grid-cols-1 gap-4 ${focus ? "" : "md:grid-cols-2"}`}>
+            {[...ratedRows]
+              .sort((a, b) => {
+                const maxSpread = (r: Consolidated) =>
+                  Math.max(...axisSpreads(r.candidate, store).map((x) => x.spread), 0)
+                return maxSpread(b) - maxSpread(a)
+              })
+              .filter((row) => !focus || row.candidate === focus)
+              .map((row) => (
+                <div
+                  key={row.candidate}
+                  className="bg-white border border-ink/10 rounded-sm overflow-hidden"
+                >
+                  {/* The candidate. A cream band, so the person being judged is
+                      visibly a different kind of thing from the judgements. */}
+                  <div className="bg-surface px-6 py-5 border-b border-ink/10">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <div className="text-h3 font-semibold text-primary">
+                        {nameOf(row.candidate)}
+                      </div>
+                      <div className="text-body tabular-nums font-bold text-primary">
+                        {row.raters ? row.score.toFixed(2) : "·"}
+                      </div>
+                    </div>
+                    <p className="text-meta uppercase tracking-widest text-muted mt-2">
+                      {row.raters}{" "}
+                      {lang === "es"
+                        ? row.raters === 1
+                          ? "lectura"
+                          : "lecturas"
+                        : row.raters === 1
+                          ? "read"
+                          : "reads"}
+                    </p>
+                    {row.raters < 2 ? (
+                      <p className="text-body text-ink/70 mt-2">
+                        {lang === "es"
+                          ? "Solo una lectura por ahora, nada que comparar todavía."
+                          : "Only one read so far, nothing to compare yet."}
+                      </p>
+                    ) : (
+                      <AxisBreakdown candidate={row.candidate} store={store} lang={lang} />
+                    )}
+                  </div>
+
+                  {/* The board. Labelled, and each member's read carries its own
+                      rule so several of them do not run together as one wall. */}
+                  {row.raters > 0 && (
+                    <div className="px-6 py-5">
+                      <div className="text-meta uppercase tracking-widest text-muted mb-4">
+                        {lang === "es" ? `La junta (${row.raters})` : `The board (${row.raters})`}
+                      </div>
+                      <div className="space-y-4">
+                        {Object.entries(store[row.candidate] ?? {}).map(([slug, r]) => (
+                          <div key={slug} className="border-l-2 border-accent/40 pl-4">
+                            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                              <div className="text-body font-semibold text-primary">
+                                {BOARD.find((m) => m.slug === slug)?.name ?? slug}
+                              </div>
+                              <div className="text-meta text-muted tabular-nums whitespace-nowrap">
+                                {lang === "es" ? "Valores" : "Values"}{" "}
+                                <strong className="text-ink/80">
+                                  {valuesAverage(r).toFixed(1)}
+                                </strong>{" "}
+                                · {lang === "es" ? "Recomendación" : "Rec"}{" "}
+                                <strong className="text-ink/80">{r.recommendation}/5</strong>
+                              </div>
+                            </div>
+                            {r.comments && (
+                              <p className="text-body text-ink/75 mt-1.5">{r.comments}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+    </div>
+  )
+
+  return (
+    <>
+      <section className="bg-primary text-primary-foreground">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="text-meta uppercase tracking-widest text-primary-foreground/60 mb-4">
+                {lang === "es" ? "Junta de admisiones" : "Board of admissions"}
+              </div>
+              <h1 className="text-h2 font-semibold">
+                {lang === "es" ? (
+                  <>
+                    Centro de Admisiones <em className="italic font-light">Lumen.</em>
+                  </>
+                ) : (
+                  <>
+                    Lumen Admissions <em className="italic font-light">Center.</em>
+                  </>
+                )}
+              </h1>
+            </div>
+            <button
+              type="button"
+              onClick={() => signOut().then(onSessionLost)}
+              className="text-meta uppercase tracking-widest text-primary-foreground/70 border border-primary-foreground/25 rounded-sm px-4 py-2 cursor-pointer transition-colors duration-200 hover:text-white hover:border-primary-foreground/60"
+            >
+              {lang === "es" ? "Cerrar sesión" : "Sign out"}
+            </button>
+          </div>
+
+          <div className="mt-8">
+            <label className="text-meta uppercase tracking-widest text-primary-foreground/60">
+              {lang === "es" ? "Estás calificando como" : "You are rating as"}
+            </label>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {BOARD.map((m) => (
+                <button
+                  key={m.slug}
+                  type="button"
+                  onClick={() => chooseMember(m.slug)}
+                  className={`text-body rounded-sm px-4 py-2 cursor-pointer transition-colors duration-200 border ${
+                    member === m.slug
+                      ? "bg-white text-primary border-white font-semibold"
+                      : "border-primary-foreground/25 text-primary-foreground/80 hover:text-white"
+                  }`}
+                >
+                  {m.name}
+                </button>
+              ))}
+            </div>
+            {!member && (
+              <p className="text-body text-primary-foreground/70 mt-3">
+                {lang === "es"
+                  ? "Elige tu nombre para empezar a guardar calificaciones."
+                  : "Pick your name to start saving ratings."}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Where the candidates come from */}
+      <section className="bg-background">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
+          <Reveal>
+            <div className="text-meta uppercase tracking-widest text-muted mb-3">
+              {lang === "es" ? "Origen" : "Origin"}
+            </div>
+            <h2 className="text-h3 font-semibold text-primary">
+              {lang === "es"
+                ? "De dónde vienen los candidatos."
+                : "Where the candidates come from."}
+            </h2>
+          </Reveal>
+          <div className="mt-8">
+            <ApplicantsMap applicants={submitted} />
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-background">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 pt-10">
+          {/* Per-candidate first: opening the portal drops a member straight
+              into the scoring task. The other two are what you check before
+              or after that, not a replacement for it. */}
+          <div className="flex gap-8 border-b border-ink/15">
+            {(
+              [
+                { key: "per-candidate", label: { en: "Per candidate", es: "Por candidato" } },
+                { key: "consolidated", label: { en: "Consolidated", es: "Consolidado" } },
+                { key: "discuss", label: { en: "To discuss", es: "Para discutir" } },
+              ] as const
+            ).map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setTab(t.key)}
+                className={`pb-3 text-meta uppercase tracking-widest transition-colors duration-200 border-b-2 -mb-px cursor-pointer ${
+                  tab === t.key
+                    ? "border-accent text-primary font-semibold"
+                    : "border-transparent text-muted hover:text-ink"
+                }`}
+              >
+                {lang === "es" ? t.label.es : t.label.en}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {tab === "per-candidate" && perCandidateContent}
+        {tab === "consolidated" && consolidatedContent}
+        {tab === "discuss" && discussContent}
       </section>
     </>
   )
 }
+
 
 export default function BoardPortal() {
   const [attempt, setAttempt] = useState(0)

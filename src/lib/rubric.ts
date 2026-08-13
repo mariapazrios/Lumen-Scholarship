@@ -201,39 +201,45 @@ export function consolidate(candidates: string[], store: RatingStore): Consolida
 }
 
 /**
- * A read of the scores as they stand: where the candidate is strong, where the
- * board disagrees, and what to probe in the interview. Derived from the rubric
- * numbers, not from reading the essay, which needs a model call on a server.
+ * One rubric axis (a value, or the free-form recommendation) exactly as every
+ * board member scored it, unblended.
  */
-export function readOfScores(row: Consolidated, lang: "en" | "es"): string {
-  if (row.raters === 0) {
-    return lang === "es" ? "Sin calificaciones todavía." : "No ratings yet."
+export type AxisSpread = {
+  key: ValueKey | "recommendation"
+  label: L
+  byMember: Array<{ member: string; score: number }>
+  spread: number
+}
+
+/** A spread this wide, on a 1-5 scale, is a real difference of opinion rather than raters rounding differently. */
+export const DISAGREEMENT_THRESHOLD = 2
+
+/**
+ * Per-axis view of a candidate's ratings: where the board's individual scores
+ * land on each of the four values plus the recommendation, not blended into
+ * one number. A candidate can average out to "the board agrees" while one
+ * value underneath is a 2 sitting next to a 5, and the average alone hides
+ * exactly that. This is what "to discuss" should surface, not a single sentence.
+ */
+export function axisSpreads(candidate: string, store: RatingStore): AxisSpread[] {
+  const entries = Object.entries(store[candidate] ?? {})
+  const valueAxes: AxisSpread[] = VALUES.map((v) => {
+    const byMember = entries.map(([member, r]) => ({ member, score: scoreValue(r.values[v.key]) }))
+    const nums = byMember.map((m) => m.score)
+    return {
+      key: v.key,
+      label: v.label,
+      byMember,
+      spread: nums.length ? Math.max(...nums) - Math.min(...nums) : 0,
+    }
+  })
+  const recByMember = entries.map(([member, r]) => ({ member, score: r.recommendation }))
+  const recNums = recByMember.map((m) => m.score)
+  const recommendationAxis: AxisSpread = {
+    key: "recommendation",
+    label: { en: "Recommendation", es: "Recomendación" },
+    byMember: recByMember,
+    spread: recNums.length ? Math.max(...recNums) - Math.min(...recNums) : 0,
   }
-  const parts: string[] = []
-  const strong = row.valuesAvg >= 4
-  const weak = row.valuesAvg <= 2.5
-  if (lang === "es") {
-    parts.push(
-      strong
-        ? `Valores fuertes (${row.valuesAvg.toFixed(1)}/5).`
-        : weak
-          ? `Valores por debajo del umbral (${row.valuesAvg.toFixed(1)}/5).`
-          : `Valores en el medio (${row.valuesAvg.toFixed(1)}/5).`,
-    )
-    parts.push(`Recomendación media de ${row.freeFormAvg.toFixed(1)}/5 sobre ${row.raters} lectura${row.raters === 1 ? "" : "s"}.`)
-    if (row.spread >= 1.5) parts.push("La junta está dividida: vale discutirlo antes de decidir.")
-    else if (row.raters > 1) parts.push("La junta está alineada.")
-  } else {
-    parts.push(
-      strong
-        ? `Strong on values (${row.valuesAvg.toFixed(1)}/5).`
-        : weak
-          ? `Values below the bar (${row.valuesAvg.toFixed(1)}/5).`
-          : `Middle of the pack on values (${row.valuesAvg.toFixed(1)}/5).`,
-    )
-    parts.push(`Average recommendation of ${row.freeFormAvg.toFixed(1)}/5 across ${row.raters} read${row.raters === 1 ? "" : "s"}.`)
-    if (row.spread >= 1.5) parts.push("The board is split, so this one is worth discussing before deciding.")
-    else if (row.raters > 1) parts.push("The board agrees.")
-  }
-  return parts.join(" ")
+  return [...valueAxes, recommendationAxis]
 }
