@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import Header from "./components/Header"
+import EnterLanding from "./components/home/EnterLanding"
 import Footer from "./components/Footer"
 import Home from "./pages/Home"
 import Scholars from "./pages/Scholars"
@@ -72,6 +73,8 @@ function usePage(lang: Lang) {
 export default function App() {
   const [lang, setLang] = useState<Lang>(initialLang)
   const { route } = usePage(lang)
+  const isHome = route === ""
+  const [splash, setSplash] = useState(true)
 
   useEffect(() => {
     localStorage.setItem(LANG_STORAGE_KEY, lang)
@@ -97,11 +100,12 @@ export default function App() {
         >
           {lang === "es" ? "Ir al contenido" : "Skip to content"}
         </a>
-        <Header route={route in pages ? route : ""} />
+        {isHome && splash && <EnterLanding onEntered={() => setSplash(false)} />}
+        {!(isHome && splash) && <Header route={route in pages ? route : ""} />}
         <main id="main" className="flex-1">
           {pages[route] ?? <Home />}
         </main>
-        <Footer />
+        {!(isHome && splash) && <Footer />}
       </div>
     </LangContext.Provider>
   )

@@ -34,7 +34,13 @@ function useHideOnScroll(threshold = 8) {
   return hidden
 }
 
-function LangToggle({ className = "" }: { className?: string }) {
+export function LangToggle({
+  className = "",
+  onDark = false,
+}: {
+  className?: string
+  onDark?: boolean
+}) {
   const { lang, setLang } = useLang()
   const options: Array<{ value: Lang; label: string }> = [
     { value: "en", label: "EN" },
@@ -45,7 +51,9 @@ function LangToggle({ className = "" }: { className?: string }) {
       <div
         role="group"
         aria-label="Language"
-        className="flex items-center border border-primary/25 rounded-sm overflow-hidden"
+        className={`flex items-center rounded-sm overflow-hidden border ${
+          onDark ? "border-white/25" : "border-primary/25"
+        }`}
       >
         {options.map((o) => (
           <button
@@ -55,8 +63,12 @@ function LangToggle({ className = "" }: { className?: string }) {
             aria-pressed={lang === o.value}
             className={`px-3 py-1.5 text-meta font-semibold tracking-widest transition-colors duration-200 cursor-pointer ${
               lang === o.value
-                ? "bg-primary text-primary-foreground"
-                : "text-primary hover:text-foreground"
+                ? onDark
+                  ? "bg-white text-primary"
+                  : "bg-primary text-primary-foreground"
+                : onDark
+                  ? "text-white/80 hover:text-white"
+                  : "text-primary hover:text-foreground"
             }`}
           >
             {o.label}
