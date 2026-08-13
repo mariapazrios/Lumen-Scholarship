@@ -69,7 +69,12 @@ export default function Hero() {
             reason, so the two do not run together as one grey block. */}
         {FOUNDER && (
           <Reveal delay={140}>
-            <div className="mt-10 md:mt-12 max-w-3xl">
+            {/* Runs to the same measure as the headline above it rather than
+                a narrower column: capped at max-w-3xl it wrapped early and
+                read as a caption hanging off the title. Unattributed on
+                purpose, so it reads as the programme's own position rather
+                than one person's testimonial. */}
+            <div className="mt-10 md:mt-12">
               <span
                 aria-hidden="true"
                 className="block w-16 h-px bg-primary-foreground/30 mb-8"
@@ -80,10 +85,6 @@ export default function Hero() {
               <p className="text-lead font-light leading-relaxed text-primary-foreground/65 mt-4">
                 {lang === "es" ? FOUNDER.highlight.es : FOUNDER.highlight.en}
               </p>
-              <div className="text-meta uppercase tracking-widest text-primary-foreground/50 mt-6">
-                {FOUNDER.name} ·{" "}
-                {lang === "es" ? "Fundadora" : "Founder"}
-              </div>
             </div>
           </Reveal>
         )}

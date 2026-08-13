@@ -3,30 +3,39 @@ import Tricolor from "../primitives/Tricolor"
 import Watermark from "../primitives/Watermark"
 import { useLang, type L } from "../../lib/i18n"
 
-const PILLARS: Array<{ n: string; title: L; body: L }> = [
+const PILLARS: Array<{ n: string; title: L }> = [
+  { n: "01", title: { en: "Robust financial aid", es: "Apoyo financiero integral" } },
+  { n: "02", title: { en: "Identity-driven community", es: "Comunidad con identidad" } },
+  { n: "03", title: { en: "Early-career guidance", es: "Orientación profesional" } },
+]
+
+/**
+ * What the scholarship actually covers, as figures rather than a sentence
+ * buried in a pillar card. This is the first question anyone applying or
+ * funding asks, and it was previously a clause in the middle of a paragraph.
+ *
+ * `{andes}` is replaced by a link to uniandes.edu.co when the row renders.
+ */
+const COVERAGE: Array<{ figure: L; label: L }> = [
   {
-    n: "01",
-    title: { en: "Robust financial aid", es: "Apoyo financiero integral" },
-    // {andes} is replaced by a link to uniandes.edu.co when the card renders.
-    body: {
-      en: "A 95% full-ride scholarship to {andes}, Colombia's top private university, which includes 10 semesters, a summer session, and a $1M COP living stipend every semester.",
-      es: "Una beca del 95% para {andes}, la mejor universidad privada de Colombia, que cubre 10 semestres y una sesión de verano, más un apoyo de sostenimiento de $1M COP por semestre.",
+    figure: { en: "95%", es: "95%" },
+    label: {
+      en: "Full-ride tuition at {andes}, Colombia's top private university.",
+      es: "De la matrícula en {andes}, la mejor universidad privada de Colombia.",
     },
   },
   {
-    n: "02",
-    title: { en: "Identity-driven community", es: "Comunidad con identidad" },
-    body: {
-      en: "A supportive, identity-driven community that drives the standard for excellence: mentorship from the Board, peer academic synergies, and shared belonging.",
-      es: "Una comunidad unida, con identidad propia, que eleva el estándar de excelencia: mentoría de la Junta, estudio entre compañeros y un fuerte sentido de pertenencia.",
+    figure: { en: "10 + 1", es: "10 + 1" },
+    label: {
+      en: "Ten semesters plus a summer session, enrolment through to the degree.",
+      es: "Diez semestres más una sesión de verano, desde la matrícula hasta el grado.",
     },
   },
   {
-    n: "03",
-    title: { en: "Early-career guidance", es: "Orientación profesional" },
-    body: {
-      en: "Position Lumens for early-career momentum by offering continued mentorship, helping them identify opportunities, and connecting students with top companies and industry-specific mentors.",
-      es: "Acompañamos a los Lumens al arrancar su vida profesional: mentoría constante, orientación para descubrir oportunidades y conexiones con empresas líderes y mentores de cada industria.",
+    figure: { en: "$2M COP", es: "$2M COP" },
+    label: {
+      en: "Living stipend, paid every semester.",
+      es: "De apoyo de sostenimiento, cada semestre.",
     },
   },
 ]
@@ -127,7 +136,15 @@ export default function Mission() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {PILLARS.map((p, i) => (
             <Reveal key={p.n} delay={i * 120}>
-              <div className="bg-surface rounded-sm p-8 md:p-10 h-full">
+              {/* Titles only. The bodies restated what the sections below
+                  already cover in full, and the concrete terms they carried
+                  now sit in the coverage figures under these cards, where a
+                  number is easier to find than a sentence.
+
+                  White with a cobalt top rule rather than the cream fill:
+                  three tan slabs read heavier than the three words on them
+                  now warrant. */}
+              <div className="bg-background border border-ink/10 border-t-2 border-t-accent rounded-sm p-8 md:p-10 h-full">
                 <div className="text-meta uppercase tracking-widest text-accent font-semibold">
                   {p.n}
                 </div>
@@ -135,13 +152,34 @@ export default function Mission() {
                 <h3 className="font-semibold text-primary mt-4 leading-tight text-[clamp(1.25rem,1.6vw,1.6rem)] md:min-h-[2.4em] lg:min-h-0 lg:whitespace-nowrap">
                   {t(p.title)}
                 </h3>
-                <p className="text-body text-ink/75 mt-3">
-                  <AndesLink text={t(p.body)} />
-                </p>
               </div>
             </Reveal>
           ))}
         </div>
+
+        {/* The terms, directly under the pillars they belong to. Figures
+            rather than prose: "95%" and "$2M COP" are what a reader is
+            scanning for, and a number set large is found in one pass where
+            the same fact inside a sentence is not. */}
+        <Reveal delay={360}>
+          <div className="mt-10 pt-10 border-t border-ink/10">
+            <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-8">
+              {lang === "es" ? "Qué cubre la beca" : "What the scholarship covers"}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-10 gap-y-10">
+              {COVERAGE.map((c) => (
+                <div key={c.figure.en}>
+                  <div className="text-stat font-semibold text-primary leading-none tabular-nums">
+                    {t(c.figure)}
+                  </div>
+                  <p className="text-body text-ink/75 mt-4 max-w-xs">
+                    <AndesLink text={t(c.label)} />
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Reveal>
 
         {/* Majors, between the pillars and the values */}
         <Reveal delay={100}>

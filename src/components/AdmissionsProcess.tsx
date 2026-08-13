@@ -183,14 +183,14 @@ export default function AdmissionsProcess({
                     <>
                       Una beca del 95% que cubre <strong>10 semestres</strong> y{" "}
                       <strong>una sesión de verano</strong>, más un apoyo de sostenimiento de{" "}
-                      <strong>$1M COP por semestre</strong>. Para afianzar el compromiso, cada
+                      <strong>$2M COP por semestre</strong>. Para afianzar el compromiso, cada
                       Lumen aporta el 5% restante de su matrícula.
                     </>
                   ) : (
                     <>
                       A 95% full-ride scholarship covering <strong>10 semesters</strong> plus{" "}
                       <strong>1 summer session</strong> of tuition, along with a{" "}
-                      <strong>$1M COP living stipend every semester</strong>. To promote
+                      <strong>$2M COP living stipend every semester</strong>. To promote
                       alignment, Lumens contribute the remaining 5% of tuition.
                     </>
                   )}

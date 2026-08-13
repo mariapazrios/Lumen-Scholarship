@@ -75,7 +75,7 @@ export const BOARD: TeamMember[] = [
     },
     highlight: {
       en: "The social rule we have taken personally upon ourselves to dismantle: that in Colombia, where you are born determines how much you can dream and how far you can go.",
-      es: "La regla social que hemos asumido personalmente desmantelar: que en Colombia, el lugar donde naces determina cuánto puedes soñar y hasta dónde puedes llegar.",
+      es: "La regla social que hemos asumido personalmente desmantelar: que en Colombia, donde naces determina cuánto puedes soñar y hasta dónde puedes llegar.",
     },
   },
   {

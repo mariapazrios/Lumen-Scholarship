@@ -316,40 +316,40 @@ export default function Stats() {
             <h2 className="text-h2 font-semibold text-primary">
               {lang === "es" ? (
                 <>
-                  Marcando el estándar de excelencia{" "}
-                  <em className="italic font-light">dentro y fuera del aula.</em>
+                  La cohorte de mejor desempeño{" "}
+                  <em className="italic font-light">de Los Andes.</em>
                 </>
               ) : (
                 <>
-                  Driving the standard for excellence{" "}
-                  <em className="italic font-light">inside and outside the classroom.</em>
+                  The best performing cohort{" "}
+                  <em className="italic font-light">at Los Andes.</em>
                 </>
               )}
             </h2>
+            {/* The claim moved up into the heading, so the paragraph now
+                carries the evidence for it and the standard-of-excellence
+                line that used to be the heading. */}
             <p className="text-lead font-light text-ink/80 mt-6">
               {lang === "es" ? (
                 <>
-                  Todos los Lumens se ubicaron en el 1% superior del ICFES a nivel nacional.
-                  En el campus,{" "}
                   <strong className="font-bold text-primary">
-                    son la cohorte de mejor desempeño de toda la universidad, por encima de
-                    los programas con y sin apoyo financiero.
+                    Por encima de los programas con y sin apoyo financiero,
                   </strong>{" "}
-                  Seleccionamos con rigor, sostenemos ese estándar en lo académico y en
-                  los valores, y ponemos a cada Lumen frente a las empresas que compiten
-                  por exactamente este perfil.
+                  y todos los Lumens se ubicaron en el 1% superior del ICFES a nivel
+                  nacional. Seleccionamos con rigor y marcamos el estándar de excelencia
+                  dentro y fuera del aula, en lo académico y en los valores, poniendo a
+                  cada Lumen frente a las empresas que compiten por exactamente este
+                  perfil.
                 </>
               ) : (
                 <>
-                  Every Lumen ranked in the top 1% of Colombia's national ICFES exam. On
-                  campus,{" "}
                   <strong className="font-bold text-primary">
-                    Lumens are the best-performing cohort across the entire university,
-                    including financial aid and non-financial aid programs alike.
+                    Ahead of financial aid and non-financial aid programs alike,
                   </strong>{" "}
-                  We select rigorously, hold the cohort to that standard across academics
-                  and values, and put every Lumen in front of the companies competing for
-                  exactly this profile.
+                  and every Lumen ranked in the top 1% of Colombia's national ICFES exam.
+                  We select rigorously and drive the standard for excellence inside and
+                  outside the classroom, across academics and values, putting every Lumen
+                  in front of the companies competing for exactly this profile.
                 </>
               )}
             </p>
