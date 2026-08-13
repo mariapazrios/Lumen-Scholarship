@@ -12,6 +12,12 @@
   --color-cobalt: #1f31d2;
   --color-cream: #f4ede0;
   --color-cream-soft: #faf6ec;
+  /* Deep wine, the second accent. Warm where cobalt is cold, which is the
+     whole point of it: on cream it reads as a considered mark rather than a
+     second link colour competing with cobalt. Dark enough to carry white
+     text at about 9:1, so it also works as a fill. Do not set it on navy,
+     where the two are close enough in value to go muddy. */
+  --color-burgundy: #7a1f3c;
   --color-ink: #0a0a14;
   --color-muted: #6b6b78;
 
@@ -24,6 +30,10 @@
   --color-primary-hover: var(--color-navy-soft);
   --color-primary-foreground: #ffffff;
   --color-accent: var(--color-cobalt);
+  /* Sparing, and warmer than `accent`. Reserved for two jobs: marking a
+     block on a light ground, and standing for the most serious state on a
+     scale (where a raw Tailwind red was previously going off-palette). */
+  --color-accent-warm: var(--color-burgundy);
 
   /* Cambria has deep descenders: line-heights leave room so g, y and j
      never crowd the line below. */

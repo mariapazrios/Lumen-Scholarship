@@ -25,8 +25,11 @@ const BUCKET: Record<
     label: { es: "Seguir de cerca", en: "Watch" },
   },
   red: {
-    dot: "bg-red-600",
-    chip: "bg-red-600/10 text-red-700",
+    // Burgundy rather than a raw Tailwind red: the brand's own warm accent,
+    // and on a page about named students it reads as serious rather than as
+    // an error state.
+    dot: "bg-accent-warm",
+    chip: "bg-accent-warm/10 text-accent-warm",
     label: { es: "Contactar ya", en: "Needs a call" },
   },
 }

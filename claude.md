@@ -39,6 +39,7 @@ Two layers, both defined as Tailwind tokens in [src/index.css](src/index.css):
 | `primary-hover` | `navy-soft` | Hover state on primary bg |
 | `primary-foreground` | white | Text on `bg-primary` |
 | `accent` | `cobalt` | **Sparing** accent only |
+| `accent-warm` | `burgundy` | Second accent, **sparing**. Two jobs only: marking a block on a light ground (the mission cards' top rule), and the most serious state on a scale (the sponsor ranking's "needs a call"). Never on navy: burgundy and navy sit too close in value and go muddy. |
 | `muted` | gray | Captions, meta text |
 
 Usage pattern: set `bg-primary text-primary-foreground` on a dark section root and let children inherit — don't repeat `text-white` on every child. Use opacity (`text-primary-foreground/70`) for muted variants within dark sections.
@@ -50,6 +51,7 @@ Usage pattern: set `bg-primary text-primary-foreground` on a dark section root a
 | `navy` | `#012851` |
 | `navy-soft` | `#1a4178` |
 | `cobalt` | `#1f31d2` |
+| `burgundy` | `#7a1f3c` |
 | `cream` | `#f4ede0` |
 | `cream-soft` | `#faf6ec` |
 | `ink` | `#0a0a14` |

@@ -3,10 +3,40 @@ import Tricolor from "../primitives/Tricolor"
 import Watermark from "../primitives/Watermark"
 import { useLang, type L } from "../../lib/i18n"
 
-const PILLARS: Array<{ n: string; title: L }> = [
-  { n: "01", title: { en: "Robust financial aid", es: "Apoyo financiero integral" } },
-  { n: "02", title: { en: "Identity-driven community", es: "Comunidad con identidad" } },
-  { n: "03", title: { en: "Early-career guidance", es: "Orientación profesional" } },
+/**
+ * `{andes}` is replaced by a link to uniandes.edu.co when the card renders.
+ *
+ * Bodies are deliberately one line each. The figures below carry the terms,
+ * so a card repeating "10 semesters, a summer session and a stipend" was
+ * spending three lines to say what the numbers say better.
+ */
+const PILLARS: Array<{ n: string; title: L; body: L }> = [
+  {
+    n: "01",
+    title: { en: "Robust financial aid", es: "Apoyo financiero integral" },
+    // Deliberately not the terms again: the figures below state them, and
+    // this card sitting inches above them said almost the same words.
+    body: {
+      en: "Cost is not what decides whether a Lumen finishes at {andes}.",
+      es: "El costo no decide si un Lumen termina en {andes}.",
+    },
+  },
+  {
+    n: "02",
+    title: { en: "Identity-driven community", es: "Comunidad con identidad" },
+    body: {
+      en: "Mentorship from the Board, peer study, and a cohort that sets the standard.",
+      es: "Mentoría de la Junta, estudio entre compañeros y una cohorte que marca el estándar.",
+    },
+  },
+  {
+    n: "03",
+    title: { en: "Early-career guidance", es: "Orientación profesional" },
+    body: {
+      en: "Continued mentorship, and introductions to the companies hiring this profile.",
+      es: "Mentoría continua y presentación ante las empresas que buscan este perfil.",
+    },
+  },
 ]
 
 /**
@@ -99,7 +129,7 @@ const VALUES: L[] = [
  * the marker inside the translated string means the link lands in the right
  * place in both languages, where Spanish word order puts it earlier.
  */
-function AndesLink({ text }: { text: string }) {
+function AndesLink({ text, onDark = false }: { text: string; onDark?: boolean }) {
   const [before, after] = text.split("{andes}")
   if (after === undefined) return <>{text}</>
   return (
@@ -109,7 +139,13 @@ function AndesLink({ text }: { text: string }) {
         href="https://www.uniandes.edu.co/"
         target="_blank"
         rel="noopener noreferrer"
-        className="underline underline-offset-2 decoration-accent/40 hover:decoration-accent hover:text-foreground transition-colors duration-200"
+        className={`underline underline-offset-2 transition-colors duration-200 ${
+          onDark
+            ? // On navy the light-ground treatment resolves to ink on hover,
+              // which is all but invisible against the panel.
+              "decoration-white/40 hover:decoration-white hover:text-white"
+            : "decoration-accent/40 hover:decoration-accent hover:text-foreground"
+        }`}
       >
         Los Andes
       </a>
@@ -127,75 +163,55 @@ export default function Mission() {
       <Tricolor className="absolute inset-x-0 top-0 h-1" />
       <Watermark className="-right-36 top-16 w-[28rem]" />
       <div className="max-w-8xl mx-auto px-6 md:px-10 lg:px-16 pt-16 md:pt-24 pb-16 md:pb-20 relative">
-        {/* The section had four blocks stacked at equal weight, each opening
-            with the same cobalt eyebrow and separated by nothing but a wide
-            margin, so it read as four unrelated notices rather than one
-            argument. It now runs statement, terms, scope: the mission gets a
-            heading to anchor it, the pillars sit beside that heading as a
-            ruled list instead of three mostly-empty boxes, and the majors
-            collapse from a nineteen-bullet wall into three lines. Hairline
-            rules do the separating that whitespace was failing at. */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,24rem)_1fr] gap-x-16 gap-y-10 items-start">
-          <Reveal>
-            <div>
-              <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-5">
-                {lang === "es" ? "Nuestra misión" : "Our mission"}
+        {/* Mission */}
+        <Reveal>
+          <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-6">
+            {lang === "es" ? "Nuestra misión" : "Our mission"}
+          </div>
+        </Reveal>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {PILLARS.map((p, i) => (
+            <Reveal key={p.n} delay={i * 120}>
+              {/* Burgundy rule rather than cobalt: on cream the warm accent
+                  reads as a deliberate mark, where cobalt on cream competes
+                  with every link on the page. */}
+              <div className="bg-surface border-t-2 border-accent-warm rounded-sm p-8 md:p-10 h-full">
+                <div className="text-meta uppercase tracking-widest text-accent-warm font-semibold">
+                  {p.n}
+                </div>
+                {/* One line at desktop; reserves two lines only where wrapping is possible */}
+                <h3 className="font-semibold text-primary mt-4 leading-tight text-[clamp(1.25rem,1.6vw,1.6rem)] md:min-h-[2.4em] lg:min-h-0 lg:whitespace-nowrap">
+                  {t(p.title)}
+                </h3>
+                <p className="text-body text-ink/75 mt-3">
+                  <AndesLink text={t(p.body)} />
+                </p>
               </div>
-              <h2 className="text-h3 font-semibold text-primary leading-tight">
-                {lang === "es" ? (
-                  <>
-                    Tres compromisos,{" "}
-                    <em className="italic font-light">
-                      de la admisión al primer empleo.
-                    </em>
-                  </>
-                ) : (
-                  <>
-                    Three commitments,{" "}
-                    <em className="italic font-light">
-                      from admission to first job.
-                    </em>
-                  </>
-                )}
-              </h2>
-            </div>
-          </Reveal>
-
-          <Reveal delay={120}>
-            <ul className="border-t border-ink/10">
-              {PILLARS.map((p) => (
-                <li
-                  key={p.n}
-                  className="flex items-baseline gap-6 border-b border-ink/10 py-5"
-                >
-                  <span className="text-meta tabular-nums text-accent font-semibold shrink-0">
-                    {p.n}
-                  </span>
-                  <span className="text-h3 font-semibold text-primary leading-tight">
-                    {t(p.title)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </Reveal>
+            </Reveal>
+          ))}
         </div>
 
-        {/* The terms as a single ruled strip rather than three figures
-            floating on white: divided cells read as one specification, which
-            is what they are. */}
+        {/* The terms and the scope both go navy. They are the two blocks a
+            reader is scanning for rather than reading, and on a white page
+            they were the two that floated. Set as dark panels they read as
+            reference, and the section gets a rhythm instead of one flat
+            expanse. */}
         <Reveal delay={200}>
-          <div className="mt-14">
-            <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-6">
+          <div className="mt-14 bg-primary text-primary-foreground rounded-sm p-6 sm:p-10">
+            <div className="text-meta uppercase tracking-widest text-primary-foreground/60 font-semibold mb-8">
               {lang === "es" ? "Qué cubre la beca" : "What the scholarship covers"}
             </div>
-            <div className="border border-ink/10 rounded-sm grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-ink/10">
-              {COVERAGE.map((c) => (
-                <div key={c.figure.en} className="px-6 sm:px-8 py-7">
-                  <div className="text-h2 font-semibold text-primary leading-none tabular-nums">
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/15">
+              {COVERAGE.map((c, i) => (
+                <div
+                  key={c.figure.en}
+                  className={`py-6 sm:py-0 ${i === 0 ? "sm:pr-8" : i === COVERAGE.length - 1 ? "sm:pl-8" : "sm:px-8"}`}
+                >
+                  <div className="text-h2 font-semibold leading-none tabular-nums">
                     {t(c.figure)}
                   </div>
-                  <p className="text-body text-ink/70 mt-4">
-                    <AndesLink text={t(c.label)} />
+                  <p className="text-body text-primary-foreground/70 mt-4">
+                    <AndesLink text={t(c.label)} onDark />
                   </p>
                 </div>
               ))}
@@ -206,23 +222,23 @@ export default function Mission() {
         {/* Majors. Nineteen bulleted items in three columns was an inventory;
             the point is the breadth, so each group is one flowing line. */}
         <Reveal delay={260}>
-          <div className="mt-14">
-            <div className="text-meta uppercase tracking-widest text-accent font-semibold mb-6">
+          <div className="mt-6 bg-primary text-primary-foreground rounded-sm p-6 sm:p-10">
+            <div className="text-meta uppercase tracking-widest text-primary-foreground/60 font-semibold mb-8">
               {lang === "es" ? "Carreras que apoyamos" : "Majors supported"}
             </div>
-            <dl className="border-t border-ink/10">
+            <dl className="border-t border-white/15">
               {MAJOR_GROUPS.map((g) => (
                 <div
                   key={g.heading.en}
-                  className="grid grid-cols-1 sm:grid-cols-[9rem_1fr] gap-x-8 gap-y-1 border-b border-ink/10 py-4"
+                  className="grid grid-cols-1 sm:grid-cols-[9rem_1fr] gap-x-8 gap-y-1 border-b border-white/15 py-4"
                 >
-                  <dt className="text-body font-semibold text-primary">{t(g.heading)}</dt>
+                  <dt className="text-body font-semibold">{t(g.heading)}</dt>
                   {/* Sorted here rather than in the data because the two
                       languages do not sort the same: Chemistry comes second in
                       English and Química comes last in Spanish. localeCompare
                       with the active language also files the accented names
                       (Física, Química) where a reader expects them. */}
-                  <dd className="text-body text-ink/75">
+                  <dd className="text-body text-primary-foreground/75">
                     {[...g.items]
                       .sort((a, b) => t(a).localeCompare(t(b), lang))
                       .map((m) => t(m))
