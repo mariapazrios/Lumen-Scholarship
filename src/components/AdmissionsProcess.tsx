@@ -1,5 +1,6 @@
 import CountUp from "./primitives/CountUp"
 import Reveal from "./primitives/Reveal"
+import { ESSAY_PROMPTS } from "../data/essayPrompts"
 import { useLang, type L } from "../lib/i18n"
 
 /** Uniandes admission cycles, oldest completed generation first. */
@@ -54,7 +55,7 @@ const FILTER: Array<{
   },
 ]
 
-const STEPS: Array<{ n: string; title: L; body: L }> = [
+const STEPS: Array<{ n: string; title: L; body: L; prompts?: boolean }> = [
   {
     n: "01",
     title: { en: "Get into Los Andes", es: "Entra a Los Andes" },
@@ -75,9 +76,10 @@ const STEPS: Array<{ n: string; title: L; body: L }> = [
     n: "03",
     title: { en: "Write your essay", es: "Escribe tu ensayo" },
     body: {
-      en: "One essay, 650 words, on the prompt you choose from the ones we provide.",
-      es: "Un ensayo de 650 palabras sobre el tema que elijas entre los que proponemos.",
+      en: "One essay, 650 words, on the prompt you choose.",
+      es: "Un ensayo de 650 palabras sobre el tema que elijas.",
     },
+    prompts: true,
   },
   {
     n: "04",
@@ -85,14 +87,6 @@ const STEPS: Array<{ n: string; title: L; body: L }> = [
     body: {
       en: "A series of one-on-one conversations with the members of the Lumen Board, who will become your mentors.",
       es: "Una serie de conversaciones individuales con los miembros de la Junta Lumen, que luego serán tus mentores.",
-    },
-  },
-  {
-    n: "05",
-    title: { en: "Become a Lumen", es: "Conviértete en Lumen" },
-    body: {
-      en: "Join the next generation.",
-      es: "Únete a la próxima generación.",
     },
   },
 ]
@@ -103,7 +97,7 @@ type Props = {
   tone?: "white" | "soft"
 }
 
-/** The Lumen admissions filter across cycles, process steps, and aid package. */
+/** The Lumen admissions filter across cycles, then the four process steps. */
 export default function AdmissionsProcess({
   id = "students",
   eyebrow = { en: "For students", es: "Para estudiantes" },
@@ -158,7 +152,7 @@ export default function AdmissionsProcess({
             {FILTER.map((row, i) => (
               <Reveal key={row.label.en} delay={i * 100}>
                 <div>
-                  <div className="grid grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(4.5rem,1fr))] sm:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(5.5rem,1fr))] gap-x-4 sm:gap-x-8 items-baseline">
+                  <div className="grid grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(4.5rem,1fr))] sm:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(5.5rem,1fr))] gap-x-4 sm:gap-x-8 items-end">
                     <div className="text-meta uppercase tracking-widest text-muted">
                       {t(row.label)}
                     </div>
@@ -192,47 +186,34 @@ export default function AdmissionsProcess({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mt-12 items-start">
-          <ol className="lg:col-span-7 space-y-0 border-t border-ink/10">
-            {STEPS.map((s, i) => (
-              <Reveal key={s.n} delay={i * 80} as="li">
-                <div className="flex gap-5 md:gap-6 py-4 border-b border-ink/10">
-                  <span className="text-h3 font-bold text-accent tabular-nums shrink-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12 items-start">
+          {STEPS.map((s, i) => (
+            <Reveal key={s.n} delay={i * 80}>
+              <div className="bg-white border border-ink/10 rounded-sm p-7 md:p-8 h-full">
+                <div className="flex items-baseline justify-between gap-4">
+                  <h3 className="text-h3 font-semibold text-primary leading-tight">
+                    {t(s.title)}
+                  </h3>
+                  <span className="text-meta font-semibold tracking-widest text-accent tabular-nums">
                     {s.n}
                   </span>
-                  <div>
-                    <h3 className="text-body font-semibold text-primary">{t(s.title)}</h3>
-                    <p className="text-body text-ink/75 mt-1">{t(s.body)}</p>
-                  </div>
                 </div>
-              </Reveal>
-            ))}
-          </ol>
-
-          <Reveal delay={120} className="lg:col-span-5">
-            <div className="bg-surface rounded-sm p-7 md:p-8 lg:mt-0">
-              <div className="text-meta uppercase tracking-widest text-muted mb-3">
-                {lang === "es" ? "El paquete de apoyo Lumen" : "The Lumen financial aid package"}
-              </div>
-              <p className="text-body text-ink/80">
-                {lang === "es" ? (
-                  <>
-                    Una beca del 95% que cubre <strong>10 semestres</strong> y{" "}
-                    <strong>una sesión de verano</strong>, más un apoyo de sostenimiento de{" "}
-                    <strong>$2M COP por semestre</strong>. Para afianzar el compromiso, cada
-                    Lumen aporta el 5% restante de su matrícula.
-                  </>
-                ) : (
-                  <>
-                    A 95% full-ride scholarship covering <strong>10 semesters</strong> plus{" "}
-                    <strong>1 summer session</strong> of tuition, along with a{" "}
-                    <strong>$2M COP living stipend every semester</strong>. To promote
-                    alignment, Lumens contribute the remaining 5% of tuition.
-                  </>
+                <p className="text-body text-ink/75 mt-3">{t(s.body)}</p>
+                {s.prompts && (
+                  <ol className="mt-5 space-y-4 border-t border-ink/10 pt-5">
+                    {ESSAY_PROMPTS.map((p, pi) => (
+                      <li key={p.en.slice(0, 24)} className="flex gap-3">
+                        <span className="text-meta font-semibold text-accent tabular-nums shrink-0 mt-0.5">
+                          {String(pi + 1).padStart(2, "0")}
+                        </span>
+                        <p className="text-body text-ink/80">{t(p)}</p>
+                      </li>
+                    ))}
+                  </ol>
                 )}
-              </p>
-            </div>
-          </Reveal>
+              </div>
+            </Reveal>
+          ))}
         </div>
       </div>
     </section>
