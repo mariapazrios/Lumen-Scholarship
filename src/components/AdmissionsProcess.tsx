@@ -55,6 +55,10 @@ const FILTER: Array<{
   },
 ]
 
+/** Shared by the cycle headers and each bar+count row so the columns cannot drift. */
+const FUNNEL_GRID =
+  "grid grid-cols-[minmax(0,1fr)_repeat(3,minmax(4.5rem,auto))] sm:grid-cols-[minmax(0,1fr)_repeat(3,minmax(5.5rem,auto))] gap-x-4 sm:gap-x-8"
+
 const STEPS: Array<{ n: string; title: L; body: L; prompts?: boolean }> = [
   {
     n: "01",
@@ -134,9 +138,11 @@ export default function AdmissionsProcess({
           </p>
         </Reveal>
 
-        {/* Funnel spans the full measure so the bars occupy the page, not a half column. */}
+        {/* Funnel spans the full measure so the bars occupy the page, not a half column.
+            Counts sit on the bar row — not in a line above it — so wrapping labels
+            cannot lift the last stages off the funnel. */}
         <div className="mt-10">
-          <div className="grid grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(4.5rem,1fr))] sm:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(5.5rem,1fr))] gap-x-4 sm:gap-x-8 items-end mb-3">
+          <div className={`${FUNNEL_GRID} items-end mb-3`}>
             <div />
             {CYCLES.map((c) => (
               <div key={c.term} className="text-right">
@@ -148,18 +154,24 @@ export default function AdmissionsProcess({
             ))}
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             {FILTER.map((row, i) => (
               <Reveal key={row.label.en} delay={i * 100}>
                 <div>
-                  <div className="grid grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(4.5rem,1fr))] sm:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(5.5rem,1fr))] gap-x-4 sm:gap-x-8 items-end">
-                    <div className="text-meta uppercase tracking-widest text-muted">
-                      {t(row.label)}
+                  <div className="text-meta uppercase tracking-widest text-muted">
+                    {t(row.label)}
+                  </div>
+                  <div className={`${FUNNEL_GRID} items-center mt-2`}>
+                    <div className="h-3.5 md:h-5">
+                      <div
+                        className={`h-full rounded-sm ${row.accent ? "bg-accent" : "bg-primary"}`}
+                        style={{ width: row.width }}
+                      />
                     </div>
                     {row.values.map((v, vi) => (
                       <div
                         key={CYCLES[vi].term}
-                        className={`text-right text-h3 font-bold tabular-nums ${
+                        className={`text-right text-h3 font-bold tabular-nums leading-none ${
                           row.accent ? "text-accent" : "text-primary"
                         }`}
                       >
@@ -171,10 +183,6 @@ export default function AdmissionsProcess({
                       </div>
                     ))}
                   </div>
-                  <div
-                    className={`h-3.5 md:h-5 rounded-sm mt-2 ${row.accent ? "bg-accent" : "bg-primary"}`}
-                    style={{ width: row.width }}
-                  />
                 </div>
               </Reveal>
             ))}
