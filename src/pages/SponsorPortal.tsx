@@ -200,9 +200,14 @@ function Portal() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mt-8 items-start">
             <Reveal>
               <div className="bg-surface-soft rounded-sm p-5 sm:p-8">
-                <h3 className="text-body font-semibold text-primary mb-5">
+                <h3 className="text-body font-semibold text-primary">
                   {lang === "es" ? "Saber 11 vs. PGA acumulado" : "Saber 11 vs. cumulative GPA"}
                 </h3>
+                <p className="text-body text-ink/70 mt-2 mb-5">
+                  {lang === "es"
+                    ? "El ICFES no correlaciona necesariamente con un mejor desempeño. Por eso Lumen selecciona con una evaluación holística."
+                    : "ICFES does not necessarily correlate with higher performance. That is why Lumen selects holistically."}
+                </p>
                 <IcfesGpaScatter grades={grades} />
               </div>
             </Reveal>

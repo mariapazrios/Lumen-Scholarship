@@ -5,10 +5,6 @@ import { useLang } from "../../lib/i18n"
 import LumenMark3D from "./LumenMark3D"
 
 const COPY = {
-  kicker: {
-    en: "Education-based social mobility.",
-    es: "Movilidad social basada en educación.",
-  },
   lead: {
     en: "Every generation inherits rules it did not write and that are meant to be broken.",
     es: "Cada generación hereda reglas que no escribió y que están hechas para romperse.",
@@ -120,15 +116,14 @@ export default function EnterLanding({ onEntered }: Props) {
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-[#141c28] via-[#141c28]/90 to-transparent px-8 pb-8 pt-16 md:px-12 lg:px-16">
         <div className="flex flex-col items-center text-center gap-5">
-          <p
-            className={`text-display font-bold tracking-tight text-white leading-none transition-[opacity,transform] duration-700 ease-out ${
+          <div
+            className={`flex flex-col items-center gap-2 transition-[opacity,transform] duration-700 ease-out ${
               together ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
             }`}
           >
-            LUMEN
-          </p>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-lead font-bold text-white">{COPY.kicker[lang]}</p>
+            <p className="text-display font-bold tracking-tight text-white leading-none">
+              LUMEN
+            </p>
             <Tricolor className="h-[3px] w-56 md:w-72" />
           </div>
           <div className="flex max-w-xl flex-col gap-4 text-body text-white/90">
