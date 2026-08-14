@@ -7,6 +7,7 @@ import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js"
 
 const SCENE_BG = "#141c28"
 const FILL = 0.5
+const FILL_MOBILE = FILL * 1.15
 const LIFT = 0.47
 const FACE = "#1a4d8a"
 const RIM = "#4a8fd4"
@@ -60,6 +61,15 @@ function Mark({ onTogether }: { onTogether?: (together: boolean) => void }) {
   const announced = useRef(false)
   const onTogetherRef = useRef(onTogether)
   onTogetherRef.current = onTogether
+  const [mobile, setMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)")
+    const sync = () => setMobile(mq.matches)
+    sync()
+    mq.addEventListener("change", sync)
+    return () => mq.removeEventListener("change", sync)
+  }, [])
 
   const { petals, extent } = useMemo(() => {
     const shapes = data.paths.flatMap((path) => path.toShapes())
@@ -106,7 +116,7 @@ function Mark({ onTogether }: { onTogether?: (together: boolean) => void }) {
 
   const scale =
     Math.min(viewport.width / Math.max(extent.x, 0.001), viewport.height / Math.max(extent.y, 0.001)) *
-    FILL
+    (mobile ? FILL_MOBILE : FILL)
 
   useEffect(() => {
     reduceMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches
