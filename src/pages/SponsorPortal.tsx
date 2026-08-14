@@ -12,7 +12,7 @@ import IcfesGpaScatter from "../components/IcfesGpaScatter"
 import CohortVsProgramme from "../components/CohortVsProgramme"
 import CohortRanking from "../components/CohortRanking"
 import { useScholarGrades } from "../lib/grades"
-import { achievementTerm, themesFor, useScholarJournals } from "../lib/journals"
+import { achievementTerm, useScholarJournals } from "../lib/journals"
 import { DRI_FILTERS, driOf, driShort } from "../data/dri"
 import { useScholarRanking } from "../lib/ranking"
 
@@ -590,18 +590,6 @@ function Portal() {
                               <h4 className="text-h3 font-semibold text-primary italic mt-2">
                                 {record.journal.title}
                               </h4>
-                              {themesFor(s.slug, record.journal).length > 0 && (
-                                <div className="flex flex-wrap gap-2 mt-3">
-                                  {themesFor(s.slug, record.journal).map((th) => (
-                                    <span
-                                      key={th.en}
-                                      className="text-meta bg-accent/10 text-accent rounded-full px-3 py-1"
-                                    >
-                                      {lang === "es" ? th.es : th.en}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
                               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-meta uppercase tracking-widest text-muted">
                                 <span>{s.name}</span>
                                 <span aria-hidden="true">·</span>

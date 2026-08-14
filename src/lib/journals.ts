@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react"
-import { JOURNAL_THEMES } from "../data/journalThemes"
-
 /**
  * Half-year journal entries the scholars write in their own words. Same reason
  * as the grades: this is a named student writing about their marks, their
@@ -82,11 +80,6 @@ export type ScholarJournal = {
   achievementsNote: { es: string; en: string } | null
   /** Whether the achievements came from the journal itself or the covering email. */
   achievementsSource: "journal" | "email"
-  /**
-   * Recall tags for this entry, when stored on the document. The client also
-   * keeps a fallback map so stickers still render if the row has none yet.
-   */
-  themes?: Array<{ es: string; en: string }>
 }
 
 /**
@@ -131,13 +124,4 @@ export function useScholarJournals(): Record<string, ScholarJournal> | null {
   }, [])
 
   return journals
-}
-
-/** Stickers for a journal: stored on the row if present, otherwise the overlay. */
-export function themesFor(
-  slug: string,
-  journal?: ScholarJournal | null,
-): Array<{ es: string; en: string }> {
-  if (journal?.themes && journal.themes.length > 0) return journal.themes
-  return JOURNAL_THEMES[slug] ?? []
 }
