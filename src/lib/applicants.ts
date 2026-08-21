@@ -45,6 +45,12 @@ export type Applicant = {
   essay: string | null
   answers: string | null
   submitted_at: string | null
+  /**
+   * The board's own discussion notes on this candidate (strengths flagged,
+   * open questions for the interview), as opposed to anything the candidate
+   * submitted. Board only, same as the essay.
+   */
+  board_notes: string | null
   /** Whether the candidate's own Saber 11 report is on file, verifying the roster's number. */
   icfes_report: boolean
   /** Whether their school transcript is on file. */

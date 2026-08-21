@@ -10,9 +10,33 @@ client bundle.
 | `/api/login` | POST | anyone | Exchange a role passcode for a session cookie |
 | `/api/login` | GET | anyone | Report the role the caller's cookie carries, or 401 |
 | `/api/ratings` | GET, POST | board | Read all ratings, upsert your own |
+| `/api/availability` | GET, POST | board | Read everyone's interview-availability poll, replace your own days |
+| `/api/interviews` | GET, POST, PATCH, DELETE | board | The group calendar: book an interview (emails calendar invites), read it, save feedback, cancel |
 | `/api/documents` | GET | board, sponsor | Fetch restricted documents |
-| `/api/applicants` | GET | board | The roster joined to each candidate's essay and answers |
+| `/api/applicants` | GET | board | The roster joined to each candidate's essay, answers, and board notes |
 | `/api/report` | GET | board, sponsor | Stream an annual report PDF |
+
+Availability and interviews are board-only end to end: gated by the same
+`allows(role, "board")` check as ratings, and there is no sponsor- or
+candidate-facing surface anywhere in the app that reads either table.
+Candidates never see this app at all; asking them for interview blackout
+dates happens over email, outside the portal.
+
+## Calendar invites
+
+`POST /api/interviews` sends the two calendar invites itself, over the Resend
+HTTP API. Needs three env vars, same pattern as the ones above:
+
+| Name | Value |
+|---|---|
+| `RESEND_API_KEY` | from resend.com |
+| `EMAIL_FROM` | e.g. `Lumen <admisiones@lumenedu.org>`. Sending to real candidate/board addresses (not just your own Resend account email) needs a verified sending domain in Resend. |
+| `BOARD_EMAILS` | a JSON object, board slug -> email, e.g. `{"oscar-cabrera":"...","cipriano-echavarria":"..."}`. Board member emails are personal data and belong only in this env var, never in `src/data/team.ts` (that file ships in the public bundle). |
+
+If any of the three are missing, or a candidate/board member has no email on
+file, booking still succeeds — the interview is created either way — and the
+response's `warnings` array says what invite did not go out, so nothing fails
+silently and nothing blocks scheduling on email being configured yet.
 
 `GET /api/login` exists because the cookie is httpOnly: the browser cannot read
 it, so after a reload the gate has no other way to tell a live session from an
@@ -54,6 +78,15 @@ Documents are rows in `lumen_documents`, not files. `kind` controls access:
 - `applicant-essay` — board only
 - `applicant-answers` — board only; the ¿Quién soy? / ¿Quién quiero ser? short
   answers, kept apart from the essay because the board portal shows them apart
+- `applicant-board-notes` — board only; the board's own discussion notes on a
+  candidate (strengths flagged, open questions to confirm at interview), as
+  opposed to anything the candidate submitted. One row per candidate,
+  `subject` their slug, `body` plain text. Since this carries candidate names
+  alongside personal circumstances (estrato, household, city), the seed SQL
+  that populates it must never be committed to this repo — it is public. Run
+  it directly in the Vercel Query tab instead, matching by `name ILIKE`
+  against `lumen_applicants` rather than a guessed slug, guarded so it only
+  inserts when exactly one applicant matches.
 
 The gate is `kind.startsWith("applicant")`, so any further `applicant-*` kind is
 board only by default. `subject` is a slug: the scholar's for `scholar-essay`,

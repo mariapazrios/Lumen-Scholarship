@@ -26,6 +26,7 @@ export default async function handler(req: Request): Promise<Response> {
            a.school_grades, a.essay_themes,
            e.body AS essay, e.submitted_at,
            q.body AS answers,
+           n.body AS board_notes,
            (i.subject IS NOT NULL) AS icfes_report,
            (s.subject IS NOT NULL) AS transcript
     FROM lumen_applicants a
@@ -33,6 +34,8 @@ export default async function handler(req: Request): Promise<Response> {
       ON e.kind = 'applicant-essay'   AND e.subject = a.slug
     LEFT JOIN lumen_documents q
       ON q.kind = 'applicant-answers' AND q.subject = a.slug
+    LEFT JOIN lumen_documents n
+      ON n.kind = 'applicant-board-notes' AND n.subject = a.slug
     LEFT JOIN lumen_documents i
       ON i.kind = 'applicant-icfes'   AND i.subject = a.slug
     LEFT JOIN lumen_documents s

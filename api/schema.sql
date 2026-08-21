@@ -69,3 +69,40 @@ CREATE TABLE IF NOT EXISTS lumen_applicants (
   invited      BOOLEAN     NOT NULL DEFAULT TRUE,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- The board's interview-scheduling poll: which days each member can interview,
+-- from now through the end of the admissions cycle. One row per member per
+-- day they are available. `day` is stored as 'YYYY-MM-DD' text rather than a
+-- DATE column so the edge function never has to round-trip through the
+-- driver's date-to-JS-Date conversion, which shifts a date by one day for
+-- anyone west of UTC.
+CREATE TABLE IF NOT EXISTS lumen_availability (
+  member     TEXT        NOT NULL,
+  day        TEXT        NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (member, day)
+);
+
+-- Booked interviews. Unlike lumen_availability's day-granularity poll, this is
+-- a real appointment at a real instant, so scheduled_at is a proper
+-- TIMESTAMPTZ: the client sends an unambiguous ISO instant (converted
+-- server-side from the Bogotá wall-clock time entered in the booking form),
+-- so there is no local-date/UTC round-trip to get wrong.
+CREATE TABLE IF NOT EXISTS lumen_interviews (
+  id               BIGSERIAL PRIMARY KEY,
+  candidate        TEXT        NOT NULL,   -- lumen_applicants.slug
+  member           TEXT        NOT NULL,   -- board slug, from src/data/team.ts
+  scheduled_at     TIMESTAMPTZ NOT NULL,
+  duration_min     INTEGER     NOT NULL DEFAULT 30,
+  location         TEXT        NOT NULL DEFAULT '',
+  status           TEXT        NOT NULL DEFAULT 'scheduled', -- scheduled | canceled
+  feedback_text    TEXT        NOT NULL DEFAULT '',
+  feedback_verdict TEXT,       -- 'yes' | 'no' | 'maybe' | NULL (not yet given)
+  created_by       TEXT        NOT NULL DEFAULT '',
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS lumen_interviews_candidate ON lumen_interviews (candidate);
+CREATE INDEX IF NOT EXISTS lumen_interviews_member ON lumen_interviews (member);
+CREATE INDEX IF NOT EXISTS lumen_interviews_scheduled_at ON lumen_interviews (scheduled_at);
