@@ -12,12 +12,18 @@ import {
   type Applicant,
 } from "../lib/applicants"
 import {
+  INTERVIEW_HOURS,
   fetchAvailability,
   formatDayLabel,
+  formatHourLabel,
   interviewWindowDays,
+  isWeekend,
   saveAvailability,
+  slotKey,
+  slotOfDateTime,
   type AvailabilityStore,
 } from "../lib/availability"
+import { fetchBoardNotes, type BoardNote } from "../lib/boardNotes"
 import {
   bookInterview,
   cancelInterview,
@@ -132,7 +138,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   // the page's primary task (reading an essay and scoring it), and the
   // other two are what a member checks before or after that, not instead.
   const [tab, setTab] = useState<
-    "per-candidate" | "consolidated" | "discuss" | "availability" | "interviews"
+    "per-candidate" | "consolidated" | "discuss" | "board-notes" | "availability" | "interviews"
   >("per-candidate")
   // How the To discuss cards are ordered.
   const [discussSort, setDiscussSort] = useState<"score-desc" | "score-asc">("score-desc")
@@ -164,6 +170,9 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   // Arms the second click on "Cancel", same two-click confirm as "Delete my
   // rating" above: canceling a booked interview isn't reversible in the UI.
   const [confirmCancelId, setConfirmCancelId] = useState<number | null>(null)
+  // Board meeting minutes, fetched from the server rather than bundled: they
+  // name candidates alongside rejection reasons and a scholar's diagnosis.
+  const [boardNotes, setBoardNotes] = useState<BoardNote[]>([])
 
   const refresh = useCallback(async () => {
     try {
@@ -177,14 +186,21 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
   useEffect(() => {
     let live = true
-    Promise.all([fetchApplicants(), fetchRatings(), fetchAvailability(), fetchInterviews()])
-      .then(([roster, ratings, avail, ivs]) => {
+    Promise.all([
+      fetchApplicants(),
+      fetchRatings(),
+      fetchAvailability(),
+      fetchInterviews(),
+      fetchBoardNotes(),
+    ])
+      .then(([roster, ratings, avail, ivs, notes]) => {
         if (!live) return
         setPeople(roster)
         setStore(ratings)
         setAvailability(avail)
         setAvailDraft(new Set(avail[loadMember()] ?? []))
         setInterviews(ivs)
+        setBoardNotes(notes)
         setFeedbackDrafts(
           Object.fromEntries(
             ivs.map((iv) => [iv.id, { text: iv.feedback_text, verdict: iv.feedback_verdict }]),
@@ -410,6 +426,26 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
   const perCandidateContent = (
     <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
+          {/* Where the candidates come from. Lives inside this tab rather than
+              above the tab bar: as a always-on section it stayed on screen
+              under every other tab, so switching to Availability still showed
+              a candidate-origin map that had nothing to do with it. */}
+          <div className="mb-16">
+            <Reveal>
+              <div className="text-meta uppercase tracking-widest text-muted mb-3">
+                {lang === "es" ? "Origen" : "Origin"}
+              </div>
+              <h2 className="text-h3 font-semibold text-primary">
+                {lang === "es"
+                  ? "De dónde vienen los candidatos."
+                  : "Where the candidates come from."}
+              </h2>
+            </Reveal>
+            <div className="mt-8">
+              <ApplicantsMap applicants={submitted} />
+            </div>
+          </div>
+
           {status === "loading" && (
             <p role="status" className="text-body text-muted">
               {lang === "es" ? "Cargando candidatos." : "Loading candidates."}
@@ -1499,12 +1535,43 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     </div>
   )
 
-  // Highlighted in the summary grid below: the day(s) with the most board
-  // members free is what actually decides when interviews get scheduled.
-  const availCounts = INTERVIEW_DAYS.map(
-    (day) => BOARD.filter((m) => availability[m.slug]?.includes(day)).length,
+  // Days with no working hours worth offering are dropped from the grid rather
+  // than rendered as dead columns, so the board is not clicking past weekends.
+  const GRID_DAYS = INTERVIEW_DAYS.filter((d) => !isWeekend(d))
+
+  // How many members are free in each slot. Drives the heat on the group grid:
+  // the fullest slot is what actually decides when an interview gets booked.
+  const slotCount = (slot: string) =>
+    BOARD.filter((m) => availability[m.slug]?.includes(slot)).length
+  const maxSlotCount = Math.max(
+    0,
+    ...GRID_DAYS.flatMap((d) => INTERVIEW_HOURS.map((h) => slotCount(slotKey(d, h)))),
   )
-  const maxAvailCount = Math.max(0, ...availCounts)
+
+  const toggleSlot = (slot: string) => {
+    setAvailDraft((prev) => {
+      const next = new Set(prev)
+      if (next.has(slot)) next.delete(slot)
+      else next.add(slot)
+      return next
+    })
+    setAvailSaved(false)
+  }
+
+  /** Marks or clears a whole day's column in one click. */
+  const toggleWholeDay = (day: string) => {
+    const slots = INTERVIEW_HOURS.map((h) => slotKey(day, h))
+    const allOn = slots.every((s) => availDraft.has(s))
+    setAvailDraft((prev) => {
+      const next = new Set(prev)
+      for (const s of slots) {
+        if (allOn) next.delete(s)
+        else next.add(s)
+      }
+      return next
+    })
+    setAvailSaved(false)
+  }
 
   const availabilityContent = (
     <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
@@ -1512,14 +1579,12 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
         {lang === "es" ? "Entrevistas" : "Interviews"}
       </div>
       <h2 className="text-h3 font-semibold text-primary">
-        {lang === "es"
-          ? "¿Qué días puedes hacer entrevistas?"
-          : "Which days can you interview?"}
+        {lang === "es" ? "¿Cuándo puedes hacer entrevistas?" : "When can you interview?"}
       </h2>
       <p className="text-body text-ink/70 mt-2 max-w-2xl">
         {lang === "es"
-          ? "Marca los días en los que tienes disponibilidad, de aquí al 31 de agosto, y guarda. Se comparte con toda la junta."
-          : "Mark the days you are available, from now through August 31, and save. It is shared with the whole board."}
+          ? "Marca las horas en las que tienes disponibilidad, de aquí al 31 de agosto. Todo en hora de Bogotá. Se comparte con toda la junta."
+          : "Mark the hours you are available, from now through August 31. All times Bogotá. It is shared with the whole board."}
       </p>
 
       {!member && (
@@ -1532,34 +1597,85 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
       {member && (
         <>
-          <div className="mt-8 flex flex-wrap gap-2">
-            {INTERVIEW_DAYS.map((day) => {
-              const on = availDraft.has(day)
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => {
-                    setAvailDraft((prev) => {
-                      const next = new Set(prev)
-                      if (next.has(day)) next.delete(day)
-                      else next.add(day)
-                      return next
-                    })
-                    setAvailSaved(false)
-                  }}
-                  className={`rounded-sm border px-4 py-3 text-body cursor-pointer transition-colors duration-200 ${
-                    on
-                      ? "bg-primary text-white border-primary font-semibold"
-                      : "border-ink/15 text-ink/70 hover:border-primary/50"
-                  }`}
-                >
-                  {formatDayLabel(day, lang)}
-                </button>
-              )
-            })}
+          <p className="md:hidden text-meta uppercase tracking-widest text-muted mt-8">
+            {lang === "es" ? "Desliza para ver el calendario →" : "Swipe to see the calendar →"}
+          </p>
+
+          {/* A real week grid: hours down, days across. Clicking the day header
+              takes or clears the whole column. */}
+          <div className="mt-6 overflow-x-auto">
+            <table className="border-collapse">
+              <thead>
+                <tr>
+                  <th className="sticky left-0 bg-background z-10 pr-3 pb-2 text-left text-meta uppercase tracking-widest text-muted font-semibold">
+                    {lang === "es" ? "Hora" : "Hour"}
+                  </th>
+                  {GRID_DAYS.map((day) => (
+                    <th key={day} className="px-1 pb-2 align-bottom">
+                      <button
+                        type="button"
+                        onClick={() => toggleWholeDay(day)}
+                        title={
+                          lang === "es"
+                            ? "Marcar o limpiar todo el día"
+                            : "Mark or clear the whole day"
+                        }
+                        className="w-full text-meta uppercase tracking-widest text-muted hover:text-accent transition-colors duration-200 cursor-pointer whitespace-nowrap px-2"
+                      >
+                        {formatDayLabel(day, lang)}
+                      </button>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {INTERVIEW_HOURS.map((hour) => (
+                  <tr key={hour}>
+                    <td className="sticky left-0 bg-background z-10 pr-3 py-0.5 text-meta tabular-nums text-muted whitespace-nowrap">
+                      {formatHourLabel(hour, lang)}
+                    </td>
+                    {GRID_DAYS.map((day) => {
+                      const slot = slotKey(day, hour)
+                      const on = availDraft.has(slot)
+                      const others = slotCount(slot) - (availability[member]?.includes(slot) ? 1 : 0)
+                      return (
+                        <td key={slot} className="px-1 py-0.5">
+                          <button
+                            type="button"
+                            aria-pressed={on}
+                            aria-label={`${formatDayLabel(day, lang)} ${formatHourLabel(hour, lang)}`}
+                            onClick={() => toggleSlot(slot)}
+                            title={
+                              others > 0
+                                ? lang === "es"
+                                  ? `${others} más de la junta libre`
+                                  : `${others} other board member(s) free`
+                                : undefined
+                            }
+                            className={`h-9 w-full min-w-[4.5rem] rounded-sm border text-meta tabular-nums cursor-pointer transition-colors duration-200 ${
+                              on
+                                ? "bg-primary text-white border-primary font-semibold"
+                                : others > 0
+                                  ? "bg-accent/10 border-accent/30 text-accent hover:border-accent"
+                                  : "border-ink/15 text-ink/40 hover:border-primary/50"
+                            }`}
+                          >
+                            {on ? "✓" : others > 0 ? others : ""}
+                          </button>
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+
+          <p className="text-meta text-muted mt-4 max-w-3xl">
+            {lang === "es"
+              ? "Azul es tu disponibilidad. Un número indica cuántos otros miembros ya marcaron esa hora."
+              : "Navy is your own availability. A number is how many other members already marked that hour."}
+          </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-4">
             <button
@@ -1576,6 +1692,11 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                   ? "Guardar disponibilidad"
                   : "Save availability"}
             </button>
+            <span className="text-meta text-muted tabular-nums">
+              {lang === "es"
+                ? `${availDraft.size} horas marcadas`
+                : `${availDraft.size} hours marked`}
+            </span>
             {availSaved && status === "ready" && (
               <span role="status" className="text-body text-accent">
                 {lang === "es"
@@ -1594,88 +1715,106 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
         </>
       )}
 
+      {/* Where the board actually overlaps. Only slots somebody marked are
+          listed: a grid of mostly-empty cells buries the handful of hours that
+          are the whole point of asking. */}
       <div className="mt-16">
         <div className="text-meta uppercase tracking-widest text-muted mb-3">
           {lang === "es" ? "Resumen" : "Summary"}
         </div>
         <h3 className="text-h3 font-semibold text-primary">
-          {lang === "es" ? "Disponibilidad de la junta." : "Board availability."}
+          {lang === "es" ? "Las mejores horas para la junta." : "The board's best hours."}
         </h3>
 
-        <p className="md:hidden text-meta uppercase tracking-widest text-muted mt-6">
-          {lang === "es" ? "Desliza para ver la tabla →" : "Swipe to see the table →"}
-        </p>
-        <div className="mt-4 md:mt-8 overflow-x-auto">
-          <table className="w-full min-w-[44rem] text-left border-collapse">
-            <thead>
-              <tr className="border-b border-ink/15">
-                <th className="text-meta uppercase tracking-widest text-muted font-semibold py-3 pr-4">
-                  {lang === "es" ? "Día" : "Day"}
-                </th>
-                {BOARD.map((m) => (
-                  <th
-                    key={m.slug}
-                    className="text-meta uppercase tracking-widest text-muted font-semibold py-3 px-2 text-center"
-                  >
-                    {m.name.split(" ")[0]}
-                  </th>
-                ))}
-                <th className="text-meta uppercase tracking-widest text-muted font-semibold py-3 pl-4 text-right">
-                  {lang === "es" ? "Total" : "Total"}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {INTERVIEW_DAYS.map((day, i) => (
-                <tr
-                  key={day}
-                  className={`border-b border-ink/5 ${
-                    availCounts[i] > 0 && availCounts[i] === maxAvailCount ? "bg-accent/10" : ""
+        <div className="mt-8 space-y-2 max-w-3xl">
+          {GRID_DAYS.flatMap((day) =>
+            INTERVIEW_HOURS.map((hour) => slotKey(day, hour)),
+          )
+            .filter((slot) => slotCount(slot) > 0)
+            .sort((a, b) => slotCount(b) - slotCount(a) || a.localeCompare(b))
+            .map((slot) => {
+              const free = BOARD.filter((m) => availability[m.slug]?.includes(slot))
+              const [day, time] = slot.split("T")
+              return (
+                <div
+                  key={slot}
+                  className={`flex flex-wrap items-baseline gap-x-4 gap-y-1 rounded-sm px-4 py-3 ${
+                    slotCount(slot) === maxSlotCount ? "bg-accent/10" : "bg-surface"
                   }`}
                 >
-                  <td className="py-2.5 pr-4 text-body text-primary font-semibold whitespace-nowrap">
+                  <div className="text-body font-semibold text-primary whitespace-nowrap">
                     {formatDayLabel(day, lang)}
-                  </td>
-                  {BOARD.map((m) => {
-                    const has = availability[m.slug]?.includes(day)
-                    return (
-                      <td key={m.slug} className="py-2.5 px-2 text-center">
-                        <span
-                          title={`${m.name} · ${formatDayLabel(day, lang)}`}
-                          className={has ? "text-accent font-bold" : "text-ink/20"}
-                        >
-                          {has ? "✓" : "·"}
-                        </span>
-                      </td>
-                    )
-                  })}
-                  <td
-                    className={`py-2.5 pl-4 text-meta tabular-nums text-right ${
-                      availCounts[i] > 0 && availCounts[i] === maxAvailCount
-                        ? "text-accent font-semibold"
-                        : "text-muted"
-                    }`}
-                  >
-                    {availCounts[i]}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    {" · "}
+                    {formatHourLabel(Number(time.slice(0, 2)), lang)}
+                  </div>
+                  <div className="text-meta tabular-nums text-accent font-semibold">
+                    {free.length}/{BOARD.length}
+                  </div>
+                  <div className="text-meta text-ink/70">
+                    {free.map((m) => m.name.split(" ")[0]).join(", ")}
+                  </div>
+                </div>
+              )
+            })}
+          {GRID_DAYS.flatMap((day) => INTERVIEW_HOURS.map((h) => slotKey(day, h))).every(
+            (slot) => slotCount(slot) === 0,
+          ) && (
+            <p className="text-body text-muted">
+              {lang === "es"
+                ? "Nadie ha marcado disponibilidad todavía."
+                : "Nobody has marked any availability yet."}
+            </p>
+          )}
         </div>
-        <p className="text-meta text-muted mt-4 max-w-3xl">
-          {lang === "es"
-            ? "Los días resaltados son los de mayor disponibilidad de la junta."
-            : "Highlighted days have the most board availability."}
-        </p>
       </div>
     </div>
   )
 
+
   const memberNameOf = (slug: string) => BOARD.find((m) => m.slug === slug)?.name ?? slug
-  const selectedDay = bookWhen.slice(0, 10)
-  const memberAvailableOnSelectedDay =
-    bookMember && selectedDay ? (availability[bookMember] ?? []).includes(selectedDay) : null
+  // Checked against the exact hour the booking falls in, not just its day: the
+  // poll is hour-granular now, so "free on Tuesday" is no longer the question.
+  const memberFreeAtBookedSlot =
+    bookMember && bookWhen.length >= 16
+      ? (availability[bookMember] ?? []).includes(slotOfDateTime(bookWhen))
+      : null
+
+  const boardNotesContent = (
+    <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
+      <div className="text-meta uppercase tracking-widest text-muted mb-3">
+        {lang === "es" ? "Actas" : "Minutes"}
+      </div>
+      <h2 className="text-h3 font-semibold text-primary">
+        {lang === "es" ? "Notas de las reuniones de junta." : "Board meeting notes."}
+      </h2>
+
+      {boardNotes.length === 0 && (
+        <p className="text-body text-muted mt-6 max-w-2xl">
+          {lang === "es"
+            ? "No hay actas cargadas todavía."
+            : "No minutes loaded yet."}
+        </p>
+      )}
+
+      <div className="mt-10 space-y-10 max-w-3xl">
+        {boardNotes.map((note) => (
+          <div key={note.subject} className="bg-surface rounded-sm p-6 md:p-8">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <h3 className="text-h3 font-semibold text-primary">{note.title}</h3>
+              <div className="text-meta uppercase tracking-widest text-accent">
+                {new Date(`${note.subject}T12:00:00`).toLocaleDateString(lang, {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </div>
+            </div>
+            <Prose text={note.body} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 
   const interviewsContent = (
     <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
@@ -1766,18 +1905,18 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
         </label>
       </div>
 
-      {memberAvailableOnSelectedDay === false && (
+      {memberFreeAtBookedSlot === false && (
         <p className="text-meta text-accent mt-3">
           {lang === "es"
-            ? `${memberNameOf(bookMember)} no marcó ese día como disponible.`
-            : `${memberNameOf(bookMember)} did not mark that day as available.`}
+            ? `${memberNameOf(bookMember)} no marcó esa hora como disponible.`
+            : `${memberNameOf(bookMember)} did not mark that hour as available.`}
         </p>
       )}
-      {memberAvailableOnSelectedDay === true && (
+      {memberFreeAtBookedSlot === true && (
         <p className="text-meta text-muted mt-3">
           {lang === "es"
-            ? `${memberNameOf(bookMember)} marcó ese día como disponible.`
-            : `${memberNameOf(bookMember)} marked that day as available.`}
+            ? `${memberNameOf(bookMember)} marcó esa hora como disponible.`
+            : `${memberNameOf(bookMember)} marked that hour as available.`}
         </p>
       )}
 
@@ -2017,25 +2156,6 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
         </div>
       </section>
 
-      {/* Where the candidates come from */}
-      <section className="bg-background">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
-          <Reveal>
-            <div className="text-meta uppercase tracking-widest text-muted mb-3">
-              {lang === "es" ? "Origen" : "Origin"}
-            </div>
-            <h2 className="text-h3 font-semibold text-primary">
-              {lang === "es"
-                ? "De dónde vienen los candidatos."
-                : "Where the candidates come from."}
-            </h2>
-          </Reveal>
-          <div className="mt-8">
-            <ApplicantsMap applicants={submitted} />
-          </div>
-        </div>
-      </section>
-
       <section className="bg-background">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 pt-10">
           {/* Per-candidate first: opening the portal drops a member straight
@@ -2047,6 +2167,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 { key: "per-candidate", label: { en: "Per candidate", es: "Por candidato" } },
                 { key: "consolidated", label: { en: "Consolidated", es: "Consolidado" } },
                 { key: "discuss", label: { en: "To discuss", es: "Para discutir" } },
+                { key: "board-notes", label: { en: "Board notes", es: "Notas de la junta" } },
                 { key: "availability", label: { en: "Availability", es: "Disponibilidad" } },
                 { key: "interviews", label: { en: "Interviews", es: "Entrevistas" } },
               ] as const
@@ -2070,6 +2191,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
         {tab === "per-candidate" && perCandidateContent}
         {tab === "consolidated" && consolidatedContent}
         {tab === "discuss" && discussContent}
+        {tab === "board-notes" && boardNotesContent}
         {tab === "availability" && availabilityContent}
         {tab === "interviews" && interviewsContent}
       </section>

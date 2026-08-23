@@ -22,9 +22,10 @@ CREATE INDEX IF NOT EXISTS lumen_ratings_candidate ON lumen_ratings (candidate);
 CREATE TABLE IF NOT EXISTS lumen_documents (
   id           BIGSERIAL PRIMARY KEY,
   -- 'scholar-essay' | 'scholar-grades' | 'applicant-essay' | 'applicant-answers'
-  -- | 'report'.
-  -- Anything matching 'applicant%' is board only, so a new applicant-* kind
-  -- inherits the right gate without touching api/documents.ts.
+  -- | 'applicant-board-notes' | 'board-notes' | 'report'.
+  -- Anything matching 'applicant%' OR 'board%' is board only, so a new kind
+  -- under either prefix inherits the right gate without touching
+  -- api/documents.ts.
   kind         TEXT        NOT NULL,
   subject      TEXT        NOT NULL,   -- scholar slug, applicant slug, or report year
   title        TEXT        NOT NULL DEFAULT '',
@@ -70,20 +71,32 @@ CREATE TABLE IF NOT EXISTS lumen_applicants (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- The board's interview-scheduling poll: which days each member can interview,
--- from now through the end of the admissions cycle. One row per member per
--- day they are available. `day` is stored as 'YYYY-MM-DD' text rather than a
--- DATE column so the edge function never has to round-trip through the
--- driver's date-to-JS-Date conversion, which shifts a date by one day for
--- anyone west of UTC.
+-- The board's interview-scheduling poll: which hour slots each member can
+-- interview in, from now through the end of the admissions cycle. One row per
+-- member per slot they are free.
 CREATE TABLE IF NOT EXISTS lumen_availability (
   member     TEXT        NOT NULL,
-  day        TEXT        NOT NULL,
+  -- One hour-aligned slot the member is free, as 'YYYY-MM-DDTHH:MM' in Bogota
+  -- wall-clock time. Text rather than TIMESTAMPTZ on purpose: this is a poll
+  -- about a square on a calendar grid, not an appointment at an instant, so
+  -- storing the label the board actually clicked keeps it immune to any
+  -- local-date/UTC round-trip. Real appointments use lumen_interviews below,
+  -- which is a proper TIMESTAMPTZ.
+  slot       TEXT        NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (member, day)
+  PRIMARY KEY (member, slot)
 );
 
--- Booked interviews. Unlike lumen_availability's day-granularity poll, this is
+-- If you already created the day-granularity version of this table, migrate
+-- it by promoting each whole day to a 09:00 slot, then drop the old column:
+--   ALTER TABLE lumen_availability ADD COLUMN IF NOT EXISTS slot TEXT;
+--   UPDATE lumen_availability SET slot = day || 'T09:00' WHERE slot IS NULL;
+--   ALTER TABLE lumen_availability DROP CONSTRAINT lumen_availability_pkey;
+--   ALTER TABLE lumen_availability ALTER COLUMN slot SET NOT NULL;
+--   ALTER TABLE lumen_availability ADD PRIMARY KEY (member, slot);
+--   ALTER TABLE lumen_availability DROP COLUMN day;
+
+-- Booked interviews. Unlike lumen_availability's hour-slot poll, this is
 -- a real appointment at a real instant, so scheduled_at is a proper
 -- TIMESTAMPTZ: the client sends an unambiguous ISO instant (converted
 -- server-side from the Bogotá wall-clock time entered in the booking form),

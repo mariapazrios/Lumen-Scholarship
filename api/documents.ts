@@ -22,8 +22,11 @@ export default async function handler(req: Request): Promise<Response> {
   const kind = url.searchParams.get("kind") ?? ""
   const subject = url.searchParams.get("subject")
 
-  // applicant material is board-only; scholar material is visible to sponsors too
-  const needed = kind.startsWith("applicant") ? "board" : "sponsor"
+  // applicant material and the board's own minutes are board-only; scholar
+  // material is visible to sponsors too. Prefix-gated rather than an explicit
+  // allowlist so a new applicant-* or board-* kind cannot be added without
+  // inheriting the right gate.
+  const needed = kind.startsWith("applicant") || kind.startsWith("board") ? "board" : "sponsor"
   if (!allows(role, needed)) return unauthorized()
 
   if (subject) {

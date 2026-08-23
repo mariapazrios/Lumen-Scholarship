@@ -10,7 +10,7 @@ client bundle.
 | `/api/login` | POST | anyone | Exchange a role passcode for a session cookie |
 | `/api/login` | GET | anyone | Report the role the caller's cookie carries, or 401 |
 | `/api/ratings` | GET, POST | board | Read all ratings, upsert your own |
-| `/api/availability` | GET, POST | board | Read everyone's interview-availability poll, replace your own days |
+| `/api/availability` | GET, POST | board | Read everyone's interview-availability poll, replace your own hour slots |
 | `/api/interviews` | GET, POST, PATCH, DELETE | board | The group calendar: book an interview (emails calendar invites), read it, save feedback, cancel |
 | `/api/documents` | GET | board, sponsor | Fetch restricted documents |
 | `/api/applicants` | GET | board | The roster joined to each candidate's essay, answers, and board notes |
@@ -78,6 +78,14 @@ Documents are rows in `lumen_documents`, not files. `kind` controls access:
 - `applicant-essay` — board only
 - `applicant-answers` — board only; the ¿Quién soy? / ¿Quién quiero ser? short
   answers, kept apart from the essay because the board portal shows them apart
+- `board-notes` — board only; one set of board meeting minutes per row,
+  `subject` the meeting date (`'2026-08-15'`), `title` the meeting name, `body`
+  plain text with blank lines between paragraphs. These carry candidate names
+  next to rejection reasons, financial circumstances and, in the August 2026
+  set, a scholar's medical diagnosis, so they cannot live in `src/data/` for
+  exactly the same reason the essays and grades left it: that directory
+  compiles into the public bundle and this repository is public. The board-notes
+  tab in the portal fetches this kind.
 - `applicant-board-notes` — board only; the board's own discussion notes on a
   candidate (strengths flagged, open questions to confirm at interview), as
   opposed to anything the candidate submitted. One row per candidate,
@@ -88,8 +96,8 @@ Documents are rows in `lumen_documents`, not files. `kind` controls access:
   against `lumen_applicants` rather than a guessed slug, guarded so it only
   inserts when exactly one applicant matches.
 
-The gate is `kind.startsWith("applicant")`, so any further `applicant-*` kind is
-board only by default. `subject` is a slug: the scholar's for `scholar-essay`,
+The gate is `kind.startsWith("applicant") || kind.startsWith("board")`, so any
+further `applicant-*` or `board-*` kind is board only by default. `subject` is a slug: the scholar's for `scholar-essay`,
 the applicant's name slug (diacritics stripped, as with scholar photos) for the
 applicant kinds, with the full name on `title`.
 
