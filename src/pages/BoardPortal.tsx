@@ -3,7 +3,7 @@ import ApplicantsMap from "../components/ApplicantsMap"
 import PasscodeGate from "../components/PasscodeGate"
 import Reveal from "../components/primitives/Reveal"
 import { BOARD } from "../data/team"
-import { useLang } from "../lib/i18n"
+import { useLang, type Lang } from "../lib/i18n"
 import {
   HOUSING,
   SCHOOL_TYPE,
@@ -61,6 +61,18 @@ const VERDICT_STYLE: Record<string, string> = {
   maybe: "bg-accent/15 text-accent",
   no: "bg-ink/10 text-muted",
   unrated: "bg-ink/5 text-muted",
+}
+
+/** Shown in a tab whose own data failed to load, so it never just looks empty. */
+function FeatureError({ show, lang }: { show: boolean; lang: Lang }) {
+  if (!show) return null
+  return (
+    <p role="alert" className="text-body text-accent mt-6 max-w-2xl">
+      {lang === "es"
+        ? "No se pudieron cargar estos datos. Recarga la página; si sigue igual, la tabla de la base de datos todavía no existe."
+        : "This data could not be loaded. Reload the page; if it persists, the database table does not exist yet."}
+    </p>
+  )
 }
 
 /**
@@ -173,6 +185,11 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   // Board meeting minutes, fetched from the server rather than bundled: they
   // name candidates alongside rejection reasons and a scholar's diagnosis.
   const [boardNotes, setBoardNotes] = useState<BoardNote[]>([])
+  // Which of the non-core features failed to load. Keyed rather than a single
+  // flag so one broken tab cannot make the others look broken too.
+  const [featureErrors, setFeatureErrors] = useState<
+    Partial<Record<"availability" | "interviews" | "notes", boolean>>
+  >({})
 
   const refresh = useCallback(async () => {
     try {
@@ -186,26 +203,21 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
   useEffect(() => {
     let live = true
-    Promise.all([
-      fetchApplicants(),
-      fetchRatings(),
-      fetchAvailability(),
-      fetchInterviews(),
-      fetchBoardNotes(),
-    ])
-      .then(([roster, ratings, avail, ivs, notes]) => {
+    const sessionLost = (e: unknown) => {
+      if (e instanceof SessionExpired) {
+        onSessionLost()
+        return true
+      }
+      return false
+    }
+
+    // Core roster and ratings. These two gate `status`, because a portal with
+    // no candidates in it has nothing to show.
+    Promise.all([fetchApplicants(), fetchRatings()])
+      .then(([roster, ratings]) => {
         if (!live) return
         setPeople(roster)
         setStore(ratings)
-        setAvailability(avail)
-        setAvailDraft(new Set(avail[loadMember()] ?? []))
-        setInterviews(ivs)
-        setBoardNotes(notes)
-        setFeedbackDrafts(
-          Object.fromEntries(
-            ivs.map((iv) => [iv.id, { text: iv.feedback_text, verdict: iv.feedback_verdict }]),
-          ),
-        )
         const first = roster.find((a) => a.essay)
         if (first) {
           setActive(first.slug)
@@ -215,9 +227,49 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
       })
       .catch((e) => {
         if (!live) return
-        if (e instanceof SessionExpired) onSessionLost()
-        else setStatus("error")
+        if (!sessionLost(e)) setStatus("error")
       })
+
+    // Scheduling and minutes load on their own. They used to sit in the same
+    // Promise.all as the roster, which meant one failing request rejected the
+    // lot and left every tab blank, including the three that predate them.
+    // Nothing here is load-bearing for reading and scoring a candidate, so a
+    // failure degrades its own tab and nothing else.
+    fetchAvailability()
+      .then((avail) => {
+        if (!live) return
+        setAvailability(avail)
+        setAvailDraft(new Set(avail[loadMember()] ?? []))
+      })
+      .catch((e) => {
+        if (!live) return
+        if (!sessionLost(e)) setFeatureErrors((p) => ({ ...p, availability: true }))
+      })
+
+    fetchInterviews()
+      .then((ivs) => {
+        if (!live) return
+        setInterviews(ivs)
+        setFeedbackDrafts(
+          Object.fromEntries(
+            ivs.map((iv) => [iv.id, { text: iv.feedback_text, verdict: iv.feedback_verdict }]),
+          ),
+        )
+      })
+      .catch((e) => {
+        if (!live) return
+        if (!sessionLost(e)) setFeatureErrors((p) => ({ ...p, interviews: true }))
+      })
+
+    fetchBoardNotes()
+      .then((notes) => {
+        if (live) setBoardNotes(notes)
+      })
+      .catch((e) => {
+        if (!live) return
+        if (!sessionLost(e)) setFeatureErrors((p) => ({ ...p, notes: true }))
+      })
+
     return () => {
       live = false
     }
@@ -1587,6 +1639,8 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
           : "Mark the hours you are available, from now through August 31. All times Bogotá. It is shared with the whole board."}
       </p>
 
+      <FeatureError show={Boolean(featureErrors.availability)} lang={lang} />
+
       {!member && (
         <p className="text-body text-accent mt-4">
           {lang === "es"
@@ -1788,7 +1842,9 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
         {lang === "es" ? "Notas de las reuniones de junta." : "Board meeting notes."}
       </h2>
 
-      {boardNotes.length === 0 && (
+      <FeatureError show={Boolean(featureErrors.notes)} lang={lang} />
+
+      {boardNotes.length === 0 && !featureErrors.notes && (
         <p className="text-body text-muted mt-6 max-w-2xl">
           {lang === "es"
             ? "No hay actas cargadas todavía."
@@ -1824,6 +1880,8 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
       <h2 className="text-h3 font-semibold text-primary">
         {lang === "es" ? "Agendar una entrevista." : "Schedule an interview."}
       </h2>
+
+      <FeatureError show={Boolean(featureErrors.interviews)} lang={lang} />
 
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-4xl">
         <label className="block">

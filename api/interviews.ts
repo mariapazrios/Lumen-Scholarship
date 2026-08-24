@@ -2,6 +2,7 @@ import { sql } from "@vercel/postgres"
 import { allows, json, readSession, unauthorized } from "./_session"
 import { buildIcs } from "./_ics"
 import { boardEmail, fromAddress, sendMail } from "./_email"
+import { ensureInterviewsTable } from "./_ensure"
 
 export const config = { runtime: "edge" }
 
@@ -20,6 +21,7 @@ const VERDICTS = new Set(["yes", "no", "maybe"])
 export default async function handler(req: Request): Promise<Response> {
   const role = await readSession(req)
   if (!allows(role, "board")) return unauthorized()
+  await ensureInterviewsTable()
 
   if (req.method === "GET") {
     const { rows } = await sql`

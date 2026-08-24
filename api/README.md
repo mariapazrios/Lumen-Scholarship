@@ -54,6 +54,13 @@ Storage, create a Postgres database and attach it to the project. Vercel injects
 **2. Create the tables.** Open the database's Query tab and run
 [`schema.sql`](./schema.sql).
 
+`lumen_availability` and `lumen_interviews` are the exception: they also
+self-provision on first request (`api/_ensure.ts`), because relying on a human
+to have run the schema made the whole portal fail closed. A missing relation
+threw a 500, which rejected the client's initial fetch, which left every tab
+blank, including the ones that predate scheduling. `schema.sql` is still the
+canonical definition; the DDL is duplicated there deliberately.
+
 **3. Set the environment variables.** Project Settings, Environment Variables,
 for Production and Preview:
 

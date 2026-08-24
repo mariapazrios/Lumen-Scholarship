@@ -1,5 +1,6 @@
 import { sql } from "@vercel/postgres"
 import { allows, json, readSession, unauthorized } from "./_session"
+import { ensureAvailabilityTable } from "./_ensure"
 
 export const config = { runtime: "edge" }
 
@@ -18,6 +19,7 @@ const SLOT_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/
 export default async function handler(req: Request): Promise<Response> {
   const role = await readSession(req)
   if (!allows(role, "board")) return unauthorized()
+  await ensureAvailabilityTable()
 
   if (req.method === "GET") {
     const { rows } = await sql`
