@@ -12,15 +12,17 @@ import {
   type Applicant,
 } from "../lib/applicants"
 import {
-  INTERVIEW_HOURS,
   fetchAvailability,
   formatDayLabel,
   formatHourLabel,
   interviewWindowDays,
+  gridRows,
   isWeekend,
   saveAvailability,
   slotKey,
   slotOfDateTime,
+  slotsInCell,
+  type Granularity,
   type AvailabilityStore,
 } from "../lib/availability"
 import { fetchBoardNotes, type BoardNote } from "../lib/boardNotes"
@@ -161,6 +163,10 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const [availability, setAvailability] = useState<AvailabilityStore>({})
   const [availDraft, setAvailDraft] = useState<Set<string>>(new Set())
   const [availSaved, setAvailSaved] = useState(false)
+  // 60 shows one block per hour, 30 splits each hour in two. Storage is always
+  // half-hour slots, so flipping this re-renders the same data at a different
+  // resolution and never converts or drops anything.
+  const [granularity, setGranularity] = useState<Granularity>(60)
 
   // Booked interviews: the group calendar, plus the booking form's own draft
   // fields (kept separate from `draft`/`availDraft` since this is a third,
@@ -1587,24 +1593,39 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     </div>
   )
 
-  // Days with no working hours worth offering are dropped from the grid rather
-  // than rendered as dead columns, so the board is not clicking past weekends.
-  const GRID_DAYS = INTERVIEW_DAYS.filter((d) => !isWeekend(d))
+  const GRID_DAYS = INTERVIEW_DAYS
+  const ROWS = gridRows(granularity)
 
-  // How many members are free in each slot. Drives the heat on the group grid:
-  // the fullest slot is what actually decides when an interview gets booked.
+  // Counts are over atomic (half-hour) slots. A 60 minute cell reports the
+  // fuller of its two halves, so an hour where somebody is free for only the
+  // back half still shows up rather than reading as empty.
   const slotCount = (slot: string) =>
     BOARD.filter((m) => availability[m.slug]?.includes(slot)).length
+  const cellCount = (day: string, hour: number, minute: number) =>
+    Math.max(...slotsInCell(day, hour, minute, granularity).map(slotCount))
   const maxSlotCount = Math.max(
     0,
-    ...GRID_DAYS.flatMap((d) => INTERVIEW_HOURS.map((h) => slotCount(slotKey(d, h)))),
+    ...GRID_DAYS.flatMap((d) =>
+      ROWS.map((r) => cellCount(d, r.hour, r.minute)),
+    ),
   )
 
-  const toggleSlot = (slot: string) => {
+  /** A cell is on when every atomic slot inside it is, partial when only some. */
+  const cellState = (day: string, hour: number, minute: number) => {
+    const slots = slotsInCell(day, hour, minute, granularity)
+    const on = slots.filter((sl) => availDraft.has(sl)).length
+    return on === 0 ? "off" : on === slots.length ? "on" : "partial"
+  }
+
+  const toggleCell = (day: string, hour: number, minute: number) => {
+    const slots = slotsInCell(day, hour, minute, granularity)
+    const allOn = slots.every((sl) => availDraft.has(sl))
     setAvailDraft((prev) => {
       const next = new Set(prev)
-      if (next.has(slot)) next.delete(slot)
-      else next.add(slot)
+      for (const sl of slots) {
+        if (allOn) next.delete(sl)
+        else next.add(sl)
+      }
       return next
     })
     setAvailSaved(false)
@@ -1612,13 +1633,13 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
   /** Marks or clears a whole day's column in one click. */
   const toggleWholeDay = (day: string) => {
-    const slots = INTERVIEW_HOURS.map((h) => slotKey(day, h))
-    const allOn = slots.every((s) => availDraft.has(s))
+    const slots = ROWS.flatMap((r) => slotsInCell(day, r.hour, r.minute, granularity))
+    const allOn = slots.every((sl) => availDraft.has(sl))
     setAvailDraft((prev) => {
       const next = new Set(prev)
-      for (const s of slots) {
-        if (allOn) next.delete(s)
-        else next.add(s)
+      for (const sl of slots) {
+        if (allOn) next.delete(sl)
+        else next.add(sl)
       }
       return next
     })
@@ -1635,9 +1656,30 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
       </h2>
       <p className="text-body text-ink/70 mt-2 max-w-2xl">
         {lang === "es"
-          ? "Marca las horas en las que tienes disponibilidad, de aquí al 31 de agosto. Todo en hora de Bogotá. Se comparte con toda la junta."
-          : "Mark the hours you are available, from now through August 31. All times Bogotá. It is shared with the whole board."}
+          ? "Marca las horas en las que tienes disponibilidad durante los próximos diez días. Todo en hora de Bogotá. Se comparte con toda la junta."
+          : "Mark the hours you are available over the next ten days. All times Bogotá. It is shared with the whole board."}
       </p>
+
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <span className="text-meta uppercase tracking-widest text-muted">
+          {lang === "es" ? "Bloques de" : "Blocks of"}
+        </span>
+        {([60, 30] as const).map((g) => (
+          <button
+            key={g}
+            type="button"
+            aria-pressed={granularity === g}
+            onClick={() => setGranularity(g)}
+            className={`text-meta rounded-sm px-4 py-2 border cursor-pointer transition-colors duration-200 ${
+              granularity === g
+                ? "bg-primary text-white border-primary font-semibold"
+                : "border-ink/15 text-ink/70 hover:border-primary/50"
+            }`}
+          >
+            {g} min
+          </button>
+        ))}
+      </div>
 
       <FeatureError show={Boolean(featureErrors.availability)} lang={lang} />
 
@@ -1674,7 +1716,9 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                             ? "Marcar o limpiar todo el día"
                             : "Mark or clear the whole day"
                         }
-                        className="w-full text-meta uppercase tracking-widest text-muted hover:text-accent transition-colors duration-200 cursor-pointer whitespace-nowrap px-2"
+                        className={`w-full text-meta uppercase tracking-widest transition-colors duration-200 cursor-pointer whitespace-nowrap px-2 hover:text-accent ${
+                          isWeekend(day) ? "text-muted/60 italic" : "text-muted"
+                        }`}
                       >
                         {formatDayLabel(day, lang)}
                       </button>
@@ -1683,44 +1727,57 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 </tr>
               </thead>
               <tbody>
-                {INTERVIEW_HOURS.map((hour) => (
-                  <tr key={hour}>
-                    <td className="sticky left-0 bg-background z-10 pr-3 py-0.5 text-meta tabular-nums text-muted whitespace-nowrap">
-                      {formatHourLabel(hour, lang)}
-                    </td>
-                    {GRID_DAYS.map((day) => {
-                      const slot = slotKey(day, hour)
-                      const on = availDraft.has(slot)
-                      const others = slotCount(slot) - (availability[member]?.includes(slot) ? 1 : 0)
-                      return (
-                        <td key={slot} className="px-1 py-0.5">
-                          <button
-                            type="button"
-                            aria-pressed={on}
-                            aria-label={`${formatDayLabel(day, lang)} ${formatHourLabel(hour, lang)}`}
-                            onClick={() => toggleSlot(slot)}
-                            title={
-                              others > 0
-                                ? lang === "es"
-                                  ? `${others} más de la junta libre`
-                                  : `${others} other board member(s) free`
-                                : undefined
-                            }
-                            className={`h-9 w-full min-w-[4.5rem] rounded-sm border text-meta tabular-nums cursor-pointer transition-colors duration-200 ${
-                              on
-                                ? "bg-primary text-white border-primary font-semibold"
-                                : others > 0
-                                  ? "bg-accent/10 border-accent/30 text-accent hover:border-accent"
-                                  : "border-ink/15 text-ink/40 hover:border-primary/50"
-                            }`}
-                          >
-                            {on ? "✓" : others > 0 ? others : ""}
-                          </button>
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
+                {ROWS.map((row) => {
+                  const label = formatHourLabel(row.hour, lang, row.minute)
+                  return (
+                    <tr key={`${row.hour}:${row.minute}`}>
+                      <td
+                        className={`sticky left-0 bg-background z-10 pr-3 py-0.5 text-meta tabular-nums whitespace-nowrap ${
+                          row.minute === 0 ? "text-muted" : "text-muted/50"
+                        }`}
+                      >
+                        {label}
+                      </td>
+                      {GRID_DAYS.map((day) => {
+                        const state = cellState(day, row.hour, row.minute)
+                        const mineHere = slotsInCell(day, row.hour, row.minute, granularity).some(
+                          (sl) => availability[member]?.includes(sl),
+                        )
+                        const others = cellCount(day, row.hour, row.minute) - (mineHere ? 1 : 0)
+                        return (
+                          <td key={`${day}-${row.hour}-${row.minute}`} className="px-1 py-0.5">
+                            <button
+                              type="button"
+                              aria-pressed={state === "on"}
+                              aria-label={`${formatDayLabel(day, lang)} ${label}`}
+                              onClick={() => toggleCell(day, row.hour, row.minute)}
+                              title={
+                                others > 0
+                                  ? lang === "es"
+                                    ? `${others} más de la junta libre`
+                                    : `${others} other board member(s) free`
+                                  : undefined
+                              }
+                              className={`h-8 w-full min-w-[4.5rem] rounded-sm border text-meta tabular-nums cursor-pointer transition-colors duration-200 ${
+                                state === "on"
+                                  ? "bg-primary text-white border-primary font-semibold"
+                                  : state === "partial"
+                                    ? "bg-primary/40 text-white border-primary/60"
+                                    : others > 0
+                                      ? "bg-accent/10 border-accent/30 text-accent hover:border-accent"
+                                      : isWeekend(day)
+                                        ? "border-ink/10 bg-ink/[0.02] text-ink/30 hover:border-primary/50"
+                                        : "border-ink/15 text-ink/40 hover:border-primary/50"
+                              }`}
+                            >
+                              {state === "on" ? "✓" : state === "partial" ? "–" : others > 0 ? others : ""}
+                            </button>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -1782,7 +1839,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
         <div className="mt-8 space-y-2 max-w-3xl">
           {GRID_DAYS.flatMap((day) =>
-            INTERVIEW_HOURS.map((hour) => slotKey(day, hour)),
+            gridRows(30).map((r) => slotKey(day, r.hour, r.minute)),
           )
             .filter((slot) => slotCount(slot) > 0)
             .sort((a, b) => slotCount(b) - slotCount(a) || a.localeCompare(b))
@@ -1799,7 +1856,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                   <div className="text-body font-semibold text-primary whitespace-nowrap">
                     {formatDayLabel(day, lang)}
                     {" · "}
-                    {formatHourLabel(Number(time.slice(0, 2)), lang)}
+                    {formatHourLabel(Number(time.slice(0, 2)), lang, Number(time.slice(3, 5)))}
                   </div>
                   <div className="text-meta tabular-nums text-accent font-semibold">
                     {free.length}/{BOARD.length}
@@ -1810,9 +1867,9 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 </div>
               )
             })}
-          {GRID_DAYS.flatMap((day) => INTERVIEW_HOURS.map((h) => slotKey(day, h))).every(
-            (slot) => slotCount(slot) === 0,
-          ) && (
+          {GRID_DAYS.flatMap((day) =>
+            gridRows(30).map((r) => slotKey(day, r.hour, r.minute)),
+          ).every((slot) => slotCount(slot) === 0) && (
             <p className="text-body text-muted">
               {lang === "es"
                 ? "Nadie ha marcado disponibilidad todavía."

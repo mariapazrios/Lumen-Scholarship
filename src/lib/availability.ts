@@ -29,19 +29,20 @@ export async function saveAvailability(member: string, slots: string[]) {
  */
 export const INTERVIEW_HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19] as const
 
+/** How many days forward the poll runs, starting tomorrow. */
+export const WINDOW_DAYS = 10
+
 /**
- * Tomorrow through August 31 of the current year, as 'YYYY-MM-DD' strings.
- * Built from local date components (never `toISOString`, which converts to
- * UTC first and can push a day back by one for anyone west of it) so the poll
- * always lines up with the board's own calendar.
+ * The next ten days, starting tomorrow, weekends included, as 'YYYY-MM-DD'
+ * strings. Built from local date components (never `toISOString`, which
+ * converts to UTC first and can push a day back by one for anyone west of it)
+ * so the poll always lines up with the board's own calendar.
  */
 export function interviewWindowDays(): string[] {
   const now = new Date()
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
-  const end = new Date(now.getFullYear(), 7, 31) // August is month index 7
   const days: string[] = []
-  for (const d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    days.push(fmtDay(d))
+  for (let i = 1; i <= WINDOW_DAYS; i++) {
+    days.push(fmtDay(new Date(now.getFullYear(), now.getMonth(), now.getDate() + i)))
   }
   return days
 }
@@ -49,17 +50,49 @@ export function interviewWindowDays(): string[] {
 const fmtDay = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 
-/** The stored key for one cell of the grid. */
-export const slotKey = (day: string, hour: number) =>
-  `${day}T${String(hour).padStart(2, "0")}:00`
+/**
+ * Half an hour is the atomic unit of the poll, whichever granularity the grid
+ * is showing. A 60 minute cell is simply the two half-hour slots inside it, so
+ * switching the toggle re-renders the same stored data at a different
+ * resolution rather than converting (and losing) anything.
+ */
+export type Granularity = 30 | 60
+
+const pad = (n: number) => String(n).padStart(2, "0")
+
+/** The stored key for one atomic (half-hour) slot. */
+export const slotKey = (day: string, hour: number, minute: number = 0) =>
+  `${day}T${pad(hour)}:${pad(minute)}`
+
+/** Every atomic slot inside one grid cell: one when 30, two when 60. */
+export const slotsInCell = (
+  day: string,
+  hour: number,
+  minute: number,
+  granularity: Granularity,
+): string[] =>
+  granularity === 60
+    ? [slotKey(day, hour, 0), slotKey(day, hour, 30)]
+    : [slotKey(day, hour, minute)]
+
+/** The rows the grid renders, top to bottom. */
+export const gridRows = (granularity: Granularity): Array<{ hour: number; minute: number }> =>
+  granularity === 60
+    ? INTERVIEW_HOURS.map((hour) => ({ hour, minute: 0 }))
+    : INTERVIEW_HOURS.flatMap((hour) => [
+        { hour, minute: 0 },
+        { hour, minute: 30 },
+      ])
 
 /**
- * The grid cell a booking falls in, so the Interviews tab can tell whether the
- * interviewer actually marked that hour free. Floors to the hour: a 14:30
- * booking sits in the 14:00 slot.
+ * The atomic slot a booking falls in, so the Interviews tab can tell whether
+ * the interviewer actually marked that time free. Floors to the half hour: a
+ * 14:45 booking sits in the 14:30 slot, a 14:20 in the 14:00 one.
  */
-export const slotOfDateTime = (localDateTime: string) =>
-  `${localDateTime.slice(0, 13)}:00`
+export const slotOfDateTime = (localDateTime: string) => {
+  const minute = Number(localDateTime.slice(14, 16))
+  return `${localDateTime.slice(0, 14)}${minute < 30 ? "00" : "30"}`
+}
 
 /** Renders a 'YYYY-MM-DD' string as a short local-language day label. */
 export function formatDayLabel(day: string, lang: "en" | "es"): string {
@@ -72,15 +105,15 @@ export function formatDayLabel(day: string, lang: "en" | "es"): string {
   })
 }
 
-/** Renders an hour as a compact clock label, e.g. "9am" / "9:00". */
-export function formatHourLabel(hour: number, lang: "en" | "es"): string {
-  if (lang === "es") return `${String(hour).padStart(2, "0")}:00`
+/** Renders a time as a compact clock label, e.g. "9am" / "9:30am" / "09:30". */
+export function formatHourLabel(hour: number, lang: "en" | "es", minute = 0): string {
+  if (lang === "es") return `${pad(hour)}:${pad(minute)}`
   const suffix = hour < 12 ? "am" : "pm"
   const h = hour % 12 === 0 ? 12 : hour % 12
-  return `${h}${suffix}`
+  return minute === 0 ? `${h}${suffix}` : `${h}:${pad(minute)}${suffix}`
 }
 
-/** True when the day has no working hours left worth offering (weekend). */
+/** Weekend columns are kept in the grid, just marked so they read differently. */
 export const isWeekend = (day: string) => {
   const [y, m, d] = day.split("-").map(Number)
   const wd = new Date(y, m - 1, d).getDay()

@@ -1,19 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { LangToggle } from "../Header"
-import Tricolor from "../primitives/Tricolor"
 import { useLang } from "../../lib/i18n"
 import LumenMark3D from "./LumenMark3D"
-
-const COPY = {
-  lead: {
-    en: "Every generation inherits rules it did not write and that are meant to be broken.",
-    es: "Cada generación hereda reglas que no escribió y que están hechas para romperse.",
-  },
-  body: {
-    en: "The rule we have taken personally upon ourselves to dismantle: that in Colombia, where you are born determines how much you can dream and how far you can go.",
-    es: "La regla que hemos asumido personalmente desmantelar: que en Colombia, donde naces determina cuánto puedes soñar y hasta dónde puedes llegar.",
-  },
-}
 
 const FADE_MS = 780
 const CLICK_SLOP_PX = 12
@@ -24,6 +12,8 @@ type Props = {
 
 export default function EnterLanding({ onEntered }: Props) {
   const { lang } = useLang()
+  // Still tracked with no text to reveal: it is what arms the 720ms timer
+  // below, so the intro cannot be clicked away before the mark assembles.
   const [together, setTogether] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const onTogether = useCallback(() => setTogether(true), [])
@@ -107,30 +97,14 @@ export default function EnterLanding({ onEntered }: Props) {
       style={{ background: "#141c28" }}
       aria-label={lang === "es" ? "Entrar a Lumen" : "Enter Lumen"}
     >
-      <div className="absolute inset-0 max-md:-translate-y-16">
+      {/* No offset: the -translate-y-16 here existed only to lift the mark
+          clear of the LUMEN title on mobile, and with the text gone it just
+          pushed the graphic off centre. */}
+      <div className="absolute inset-0">
         <LumenMark3D onTogether={onTogether} />
       </div>
       <div className="absolute top-5 right-6 z-10" data-no-enter>
         <LangToggle onDark />
-      </div>
-
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-[#141c28] via-[#141c28]/90 to-transparent px-8 pb-8 pt-16 md:px-12 lg:px-16">
-        <div className="flex flex-col items-center text-center gap-5">
-          <div
-            className={`flex flex-col items-center gap-2 transition-[opacity,transform] duration-700 ease-out ${
-              together ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-            }`}
-          >
-            <p className="text-display font-bold tracking-tight text-white leading-none">
-              LUMEN
-            </p>
-            <Tricolor className="h-[3px] w-56 md:w-72" />
-          </div>
-          <div className="flex max-w-xl flex-col gap-4 text-body text-white/90">
-            <p>{COPY.lead[lang]}</p>
-            <p>{COPY.body[lang]}</p>
-          </div>
-        </div>
       </div>
     </section>
   )
