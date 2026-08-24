@@ -6,7 +6,7 @@
  * Requires two env vars, same "set it in Vercel, redeploy" pattern as
  * SESSION_SECRET etc. (see README):
  *   RESEND_API_KEY — from resend.com
- *   EMAIL_FROM     — e.g. "Lumen <admisiones@lumenedu.org>". Sending to real
+ *   EMAIL_FROM     — e.g. "Lumen <hq@lumenedu.org>". Sending to real
  *                    candidate and board addresses needs a verified sending
  *                    domain in Resend; the sandbox address only delivers to
  *                    the Resend account's own verified email.

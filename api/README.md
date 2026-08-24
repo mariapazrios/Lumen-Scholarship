@@ -30,7 +30,7 @@ HTTP API. Needs three env vars, same pattern as the ones above:
 | Name | Value |
 |---|---|
 | `RESEND_API_KEY` | from resend.com |
-| `EMAIL_FROM` | e.g. `Lumen <admisiones@lumenedu.org>`. Sending to real candidate/board addresses (not just your own Resend account email) needs a verified sending domain in Resend. |
+| `EMAIL_FROM` | `Lumen <hq@lumenedu.org>`. All candidate-facing mail goes out from the Lumen HQ mailbox, never from a board member's personal or work address. Sending to real candidate/board addresses (not just your own Resend account email) needs `lumenedu.org` verified as a sending domain in Resend. |
 | `BOARD_EMAILS` | a JSON object, board slug -> email, e.g. `{"oscar-cabrera":"...","cipriano-echavarria":"..."}`. Board member emails are personal data and belong only in this env var, never in `src/data/team.ts` (that file ships in the public bundle). |
 
 If any of the three are missing, or a candidate/board member has no email on
