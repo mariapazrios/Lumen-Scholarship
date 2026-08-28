@@ -123,6 +123,65 @@ function Prose({ text }: { text: string }) {
   )
 }
 
+/**
+ * Board minutes, which are structured in a way an essay is not: sections,
+ * sub-sections, and a bullet per candidate under each. `Prose` flattens all
+ * of that into one run of paragraphs, and a fifty-line set of minutes read
+ * that way is a wall.
+ *
+ * Deliberately the smallest grammar that carries these documents rather than
+ * a Markdown dependency: "## " and "### " head a section, "- " is a bullet,
+ * anything else is a paragraph. Unrecognised leading punctuation renders as
+ * the literal text it is, so a note written without knowing the rules still
+ * comes out readable.
+ */
+function Minutes({ text }: { text: string }) {
+  const lines = text.split("\n").filter((l) => l.trim() !== "")
+  return (
+    <div className="mt-4 max-w-3xl">
+      {lines.map((raw, i) => {
+        const line = raw.trim()
+        const key = `${i}-${line.slice(0, 24)}`
+        if (line.startsWith("### ")) {
+          return (
+            <div
+              key={key}
+              className="text-meta uppercase tracking-widest text-accent mt-7 mb-2"
+            >
+              {line.slice(4)}
+            </div>
+          )
+        }
+        if (line.startsWith("## ")) {
+          return (
+            <h4
+              key={key}
+              className="text-body font-semibold text-primary mt-9 mb-3 pb-2 border-b border-ink/10"
+            >
+              {line.slice(3)}
+            </h4>
+          )
+        }
+        if (line.startsWith("- ")) {
+          return (
+            <div key={key} className="flex gap-3 mt-2">
+              <span aria-hidden className="text-accent select-none">
+                ·
+              </span>
+              <p className="text-body text-ink/80">{line.slice(2)}</p>
+            </div>
+          )
+        }
+        return (
+          <p key={key} className="text-body text-ink/80 mt-3">
+            {line}
+          </p>
+        )
+      })}
+    </div>
+  )
+}
+
 function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const { lang } = useLang()
   const [member, setMember] = useState(loadMember)
@@ -180,6 +239,14 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     Record<string, { text: string; rating: number | null }>
   >({})
   const [feedbackSavedId, setFeedbackSavedId] = useState<string | null>(null)
+  // Which slice of the interview notes is on screen: "consolidated", or a
+  // board member's slug. Opens on your own list when a name is already
+  // remembered, since writing your notes is what you came for; otherwise on
+  // the consolidated read, which is the only view that works without an
+  // identity. Read from localStorage once rather than tracked against
+  // `member`, so switching your name later never yanks the view out from
+  // under someone mid-read.
+  const [ivView, setIvView] = useState<string>(() => loadMember() || "consolidated")
   // Arms the second click on "Remove", same two-click confirm as "Delete my
   // rating" above: removing a pairing isn't reversible in the UI.
   const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null)
@@ -1916,7 +1983,362 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 })}
               </div>
             </div>
-            <Prose text={note.body} />
+            <Minutes text={note.body} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
+  /**
+   * Interview notes.
+   *
+   * Every member's notes used to render stacked on one page: six sections,
+   * one per board member, each with a card per candidate. That is the whole
+   * board's reading in one scroll, and nobody got past the first section.
+   * The tab now shows exactly one slice at a time, picked from the chip row —
+   * the consolidated read-across, or any single member's list.
+   */
+  const liveInterviews = interviews.filter((iv) => iv.status !== "canceled")
+
+  /** How many live pairings each member has, for the chip counts. */
+  const interviewCount = (slug: string) =>
+    liveInterviews.filter((iv) => iv.member === slug).length
+
+  const memberName = (slug: string) => BOARD.find((m) => m.slug === slug)?.name ?? slug
+
+  /** "1 candidate" rather than "1 candidates", in either language. */
+  const plural = (n: number, [one, many]: [string, string]) => (n === 1 ? one : many)
+
+  /** Pairings somebody has actually written up, for the consolidated header. */
+  const noteCount = liveInterviews.filter(
+    (iv) => iv.feedback_rating != null || iv.feedback_text,
+  ).length
+
+  /**
+   * The consolidated read: one entry per candidate somebody is speaking with,
+   * carrying every member's rating and note side by side. This is the view the
+   * board actually decides from — a candidate's reads are worth comparing
+   * against each other, not six screens apart.
+   *
+   * Candidates nobody has rated yet sort last rather than as a zero: not
+   * having been spoken to is not the same as having interviewed badly.
+   */
+  const interviewsByCandidate = (() => {
+    const bySlug = new Map<string, Interview[]>()
+    for (const iv of liveInterviews) {
+      const list = bySlug.get(iv.candidate) ?? []
+      list.push(iv)
+      bySlug.set(iv.candidate, list)
+    }
+    return [...bySlug.entries()]
+      .map(([candidate, rows]) => {
+        const rated = rows.filter((r) => r.feedback_rating != null)
+        const avg = rated.length
+          ? rated.reduce((a, r) => a + (r.feedback_rating as number), 0) / rated.length
+          : null
+        return { candidate, rows, ratedCount: rated.length, avg }
+      })
+      .sort(
+        (a, b) =>
+          (b.avg ?? -1) - (a.avg ?? -1) ||
+          nameOf(a.candidate).localeCompare(nameOf(b.candidate)),
+      )
+  })()
+
+  /** One member's own list: the add control, then a card per candidate. */
+  const memberInterviews = (slug: string) => {
+    const mine = slug === member
+    const rows = liveInterviews.filter((iv) => iv.member === slug)
+    const already = new Set(rows.map((iv) => iv.candidate))
+    const addable = submitted.filter((a) => !already.has(a.slug))
+
+    return (
+      <div>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-ink/10 pb-3">
+          <h3 className="text-h3 font-semibold text-primary">{memberName(slug)}</h3>
+          <span className="text-meta uppercase tracking-widest text-muted">
+            {rows.length}{" "}
+            {plural(
+              rows.length,
+              lang === "es" ? ["candidato", "candidatos"] : ["candidate", "candidates"],
+            )}
+          </span>
+        </div>
+
+        {mine && (
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <select
+              value={bookCandidate}
+              onChange={(e) => setBookCandidate(e.target.value)}
+              className="bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink cursor-pointer focus:outline-none focus:border-accent"
+            >
+              <option value="">{lang === "es" ? "Añadir un candidato…" : "Add a candidate…"}</option>
+              {addable.map((a) => (
+                <option key={a.slug} value={a.slug}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={submitBooking}
+              disabled={!bookCandidate || bookBusy}
+              className="text-meta uppercase tracking-widest rounded-sm px-4 py-2.5 bg-primary text-white cursor-pointer transition-opacity duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {bookBusy ? (lang === "es" ? "Añadiendo" : "Adding") : lang === "es" ? "Añadir" : "Add"}
+            </button>
+          </div>
+        )}
+        {mine && bookWarnings.length > 0 && (
+          <div className="mt-3 max-w-2xl">
+            {bookWarnings.map((w) => (
+              <p key={w} role="alert" className="text-meta text-accent">
+                {w}
+              </p>
+            ))}
+          </div>
+        )}
+
+        {/* Someone else's list is read-only, and says so once rather than on
+            every card: the alternative is a reader wondering why the
+            textareas went missing. */}
+        {!mine && rows.length > 0 && (
+          <p className="text-meta uppercase tracking-widest text-muted mt-5">
+            {lang === "es" ? "Solo lectura" : "Read only"}
+          </p>
+        )}
+
+        {rows.length === 0 && (
+          <p className="text-body text-muted mt-5">
+            {mine
+              ? lang === "es"
+                ? "Todavía no has añadido a nadie."
+                : "You have not added anyone yet."
+              : lang === "es"
+                ? "Sin candidatos todavía."
+                : "No candidates yet."}
+          </p>
+        )}
+
+        <div className="mt-6 grid grid-cols-1 gap-4">
+          {rows.map((iv) => {
+            const draft = feedbackDrafts[iv.id] ?? { text: iv.feedback_text, rating: iv.feedback_rating }
+            return (
+              <div key={iv.id} className="bg-white border border-ink/10 rounded-sm px-6 py-5">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <div className="text-body font-semibold text-primary">{nameOf(iv.candidate)}</div>
+                  {mine && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        confirmCancelId === iv.id ? removeInterview(iv.id) : setConfirmCancelId(iv.id)
+                      }
+                      className={`text-meta uppercase tracking-widest cursor-pointer transition-colors duration-200 ${
+                        confirmCancelId === iv.id
+                          ? "text-accent font-semibold"
+                          : "text-muted hover:text-accent"
+                      }`}
+                    >
+                      {confirmCancelId === iv.id
+                        ? lang === "es"
+                          ? "¿Seguro? Quitar"
+                          : "Sure? Remove"
+                        : lang === "es"
+                          ? "Quitar"
+                          : "Remove"}
+                    </button>
+                  )}
+                </div>
+
+                {mine ? (
+                  <>
+                    <textarea
+                      value={draft.text}
+                      onChange={(e) => {
+                        const text = e.target.value
+                        setFeedbackDrafts((prev) => ({ ...prev, [iv.id]: { ...draft, text } }))
+                        setFeedbackSavedId(null)
+                      }}
+                      rows={3}
+                      placeholder={
+                        lang === "es" ? "Cómo le fue en la entrevista." : "How the interview went."
+                      }
+                      className="mt-3 w-full bg-white border border-ink/15 rounded-sm px-4 py-3 text-body text-ink focus:outline-none focus:border-accent"
+                    />
+                    <div className="flex flex-wrap items-center gap-3 mt-4">
+                      <span className="text-meta uppercase tracking-widest text-muted">
+                        {lang === "es" ? "Calificación" : "Rating"}
+                      </span>
+                      {[1, 2, 3, 4].map((n) => {
+                        const on = draft.rating === n
+                        return (
+                          <button
+                            key={n}
+                            type="button"
+                            aria-pressed={on}
+                            // The visible label is a bare digit, which
+                            // announces as "3, pressed" with no hint at
+                            // what was rated or out of what.
+                            aria-label={
+                              lang === "es"
+                                ? `Calificar ${n} de 4 a ${nameOf(iv.candidate)}`
+                                : `Rate ${nameOf(iv.candidate)} ${n} out of 4`
+                            }
+                            onClick={() => {
+                              setFeedbackDrafts((prev) => ({
+                                ...prev,
+                                [iv.id]: { ...draft, rating: on ? null : n },
+                              }))
+                              setFeedbackSavedId(null)
+                            }}
+                            className={`text-body rounded-sm w-10 h-10 border cursor-pointer transition-colors duration-200 ${
+                              on
+                                ? "bg-primary text-white border-primary font-semibold"
+                                : "border-ink/15 text-ink/70 hover:border-primary/50"
+                            }`}
+                          >
+                            {n}
+                          </button>
+                        )
+                      })}
+                      <button
+                        type="button"
+                        onClick={() => commitFeedback(iv.id)}
+                        className="ml-auto text-meta uppercase tracking-widest text-accent hover:text-ink transition-colors duration-200 cursor-pointer"
+                      >
+                        {lang === "es" ? "Guardar" : "Save"}
+                      </button>
+                      {feedbackSavedId === iv.id && (
+                        <span role="status" className="text-meta text-accent">
+                          {lang === "es" ? "Guardado." : "Saved."}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="mt-3">
+                    {iv.feedback_rating != null && (
+                      <span className="text-meta uppercase tracking-widest text-accent">
+                        {lang === "es" ? "Calificación" : "Rating"}: {iv.feedback_rating}/4
+                      </span>
+                    )}
+                    {iv.feedback_text ? (
+                      <p className="text-body text-ink/80 mt-2 whitespace-pre-wrap">
+                        {iv.feedback_text}
+                      </p>
+                    ) : (
+                      <p className="text-body text-muted mt-2">
+                        {lang === "es" ? "Sin notas todavía." : "No notes yet."}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  /** Every member's read of one candidate, in one card. */
+  const consolidatedInterviews = (
+    <div>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-ink/10 pb-3">
+        <h3 className="text-h3 font-semibold text-primary">
+          {lang === "es" ? "Todas las entrevistas" : "All interviews"}
+        </h3>
+        <span className="text-meta uppercase tracking-widest text-muted">
+          {interviewsByCandidate.length}{" "}
+          {plural(
+            interviewsByCandidate.length,
+            lang === "es" ? ["candidato", "candidatos"] : ["candidate", "candidates"],
+          )}
+          {" · "}
+          {noteCount}{" "}
+          {plural(noteCount, lang === "es" ? ["nota", "notas"] : ["note", "notes"])}
+        </span>
+      </div>
+
+      {interviewsByCandidate.length === 0 && (
+        <p className="text-body text-muted mt-5">
+          {lang === "es"
+            ? "Nadie ha añadido entrevistas todavía."
+            : "Nobody has added interviews yet."}
+        </p>
+      )}
+
+      <div className="mt-6 grid grid-cols-1 gap-4">
+        {interviewsByCandidate.map((c) => (
+          <div key={c.candidate} className="bg-white border border-ink/10 rounded-sm px-6 py-5">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <div className="text-body font-semibold text-primary">{nameOf(c.candidate)}</div>
+              <div className="text-meta uppercase tracking-widest text-muted">
+                {c.avg != null ? (
+                  <>
+                    <span className="text-accent font-semibold">{c.avg.toFixed(1)}/4</span>
+                    {" · "}
+                    {c.ratedCount}{" "}
+                    {plural(
+                      c.ratedCount,
+                      lang === "es"
+                        ? ["calificación", "calificaciones"]
+                        : ["rating", "ratings"],
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {c.rows.length}{" "}
+                    {plural(
+                      c.rows.length,
+                      lang === "es"
+                        ? ["entrevistador", "entrevistadores"]
+                        : ["interviewer", "interviewers"],
+                    )}
+                    {" · "}
+                    {lang === "es" ? "sin calificar" : "unrated"}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Rated reads first: a member who wrote something is the reason
+                to open this card, and a run of pending pairings above them
+                buries it. */}
+            <div className="mt-4 space-y-4">
+              {[...c.rows]
+                .sort((a, b) => (b.feedback_rating ?? -1) - (a.feedback_rating ?? -1))
+                .map((iv) => (
+                  <div
+                    key={iv.id}
+                    className="border-t border-ink/10 pt-4 first:border-t-0 first:pt-0"
+                  >
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <span className="text-meta uppercase tracking-widest text-ink/70">
+                        {memberName(iv.member)}
+                        {iv.member === member && (
+                          <span className="text-accent"> · {lang === "es" ? "tú" : "you"}</span>
+                        )}
+                      </span>
+                      {iv.feedback_rating != null ? (
+                        <span className="text-meta font-semibold rounded-sm px-2 py-0.5 bg-primary text-white">
+                          {iv.feedback_rating}/4
+                        </span>
+                      ) : (
+                        <span className="text-meta uppercase tracking-widest text-muted">
+                          {lang === "es" ? "pendiente" : "pending"}
+                        </span>
+                      )}
+                    </div>
+                    {iv.feedback_text && (
+                      <p className="text-body text-ink/80 mt-2 whitespace-pre-wrap">
+                        {iv.feedback_text}
+                      </p>
+                    )}
+                  </div>
+                ))}
+            </div>
           </div>
         ))}
       </div>
@@ -1933,13 +2355,13 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
       </h2>
       <p className="text-body text-muted mt-3 max-w-2xl">
         {lang === "es"
-          ? "Quién habla con quién, y cómo les fue. Cada miembro añade sus propios candidatos y solo puede editar sus propias notas; las de los demás quedan visibles para toda la junta."
-          : "Who's speaking with whom, and how it went. Each member adds their own candidates and can only edit their own notes — everyone else's stay visible to the whole board."}
+          ? "Cada miembro añade sus propios candidatos, escribe su nota y califica de 1 a 4. Todo queda guardado y visible para toda la junta: cambia de vista abajo para leer a otro miembro, o el consolidado para ver a un candidato con todas las lecturas juntas."
+          : "Each member adds their own candidates, writes their note and rates 1 to 4. Everything is saved and visible to the whole board: switch views below to read another member, or the consolidated view to see one candidate with every read together."}
       </p>
 
       <FeatureError show={Boolean(featureErrors.interviews)} lang={lang} />
 
-      {/* Without a name picked, every section below is read-only and there is
+      {/* Without a name picked, every view below is read-only and there is
           no add control anywhere, which reads as a broken tab rather than a
           missing selection. Say so. */}
       {!member && (
@@ -1950,194 +2372,46 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
         </p>
       )}
 
-      {/* Grouped by board member first, candidates second — a read of "who is
-          speaking with whom" is one scroll per member rather than a filter
-          each board member has to build themselves. Every section is visible
-          to everyone (that's the whole point of moving this off one browser's
-          local state and onto the server); only the signed-in member's own
-          section gets an "add a candidate" control and editable feedback. */}
-      <div className="mt-10 space-y-12">
-        {BOARD.map((m) => {
-          const mine = m.slug === member
-          const rows = interviews.filter((iv) => iv.member === m.slug && iv.status !== "canceled")
-          const already = new Set(rows.map((iv) => iv.candidate))
-          const addable = submitted.filter((a) => !already.has(a.slug))
+      {/* One view at a time. Consolidated leads because it is the only view
+          that answers "what does the board think of this candidate"; the rest
+          are one member each, counted so an empty list is visible before you
+          click into it. */}
+      <div className="mt-8 flex flex-wrap gap-2">
+        {(
+          [
+            {
+              key: "consolidated",
+              label: lang === "es" ? "Consolidado" : "Consolidated",
+              count: null,
+            },
+            ...BOARD.map((m) => ({
+              key: m.slug,
+              label: m.slug === member ? `${m.name} · ${lang === "es" ? "tú" : "you"}` : m.name,
+              count: interviewCount(m.slug),
+            })),
+          ] as Array<{ key: string; label: string; count: number | null }>
+        ).map((v) => (
+          <button
+            key={v.key}
+            type="button"
+            aria-pressed={ivView === v.key}
+            onClick={() => setIvView(v.key)}
+            className={`text-meta uppercase tracking-widest rounded-sm px-4 py-2 border cursor-pointer transition-colors duration-200 ${
+              ivView === v.key
+                ? "bg-primary text-white border-primary font-semibold"
+                : "bg-white text-ink/70 border-ink/15 hover:border-primary/50"
+            }`}
+          >
+            {v.label}
+            {v.count != null && (
+              <span className={ivView === v.key ? "text-white/70" : "text-muted"}> {v.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
 
-          return (
-            <div key={m.slug}>
-              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-ink/10 pb-3">
-                <h3 className="text-h3 font-semibold text-primary">{m.name}</h3>
-                <span className="text-meta uppercase tracking-widest text-muted">
-                  {rows.length} {lang === "es" ? "candidatos" : "candidates"}
-                </span>
-              </div>
-
-              {mine && (
-                <div className="mt-5 flex flex-wrap items-center gap-3">
-                  <select
-                    value={bookCandidate}
-                    onChange={(e) => setBookCandidate(e.target.value)}
-                    className="bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink cursor-pointer focus:outline-none focus:border-accent"
-                  >
-                    <option value="">{lang === "es" ? "Añadir un candidato…" : "Add a candidate…"}</option>
-                    {addable.map((a) => (
-                      <option key={a.slug} value={a.slug}>
-                        {a.name}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={submitBooking}
-                    disabled={!bookCandidate || bookBusy}
-                    className="text-meta uppercase tracking-widest rounded-sm px-4 py-2.5 bg-primary text-white cursor-pointer transition-opacity duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {bookBusy ? (lang === "es" ? "Añadiendo" : "Adding") : lang === "es" ? "Añadir" : "Add"}
-                  </button>
-                </div>
-              )}
-              {mine && bookWarnings.length > 0 && (
-                <div className="mt-3 max-w-2xl">
-                  {bookWarnings.map((w) => (
-                    <p key={w} role="alert" className="text-meta text-accent">
-                      {w}
-                    </p>
-                  ))}
-                </div>
-              )}
-
-              {rows.length === 0 && (
-                <p className="text-body text-muted mt-5">
-                  {mine
-                    ? lang === "es"
-                      ? "Todavía no has añadido a nadie."
-                      : "You haven't added anyone yet."
-                    : lang === "es"
-                      ? "Sin candidatos todavía."
-                      : "No candidates yet."}
-                </p>
-              )}
-
-              <div className="mt-6 grid grid-cols-1 gap-4">
-                {rows.map((iv) => {
-                  const draft = feedbackDrafts[iv.id] ?? { text: iv.feedback_text, rating: iv.feedback_rating }
-                  return (
-                    <div key={iv.id} className="bg-white border border-ink/10 rounded-sm px-6 py-5">
-                      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                        <div className="text-body font-semibold text-primary">{nameOf(iv.candidate)}</div>
-                        {mine && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              confirmCancelId === iv.id ? removeInterview(iv.id) : setConfirmCancelId(iv.id)
-                            }
-                            className={`text-meta uppercase tracking-widest cursor-pointer transition-colors duration-200 ${
-                              confirmCancelId === iv.id
-                                ? "text-accent font-semibold"
-                                : "text-muted hover:text-accent"
-                            }`}
-                          >
-                            {confirmCancelId === iv.id
-                              ? lang === "es"
-                                ? "¿Seguro? Quitar"
-                                : "Sure? Remove"
-                              : lang === "es"
-                                ? "Quitar"
-                                : "Remove"}
-                          </button>
-                        )}
-                      </div>
-
-                      {mine ? (
-                        <>
-                          <textarea
-                            value={draft.text}
-                            onChange={(e) => {
-                              const text = e.target.value
-                              setFeedbackDrafts((prev) => ({ ...prev, [iv.id]: { ...draft, text } }))
-                              setFeedbackSavedId(null)
-                            }}
-                            rows={3}
-                            placeholder={
-                              lang === "es" ? "Cómo le fue en la entrevista." : "How the interview went."
-                            }
-                            className="mt-3 w-full bg-white border border-ink/15 rounded-sm px-4 py-3 text-body text-ink focus:outline-none focus:border-accent"
-                          />
-                          <div className="flex flex-wrap items-center gap-3 mt-4">
-                            <span className="text-meta uppercase tracking-widest text-muted">
-                              {lang === "es" ? "Calificación" : "Rating"}
-                            </span>
-                            {[1, 2, 3, 4].map((n) => {
-                              const on = draft.rating === n
-                              return (
-                                <button
-                                  key={n}
-                                  type="button"
-                                  aria-pressed={on}
-                                  // The visible label is a bare digit, which
-                                  // announces as "3, pressed" with no hint at
-                                  // what was rated or out of what.
-                                  aria-label={
-                                    lang === "es"
-                                      ? `Calificar ${n} de 4 a ${nameOf(iv.candidate)}`
-                                      : `Rate ${nameOf(iv.candidate)} ${n} out of 4`
-                                  }
-                                  onClick={() => {
-                                    setFeedbackDrafts((prev) => ({
-                                      ...prev,
-                                      [iv.id]: { ...draft, rating: on ? null : n },
-                                    }))
-                                    setFeedbackSavedId(null)
-                                  }}
-                                  className={`text-body rounded-sm w-10 h-10 border cursor-pointer transition-colors duration-200 ${
-                                    on
-                                      ? "bg-primary text-white border-primary font-semibold"
-                                      : "border-ink/15 text-ink/70 hover:border-primary/50"
-                                  }`}
-                                >
-                                  {n}
-                                </button>
-                              )
-                            })}
-                            <button
-                              type="button"
-                              onClick={() => commitFeedback(iv.id)}
-                              className="ml-auto text-meta uppercase tracking-widest text-accent hover:text-ink transition-colors duration-200 cursor-pointer"
-                            >
-                              {lang === "es" ? "Guardar" : "Save"}
-                            </button>
-                            {feedbackSavedId === iv.id && (
-                              <span role="status" className="text-meta text-accent">
-                                {lang === "es" ? "Guardado." : "Saved."}
-                              </span>
-                            )}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="mt-3">
-                          {iv.feedback_rating != null && (
-                            <span className="text-meta uppercase tracking-widest text-accent">
-                              {lang === "es" ? "Calificación" : "Rating"}: {iv.feedback_rating}/4
-                            </span>
-                          )}
-                          {iv.feedback_text ? (
-                            <p className="text-body text-ink/80 mt-2 whitespace-pre-wrap">
-                              {iv.feedback_text}
-                            </p>
-                          ) : (
-                            <p className="text-body text-muted mt-2">
-                              {lang === "es" ? "Sin notas todavía." : "No notes yet."}
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
+      <div className="mt-10">
+        {ivView === "consolidated" ? consolidatedInterviews : memberInterviews(ivView)}
       </div>
     </div>
   )
