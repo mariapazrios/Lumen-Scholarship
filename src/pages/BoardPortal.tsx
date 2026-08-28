@@ -177,12 +177,12 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   // Per-interview feedback drafts, keyed by interview id, so editing one
   // card's textarea can't bleed into another's before either is saved.
   const [feedbackDrafts, setFeedbackDrafts] = useState<
-    Record<number, { text: string; rating: number | null }>
+    Record<string, { text: string; rating: number | null }>
   >({})
-  const [feedbackSavedId, setFeedbackSavedId] = useState<number | null>(null)
-  // Arms the second click on "Cancel", same two-click confirm as "Delete my
-  // rating" above: canceling a booked interview isn't reversible in the UI.
-  const [confirmCancelId, setConfirmCancelId] = useState<number | null>(null)
+  const [feedbackSavedId, setFeedbackSavedId] = useState<string | null>(null)
+  // Arms the second click on "Remove", same two-click confirm as "Delete my
+  // rating" above: removing a pairing isn't reversible in the UI.
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null)
   // Board meeting minutes, fetched from the server rather than bundled: they
   // name candidates alongside rejection reasons and a scholar's diagnosis.
   const [boardNotes, setBoardNotes] = useState<BoardNote[]>([])
@@ -364,6 +364,15 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     setConfirmDelete(false)
     setAvailDraft(new Set(availability[slug] ?? []))
     setAvailSaved(false)
+    // The interview-notes add control only ever renders under the signed-in
+    // member, so a candidate left selected but not added carried over to
+    // whoever you switched to — with their Add button live, one stray click
+    // filed that candidate under the wrong person. Same reason confirmDelete
+    // and confirmCancelId reset here: nothing armed for one identity should
+    // still be armed for the next.
+    setBookCandidate("")
+    setBookWarnings([])
+    setConfirmCancelId(null)
   }
 
   const commitAvailability = async () => {
@@ -418,7 +427,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     }
   }
 
-  const commitFeedback = async (id: number) => {
+  const commitFeedback = async (id: string) => {
     const draft = feedbackDrafts[id]
     if (!draft) return
     setFeedbackSavedId(null)
@@ -431,9 +440,10 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     }
   }
 
-  const removeInterview = async (id: number) => {
+  const removeInterview = async (id: string) => {
     try {
       await cancelInterview(id)
+      setConfirmCancelId(null)
       await refreshInterviews()
     } catch (e) {
       if (e instanceof SessionExpired) onSessionLost()
@@ -1929,6 +1939,17 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
       <FeatureError show={Boolean(featureErrors.interviews)} lang={lang} />
 
+      {/* Without a name picked, every section below is read-only and there is
+          no add control anywhere, which reads as a broken tab rather than a
+          missing selection. Say so. */}
+      {!member && (
+        <p className="text-body text-accent mt-6 max-w-2xl">
+          {lang === "es"
+            ? "Elige tu nombre arriba para añadir candidatos y escribir tus notas."
+            : "Pick your name above to add candidates and write your own notes."}
+        </p>
+      )}
+
       {/* Grouped by board member first, candidates second — a read of "who is
           speaking with whom" is one scroll per member rather than a filter
           each board member has to build themselves. Every section is visible
@@ -2053,6 +2074,14 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                                   key={n}
                                   type="button"
                                   aria-pressed={on}
+                                  // The visible label is a bare digit, which
+                                  // announces as "3, pressed" with no hint at
+                                  // what was rated or out of what.
+                                  aria-label={
+                                    lang === "es"
+                                      ? `Calificar ${n} de 4 a ${nameOf(iv.candidate)}`
+                                      : `Rate ${nameOf(iv.candidate)} ${n} out of 4`
+                                  }
                                   onClick={() => {
                                     setFeedbackDrafts((prev) => ({
                                       ...prev,

@@ -1,10 +1,20 @@
 import { SessionExpired } from "./rubric"
 
 export type Interview = {
-  id: number
+  /**
+   * A string, not a number: the column is BIGSERIAL and Postgres serialises
+   * 64-bit ints as JSON strings to avoid the float53 precision cliff. Typing
+   * it `number` was a lie that happened to work — object keys stringify and
+   * every comparison comes from this same field — but it left `iv.id === 1`
+   * silently false for anyone who tried it later.
+   */
+  id: string
   candidate: string
   member: string
-  /** ISO instant. Format with formatInterviewTime() for a Bogotá-local display. */
+  /**
+   * ISO instant. Defaults to when the pairing was added: the notes tab does
+   * not collect a time, so treat this as a created-at, not an appointment.
+   */
   scheduled_at: string
   duration_min: number
   location: string
@@ -56,7 +66,7 @@ export async function bookInterview(input: {
 }
 
 export async function saveInterviewFeedback(
-  id: number,
+  id: string,
   feedbackText: string,
   feedbackRating: number | null,
 ) {
@@ -69,7 +79,7 @@ export async function saveInterviewFeedback(
   if (!res.ok) throw new Error(`feedback save failed: ${res.status}`)
 }
 
-export async function cancelInterview(id: number) {
+export async function cancelInterview(id: string) {
   const res = await fetch("/api/interviews", {
     method: "DELETE",
     headers: { "content-type": "application/json" },
@@ -77,16 +87,4 @@ export async function cancelInterview(id: number) {
   })
   if (res.status === 401) throw new SessionExpired()
   if (!res.ok) throw new Error(`interview cancel failed: ${res.status}`)
-}
-
-/** Renders an ISO instant as a Bogotá-local date and time, regardless of the reader's own timezone. */
-export function formatInterviewTime(iso: string, lang: "en" | "es"): string {
-  return new Date(iso).toLocaleString(lang === "es" ? "es-CO" : "en-US", {
-    timeZone: "America/Bogota",
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "2-digit",
-  })
 }

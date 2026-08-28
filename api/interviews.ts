@@ -77,6 +77,25 @@ export default async function handler(req: Request): Promise<Response> {
     const candidateName = found[0].name as string
     const candidateEmail = found[0].email as string
 
+    // Adding a pairing is idempotent: a live row for this member and candidate
+    // already existing means return it, not stack a second one. The notes tab
+    // hides already-added candidates from its picker, so reaching here twice
+    // takes a second tab or a stale page — but two cards for one pairing would
+    // split that member's notes in half with no way to tell which is current.
+    //
+    // Deliberately NOT a UNIQUE (candidate, member) constraint: removal is a
+    // soft cancel that leaves the row in place, so a unique pair would make
+    // remove-then-re-add fail at the database with a 500. Scoping the check to
+    // status='scheduled' keeps re-adding a removed candidate working.
+    const { rows: live } = await sql`
+      SELECT id, candidate, member, scheduled_at, duration_min, location, status,
+             feedback_text, feedback_verdict, feedback_rating, created_by, updated_at
+      FROM lumen_interviews
+      WHERE candidate = ${candidate} AND member = ${member} AND status = 'scheduled'
+      LIMIT 1
+    `
+    if (live.length > 0) return json({ interview: live[0], warnings: [] })
+
     const { rows: inserted } = await sql`
       INSERT INTO lumen_interviews
         (candidate, member, scheduled_at, duration_min, location, created_by, updated_at)
