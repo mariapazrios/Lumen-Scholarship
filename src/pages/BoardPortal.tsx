@@ -20,7 +20,6 @@ import {
   isWeekend,
   saveAvailability,
   slotKey,
-  slotOfDateTime,
   slotsInCell,
   type Granularity,
   type AvailabilityStore,
@@ -30,10 +29,8 @@ import {
   bookInterview,
   cancelInterview,
   fetchInterviews,
-  formatInterviewTime,
   saveInterviewFeedback,
   type Interview,
-  type Verdict,
 } from "../lib/interviews"
 import {
   COMMENT_PLACEHOLDER,
@@ -168,21 +165,19 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   // resolution and never converts or drops anything.
   const [granularity, setGranularity] = useState<Granularity>(60)
 
-  // Booked interviews: the group calendar, plus the booking form's own draft
-  // fields (kept separate from `draft`/`availDraft` since this is a third,
-  // unrelated form on the same page).
+  // Interview notes: who each board member is speaking with, plus the "add a
+  // candidate to my list" draft (kept separate from `draft`/`availDraft`
+  // since this is a third, unrelated form on the same page). There's no
+  // interviewer picker any more — the add control only appears under the
+  // signed-in member's own section, so `member` is always who it adds to.
   const [interviews, setInterviews] = useState<Interview[]>([])
   const [bookCandidate, setBookCandidate] = useState("")
-  const [bookMember, setBookMember] = useState("")
-  const [bookWhen, setBookWhen] = useState("")
-  const [bookDuration, setBookDuration] = useState(30)
-  const [bookLocation, setBookLocation] = useState("")
   const [bookWarnings, setBookWarnings] = useState<string[]>([])
   const [bookBusy, setBookBusy] = useState(false)
   // Per-interview feedback drafts, keyed by interview id, so editing one
   // card's textarea can't bleed into another's before either is saved.
   const [feedbackDrafts, setFeedbackDrafts] = useState<
-    Record<number, { text: string; verdict: Verdict | null }>
+    Record<number, { text: string; rating: number | null }>
   >({})
   const [feedbackSavedId, setFeedbackSavedId] = useState<number | null>(null)
   // Arms the second click on "Cancel", same two-click confirm as "Delete my
@@ -258,7 +253,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
         setInterviews(ivs)
         setFeedbackDrafts(
           Object.fromEntries(
-            ivs.map((iv) => [iv.id, { text: iv.feedback_text, verdict: iv.feedback_verdict }]),
+            ivs.map((iv) => [iv.id, { text: iv.feedback_text, rating: iv.feedback_rating }]),
           ),
         )
       })
@@ -393,34 +388,31 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     setFeedbackDrafts((prev) => {
       const next = { ...prev }
       for (const iv of ivs) {
-        next[iv.id] ??= { text: iv.feedback_text, verdict: iv.feedback_verdict }
+        next[iv.id] ??= { text: iv.feedback_text, rating: iv.feedback_rating }
       }
       return next
     })
   }
 
+  /** Adds a candidate to the signed-in member's own interview-notes list. */
   const submitBooking = async () => {
-    const memberEntry = BOARD.find((m) => m.slug === bookMember)
-    if (!bookCandidate || !bookMember || !memberEntry || !bookWhen || bookBusy) return
+    const memberEntry = BOARD.find((m) => m.slug === member)
+    if (!bookCandidate || !member || !memberEntry || bookBusy) return
     setBookBusy(true)
     setBookWarnings([])
     try {
       const { warnings } = await bookInterview({
         candidate: bookCandidate,
-        member: bookMember,
+        member,
         memberName: memberEntry.name,
-        scheduledAtBogota: bookWhen,
-        durationMin: bookDuration,
-        location: bookLocation,
         createdBy: member,
       })
       setBookWarnings(warnings)
-      setBookWhen("")
-      setBookLocation("")
+      setBookCandidate("")
       await refreshInterviews()
     } catch (e) {
       if (e instanceof SessionExpired) onSessionLost()
-      else setBookWarnings([lang === "es" ? "No se pudo agendar." : "Could not book."])
+      else setBookWarnings([lang === "es" ? "No se pudo añadir." : "Could not add."])
     } finally {
       setBookBusy(false)
     }
@@ -431,7 +423,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     if (!draft) return
     setFeedbackSavedId(null)
     try {
-      await saveInterviewFeedback(id, draft.text, draft.verdict)
+      await saveInterviewFeedback(id, draft.text, draft.rating)
       await refreshInterviews()
       setFeedbackSavedId(id)
     } catch (e) {
@@ -1882,14 +1874,6 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   )
 
 
-  const memberNameOf = (slug: string) => BOARD.find((m) => m.slug === slug)?.name ?? slug
-  // Checked against the exact hour the booking falls in, not just its day: the
-  // poll is hour-granular now, so "free on Tuesday" is no longer the question.
-  const memberFreeAtBookedSlot =
-    bookMember && bookWhen.length >= 16
-      ? (availability[bookMember] ?? []).includes(slotOfDateTime(bookWhen))
-      : null
-
   const boardNotesContent = (
     <div className="max-w-8xl mx-auto px-4 sm:px-6 md:px-10 lg:px-16 py-12 md:py-16">
       <div className="text-meta uppercase tracking-widest text-muted mb-3">
@@ -1935,277 +1919,196 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
         {lang === "es" ? "Entrevistas" : "Interviews"}
       </div>
       <h2 className="text-h3 font-semibold text-primary">
-        {lang === "es" ? "Agendar una entrevista." : "Schedule an interview."}
+        {lang === "es" ? "Notas de entrevista." : "Interview notes."}
       </h2>
+      <p className="text-body text-muted mt-3 max-w-2xl">
+        {lang === "es"
+          ? "Quién habla con quién, y cómo les fue. Cada miembro añade sus propios candidatos y solo puede editar sus propias notas; las de los demás quedan visibles para toda la junta."
+          : "Who's speaking with whom, and how it went. Each member adds their own candidates and can only edit their own notes — everyone else's stay visible to the whole board."}
+      </p>
 
       <FeatureError show={Boolean(featureErrors.interviews)} lang={lang} />
 
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-4xl">
-        <label className="block">
-          <span className="text-meta uppercase tracking-widest text-muted">
-            {lang === "es" ? "Candidato" : "Candidate"}
-          </span>
-          <select
-            value={bookCandidate}
-            onChange={(e) => setBookCandidate(e.target.value)}
-            className="mt-1.5 w-full bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink cursor-pointer focus:outline-none focus:border-accent"
-          >
-            <option value="">—</option>
-            {submitted.map((a) => (
-              <option key={a.slug} value={a.slug}>
-                {a.name}
-              </option>
-            ))}
-          </select>
-        </label>
+      {/* Grouped by board member first, candidates second — a read of "who is
+          speaking with whom" is one scroll per member rather than a filter
+          each board member has to build themselves. Every section is visible
+          to everyone (that's the whole point of moving this off one browser's
+          local state and onto the server); only the signed-in member's own
+          section gets an "add a candidate" control and editable feedback. */}
+      <div className="mt-10 space-y-12">
+        {BOARD.map((m) => {
+          const mine = m.slug === member
+          const rows = interviews.filter((iv) => iv.member === m.slug && iv.status !== "canceled")
+          const already = new Set(rows.map((iv) => iv.candidate))
+          const addable = submitted.filter((a) => !already.has(a.slug))
 
-        <label className="block">
-          <span className="text-meta uppercase tracking-widest text-muted">
-            {lang === "es" ? "Entrevistador" : "Interviewer"}
-          </span>
-          <select
-            value={bookMember}
-            onChange={(e) => setBookMember(e.target.value)}
-            className="mt-1.5 w-full bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink cursor-pointer focus:outline-none focus:border-accent"
-          >
-            <option value="">—</option>
-            {BOARD.map((m) => (
-              <option key={m.slug} value={m.slug}>
-                {m.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="block">
-          <span className="text-meta uppercase tracking-widest text-muted">
-            {lang === "es" ? "Hora (Bogotá)" : "Time (Bogotá)"}
-          </span>
-          <input
-            type="datetime-local"
-            value={bookWhen}
-            onChange={(e) => setBookWhen(e.target.value)}
-            className="mt-1.5 w-full bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink focus:outline-none focus:border-accent"
-          />
-        </label>
-
-        <label className="block">
-          <span className="text-meta uppercase tracking-widest text-muted">
-            {lang === "es" ? "Duración" : "Duration"}
-          </span>
-          <select
-            value={bookDuration}
-            onChange={(e) => setBookDuration(Number(e.target.value))}
-            className="mt-1.5 w-full bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink cursor-pointer focus:outline-none focus:border-accent"
-          >
-            {[30, 45, 60].map((n) => (
-              <option key={n} value={n}>
-                {n} {lang === "es" ? "min" : "min"}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="block">
-          <span className="text-meta uppercase tracking-widest text-muted">
-            {lang === "es" ? "Enlace o lugar" : "Link or location"}
-          </span>
-          <input
-            type="text"
-            value={bookLocation}
-            onChange={(e) => setBookLocation(e.target.value)}
-            placeholder={lang === "es" ? "Zoom, Meet, oficina…" : "Zoom, Meet, office…"}
-            className="mt-1.5 w-full bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink focus:outline-none focus:border-accent"
-          />
-        </label>
-      </div>
-
-      {memberFreeAtBookedSlot === false && (
-        <p className="text-meta text-accent mt-3">
-          {lang === "es"
-            ? `${memberNameOf(bookMember)} no marcó esa hora como disponible.`
-            : `${memberNameOf(bookMember)} did not mark that hour as available.`}
-        </p>
-      )}
-      {memberFreeAtBookedSlot === true && (
-        <p className="text-meta text-muted mt-3">
-          {lang === "es"
-            ? `${memberNameOf(bookMember)} marcó esa hora como disponible.`
-            : `${memberNameOf(bookMember)} marked that hour as available.`}
-        </p>
-      )}
-
-      <div className="mt-6 flex flex-wrap items-center gap-4">
-        <button
-          type="button"
-          onClick={submitBooking}
-          disabled={!bookCandidate || !bookMember || !bookWhen || bookBusy}
-          className="text-body font-semibold rounded-sm px-6 py-3 bg-primary text-white cursor-pointer transition-opacity duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {bookBusy
-            ? lang === "es"
-              ? "Agendando"
-              : "Booking"
-            : lang === "es"
-              ? "Agendar entrevista"
-              : "Book interview"}
-        </button>
-        {!member && (
-          <span className="text-meta text-muted">
-            {lang === "es"
-              ? "Elige tu nombre arriba para registrar quién agendó."
-              : "Pick your name above to record who booked this."}
-          </span>
-        )}
-      </div>
-
-      {bookWarnings.length > 0 && (
-        <div className="mt-4 max-w-2xl">
-          {bookWarnings.map((w) => (
-            <p key={w} role="alert" className="text-meta text-accent">
-              {w}
-            </p>
-          ))}
-        </div>
-      )}
-
-      {/* The group calendar: everyone's booked interviews in one place, oldest
-          first, so "who is interviewing whom, when" is one scroll rather than
-          a question each board member has to ask separately. */}
-      <div className="mt-16">
-        <div className="text-meta uppercase tracking-widest text-muted mb-3">
-          {lang === "es" ? "Calendario del grupo" : "Group calendar"}
-        </div>
-        <h3 className="text-h3 font-semibold text-primary">
-          {lang === "es" ? "Quién entrevista a quién, y cuándo." : "Who's interviewing whom, and when."}
-        </h3>
-
-        <div className="mt-8 grid grid-cols-1 gap-4">
-          {interviews.length === 0 && (
-            <p className="text-body text-muted">
-              {lang === "es" ? "Todavía no hay entrevistas agendadas." : "No interviews booked yet."}
-            </p>
-          )}
-          {interviews.map((iv) => {
-            const draft = feedbackDrafts[iv.id] ?? { text: iv.feedback_text, verdict: iv.feedback_verdict }
-            const canceled = iv.status === "canceled"
-            return (
-              <div
-                key={iv.id}
-                className={`bg-white border border-ink/10 rounded-sm overflow-hidden ${
-                  canceled ? "opacity-50" : ""
-                }`}
-              >
-                <div className="bg-surface px-6 py-5 border-b border-ink/10">
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                    <div className="text-body font-semibold text-primary">
-                      {nameOf(iv.candidate)}
-                      <span className="text-ink/40 font-normal"> × </span>
-                      {memberNameOf(iv.member)}
-                    </div>
-                    <div className="text-meta uppercase tracking-widest text-accent">
-                      {formatInterviewTime(iv.scheduled_at, lang)} · {iv.duration_min} min
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
-                    {iv.location && <div className="text-meta text-ink/70">{iv.location}</div>}
-                    {canceled && (
-                      <span className="text-[10px] uppercase tracking-widest font-semibold rounded-full px-2.5 py-1 bg-ink/10 text-muted">
-                        {lang === "es" ? "Cancelada" : "Canceled"}
-                      </span>
-                    )}
-                    {!canceled && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          confirmCancelId === iv.id ? removeInterview(iv.id) : setConfirmCancelId(iv.id)
-                        }
-                        className={`ml-auto text-meta uppercase tracking-widest cursor-pointer transition-colors duration-200 ${
-                          confirmCancelId === iv.id
-                            ? "text-accent font-semibold"
-                            : "text-muted hover:text-accent"
-                        }`}
-                      >
-                        {confirmCancelId === iv.id
-                          ? lang === "es"
-                            ? "¿Seguro? Cancelar"
-                            : "Sure? Cancel"
-                          : lang === "es"
-                            ? "Cancelar"
-                            : "Cancel"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="px-6 py-5">
-                  <div className="text-meta uppercase tracking-widest text-muted mb-3">
-                    {lang === "es" ? "Retroalimentación" : "Feedback"}
-                  </div>
-                  <textarea
-                    value={draft.text}
-                    onChange={(e) => {
-                      const text = e.target.value
-                      setFeedbackDrafts((prev) => ({ ...prev, [iv.id]: { ...draft, text } }))
-                      setFeedbackSavedId(null)
-                    }}
-                    rows={3}
-                    placeholder={
-                      lang === "es"
-                        ? "Cómo le fue en la entrevista."
-                        : "How the interview went."
-                    }
-                    className="w-full bg-white border border-ink/15 rounded-sm px-4 py-3 text-body text-ink focus:outline-none focus:border-accent"
-                  />
-                  <div className="flex flex-wrap items-center gap-3 mt-4">
-                    {(
-                      [
-                        { key: "yes" as const, label: { en: "Yes", es: "Sí" } },
-                        { key: "maybe" as const, label: { en: "Maybe", es: "Tal vez" } },
-                        { key: "no" as const, label: { en: "No", es: "No" } },
-                      ] as const
-                    ).map((v) => {
-                      const on = draft.verdict === v.key
-                      return (
-                        <button
-                          key={v.key}
-                          type="button"
-                          aria-pressed={on}
-                          onClick={() => {
-                            setFeedbackDrafts((prev) => ({
-                              ...prev,
-                              [iv.id]: { ...draft, verdict: on ? null : v.key },
-                            }))
-                            setFeedbackSavedId(null)
-                          }}
-                          className={`text-body rounded-sm px-4 py-2 border cursor-pointer transition-colors duration-200 ${
-                            on
-                              ? "bg-primary text-white border-primary font-semibold"
-                              : "border-ink/15 text-ink/70 hover:border-primary/50"
-                          }`}
-                        >
-                          {lang === "es" ? v.label.es : v.label.en}
-                        </button>
-                      )
-                    })}
-                    <button
-                      type="button"
-                      onClick={() => commitFeedback(iv.id)}
-                      className="ml-auto text-meta uppercase tracking-widest text-accent hover:text-ink transition-colors duration-200 cursor-pointer"
-                    >
-                      {lang === "es" ? "Guardar" : "Save"}
-                    </button>
-                    {feedbackSavedId === iv.id && (
-                      <span role="status" className="text-meta text-accent">
-                        {lang === "es" ? "Guardado." : "Saved."}
-                      </span>
-                    )}
-                  </div>
-                </div>
+          return (
+            <div key={m.slug}>
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-ink/10 pb-3">
+                <h3 className="text-h3 font-semibold text-primary">{m.name}</h3>
+                <span className="text-meta uppercase tracking-widest text-muted">
+                  {rows.length} {lang === "es" ? "candidatos" : "candidates"}
+                </span>
               </div>
-            )
-          })}
-        </div>
+
+              {mine && (
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <select
+                    value={bookCandidate}
+                    onChange={(e) => setBookCandidate(e.target.value)}
+                    className="bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink cursor-pointer focus:outline-none focus:border-accent"
+                  >
+                    <option value="">{lang === "es" ? "Añadir un candidato…" : "Add a candidate…"}</option>
+                    {addable.map((a) => (
+                      <option key={a.slug} value={a.slug}>
+                        {a.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={submitBooking}
+                    disabled={!bookCandidate || bookBusy}
+                    className="text-meta uppercase tracking-widest rounded-sm px-4 py-2.5 bg-primary text-white cursor-pointer transition-opacity duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {bookBusy ? (lang === "es" ? "Añadiendo" : "Adding") : lang === "es" ? "Añadir" : "Add"}
+                  </button>
+                </div>
+              )}
+              {mine && bookWarnings.length > 0 && (
+                <div className="mt-3 max-w-2xl">
+                  {bookWarnings.map((w) => (
+                    <p key={w} role="alert" className="text-meta text-accent">
+                      {w}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              {rows.length === 0 && (
+                <p className="text-body text-muted mt-5">
+                  {mine
+                    ? lang === "es"
+                      ? "Todavía no has añadido a nadie."
+                      : "You haven't added anyone yet."
+                    : lang === "es"
+                      ? "Sin candidatos todavía."
+                      : "No candidates yet."}
+                </p>
+              )}
+
+              <div className="mt-6 grid grid-cols-1 gap-4">
+                {rows.map((iv) => {
+                  const draft = feedbackDrafts[iv.id] ?? { text: iv.feedback_text, rating: iv.feedback_rating }
+                  return (
+                    <div key={iv.id} className="bg-white border border-ink/10 rounded-sm px-6 py-5">
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                        <div className="text-body font-semibold text-primary">{nameOf(iv.candidate)}</div>
+                        {mine && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              confirmCancelId === iv.id ? removeInterview(iv.id) : setConfirmCancelId(iv.id)
+                            }
+                            className={`text-meta uppercase tracking-widest cursor-pointer transition-colors duration-200 ${
+                              confirmCancelId === iv.id
+                                ? "text-accent font-semibold"
+                                : "text-muted hover:text-accent"
+                            }`}
+                          >
+                            {confirmCancelId === iv.id
+                              ? lang === "es"
+                                ? "¿Seguro? Quitar"
+                                : "Sure? Remove"
+                              : lang === "es"
+                                ? "Quitar"
+                                : "Remove"}
+                          </button>
+                        )}
+                      </div>
+
+                      {mine ? (
+                        <>
+                          <textarea
+                            value={draft.text}
+                            onChange={(e) => {
+                              const text = e.target.value
+                              setFeedbackDrafts((prev) => ({ ...prev, [iv.id]: { ...draft, text } }))
+                              setFeedbackSavedId(null)
+                            }}
+                            rows={3}
+                            placeholder={
+                              lang === "es" ? "Cómo le fue en la entrevista." : "How the interview went."
+                            }
+                            className="mt-3 w-full bg-white border border-ink/15 rounded-sm px-4 py-3 text-body text-ink focus:outline-none focus:border-accent"
+                          />
+                          <div className="flex flex-wrap items-center gap-3 mt-4">
+                            <span className="text-meta uppercase tracking-widest text-muted">
+                              {lang === "es" ? "Calificación" : "Rating"}
+                            </span>
+                            {[1, 2, 3, 4].map((n) => {
+                              const on = draft.rating === n
+                              return (
+                                <button
+                                  key={n}
+                                  type="button"
+                                  aria-pressed={on}
+                                  onClick={() => {
+                                    setFeedbackDrafts((prev) => ({
+                                      ...prev,
+                                      [iv.id]: { ...draft, rating: on ? null : n },
+                                    }))
+                                    setFeedbackSavedId(null)
+                                  }}
+                                  className={`text-body rounded-sm w-10 h-10 border cursor-pointer transition-colors duration-200 ${
+                                    on
+                                      ? "bg-primary text-white border-primary font-semibold"
+                                      : "border-ink/15 text-ink/70 hover:border-primary/50"
+                                  }`}
+                                >
+                                  {n}
+                                </button>
+                              )
+                            })}
+                            <button
+                              type="button"
+                              onClick={() => commitFeedback(iv.id)}
+                              className="ml-auto text-meta uppercase tracking-widest text-accent hover:text-ink transition-colors duration-200 cursor-pointer"
+                            >
+                              {lang === "es" ? "Guardar" : "Save"}
+                            </button>
+                            {feedbackSavedId === iv.id && (
+                              <span role="status" className="text-meta text-accent">
+                                {lang === "es" ? "Guardado." : "Saved."}
+                              </span>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="mt-3">
+                          {iv.feedback_rating != null && (
+                            <span className="text-meta uppercase tracking-widest text-accent">
+                              {lang === "es" ? "Calificación" : "Rating"}: {iv.feedback_rating}/4
+                            </span>
+                          )}
+                          {iv.feedback_text ? (
+                            <p className="text-body text-ink/80 mt-2 whitespace-pre-wrap">
+                              {iv.feedback_text}
+                            </p>
+                          ) : (
+                            <p className="text-body text-muted mt-2">
+                              {lang === "es" ? "Sin notas todavía." : "No notes yet."}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -2284,7 +2187,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 { key: "discuss", label: { en: "To discuss", es: "Para discutir" } },
                 { key: "board-notes", label: { en: "Board notes", es: "Notas de la junta" } },
                 { key: "availability", label: { en: "Availability", es: "Disponibilidad" } },
-                { key: "interviews", label: { en: "Interviews", es: "Entrevistas" } },
+                { key: "interviews", label: { en: "Interview notes", es: "Notas de entrevista" } },
               ] as const
             ).map((t) => (
               <button

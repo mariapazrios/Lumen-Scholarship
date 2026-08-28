@@ -6,17 +6,17 @@ import { ensureInterviewsTable } from "./_ensure"
 
 export const config = { runtime: "edge" }
 
-const VERDICTS = new Set(["yes", "no", "maybe"])
-
 /**
- * Booked interviews, board only: schedule one, list the group calendar, add
- * post-interview feedback, or cancel.
+ * Interview notes, board only: pair a member with a candidate they're
+ * speaking with, list everyone's pairings, add post-interview feedback, or
+ * remove a pairing.
  *
- * POST creates the appointment first and only then tries to email the two
- * calendar invites — a Resend outage or a board member with no email on file
- * must not stop the interview from actually getting booked. Any send
- * failures come back in the response as warnings, not a request failure,
- * same as audit logging never blocking the operation it is logging.
+ * POST creates the pairing first and only then tries to email calendar
+ * invites when a time was actually supplied — a Resend outage or a board
+ * member with no email on file must not stop the pairing from being
+ * recorded. Any send failures come back in the response as warnings, not a
+ * request failure, same as audit logging never blocking the operation it is
+ * logging.
  */
 export default async function handler(req: Request): Promise<Response> {
   const role = await readSession(req)
@@ -26,7 +26,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (req.method === "GET") {
     const { rows } = await sql`
       SELECT id, candidate, member, scheduled_at, duration_min, location, status,
-             feedback_text, feedback_verdict, created_by, updated_at
+             feedback_text, feedback_verdict, feedback_rating, created_by, updated_at
       FROM lumen_interviews
       ORDER BY scheduled_at ASC
     `
@@ -50,14 +50,21 @@ export default async function handler(req: Request): Promise<Response> {
     }
 
     const { candidate, member, memberName, scheduledAtBogota, createdBy } = body
-    if (!candidate || !member || !memberName || !scheduledAtBogota) {
+    if (!candidate || !member || !memberName) {
       return json({ error: "bad request" }, { status: 400 })
     }
-    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(scheduledAtBogota)) {
-      return json({ error: "bad datetime" }, { status: 400 })
+    // A time is optional now: the Interview Notes tab only records who is
+    // speaking with whom, not when — actual scheduling happens off-site. When
+    // a caller does supply one (e.g. a future booking flow), it's still
+    // validated and still triggers calendar invites below.
+    let start = new Date()
+    if (scheduledAtBogota != null) {
+      if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(scheduledAtBogota)) {
+        return json({ error: "bad datetime" }, { status: 400 })
+      }
+      start = new Date(`${scheduledAtBogota}:00-05:00`)
+      if (Number.isNaN(start.getTime())) return json({ error: "bad datetime" }, { status: 400 })
     }
-    const start = new Date(`${scheduledAtBogota}:00-05:00`)
-    if (Number.isNaN(start.getTime())) return json({ error: "bad datetime" }, { status: 400 })
 
     const durationMin = Number.isFinite(body.durationMin) ? Number(body.durationMin) : 30
     const location = (body.location ?? "").slice(0, 500)
@@ -77,12 +84,13 @@ export default async function handler(req: Request): Promise<Response> {
         (${candidate}, ${member}, ${start.toISOString()}, ${durationMin}, ${location},
          ${createdBy ?? ""}, NOW())
       RETURNING id, candidate, member, scheduled_at, duration_min, location, status,
-                feedback_text, feedback_verdict, created_by, updated_at
+                feedback_text, feedback_verdict, feedback_rating, created_by, updated_at
     `
     const interview = inserted[0]
 
-    // Best-effort invites. A missing address or a Resend failure is reported
-    // back, not thrown: the interview above is already booked either way.
+    // Best-effort invites, and only when a caller actually supplied a time —
+    // the Interview Notes tab doesn't collect one, and an ICS invite for the
+    // moment the pairing happened to be added would be actively wrong.
     const warnings: string[] = []
     const memberMail = boardEmail(member)
     const summary = `Entrevista Beca Lumen: ${candidateName} con ${memberName}`
@@ -95,13 +103,20 @@ export default async function handler(req: Request): Promise<Response> {
       .filter(Boolean)
       .join("\n")
 
-    const attendees = [
-      candidateEmail ? { name: candidateName, email: candidateEmail } : null,
-      memberMail ? { name: memberName, email: memberMail } : null,
-    ].filter((a): a is { name: string; email: string } => a !== null)
+    const attendees =
+      scheduledAtBogota == null
+        ? []
+        : [
+            candidateEmail ? { name: candidateName, email: candidateEmail } : null,
+            memberMail ? { name: memberName, email: memberMail } : null,
+          ].filter((a): a is { name: string; email: string } => a !== null)
 
-    if (!candidateEmail) warnings.push("candidate has no email on file, no invite sent to them")
-    if (!memberMail) warnings.push(`no email on file for board member "${member}" (set BOARD_EMAILS)`)
+    if (scheduledAtBogota != null && !candidateEmail) {
+      warnings.push("candidate has no email on file, no invite sent to them")
+    }
+    if (scheduledAtBogota != null && !memberMail) {
+      warnings.push(`no email on file for board member "${member}" (set BOARD_EMAILS)`)
+    }
 
     if (attendees.length > 0 && process.env.RESEND_API_KEY && process.env.EMAIL_FROM) {
       const ics = buildIcs({
@@ -134,7 +149,7 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   if (req.method === "PATCH") {
-    let body: { id?: number; feedback_text?: string; feedback_verdict?: string | null }
+    let body: { id?: number; feedback_text?: string; feedback_rating?: number | null }
     try {
       body = await req.json()
     } catch {
@@ -142,15 +157,18 @@ export default async function handler(req: Request): Promise<Response> {
     }
     const { id } = body
     if (!id) return json({ error: "bad request" }, { status: 400 })
-    if (body.feedback_verdict != null && !VERDICTS.has(body.feedback_verdict)) {
-      return json({ error: "bad verdict" }, { status: 400 })
+    if (
+      body.feedback_rating != null &&
+      (!Number.isInteger(body.feedback_rating) || body.feedback_rating < 1 || body.feedback_rating > 4)
+    ) {
+      return json({ error: "bad rating" }, { status: 400 })
     }
     const feedbackText = (body.feedback_text ?? "").slice(0, 4000)
 
     await sql`
       UPDATE lumen_interviews
       SET feedback_text = ${feedbackText},
-          feedback_verdict = ${body.feedback_verdict ?? null},
+          feedback_rating = ${body.feedback_rating ?? null},
           updated_at = NOW()
       WHERE id = ${id}
     `

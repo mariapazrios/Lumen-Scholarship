@@ -53,4 +53,9 @@ export const ensureInterviewsTable = once(async () => {
     )
   `
   await sql`CREATE INDEX IF NOT EXISTS lumen_interviews_scheduled_at ON lumen_interviews (scheduled_at)`
+  // Added when the Interviews tab became a notes tab: a 1-4 read on how the
+  // interview went, alongside the existing free-text feedback. ALTER ...
+  // IF NOT EXISTS rather than a one-time migration script, same reasoning as
+  // the CREATE TABLE above — a no-op on every cold start after the first.
+  await sql`ALTER TABLE lumen_interviews ADD COLUMN IF NOT EXISTS feedback_rating SMALLINT`
 })

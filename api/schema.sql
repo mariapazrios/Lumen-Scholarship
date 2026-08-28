@@ -96,11 +96,12 @@ CREATE TABLE IF NOT EXISTS lumen_availability (
 --   ALTER TABLE lumen_availability ADD PRIMARY KEY (member, slot);
 --   ALTER TABLE lumen_availability DROP COLUMN day;
 
--- Booked interviews. Unlike lumen_availability's hour-slot poll, this is
--- a real appointment at a real instant, so scheduled_at is a proper
--- TIMESTAMPTZ: the client sends an unambiguous ISO instant (converted
--- server-side from the Bogotá wall-clock time entered in the booking form),
--- so there is no local-date/UTC round-trip to get wrong.
+-- Interview notes: which candidates each board member is speaking with, plus
+-- their post-interview feedback. scheduled_at is a proper TIMESTAMPTZ (an
+-- unambiguous instant, converted server-side from Bogotá wall-clock time)
+-- when the client supplies one, but the Interview Notes tab no longer
+-- collects a time at all — actual scheduling happens off-site — so the API
+-- defaults it to the moment the pairing was added.
 CREATE TABLE IF NOT EXISTS lumen_interviews (
   id               BIGSERIAL PRIMARY KEY,
   candidate        TEXT        NOT NULL,   -- lumen_applicants.slug
@@ -110,7 +111,8 @@ CREATE TABLE IF NOT EXISTS lumen_interviews (
   location         TEXT        NOT NULL DEFAULT '',
   status           TEXT        NOT NULL DEFAULT 'scheduled', -- scheduled | canceled
   feedback_text    TEXT        NOT NULL DEFAULT '',
-  feedback_verdict TEXT,       -- 'yes' | 'no' | 'maybe' | NULL (not yet given)
+  feedback_verdict TEXT,       -- 'yes' | 'no' | 'maybe' | NULL — legacy, unused by the UI
+  feedback_rating  SMALLINT,   -- 1 to 4, or NULL (not yet given)
   created_by       TEXT        NOT NULL DEFAULT '',
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
