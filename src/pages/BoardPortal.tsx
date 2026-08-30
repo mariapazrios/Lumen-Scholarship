@@ -24,7 +24,13 @@ import {
   type Granularity,
   type AvailabilityStore,
 } from "../lib/availability"
-import { fetchBoardNotes, type BoardNote } from "../lib/boardNotes"
+import {
+  fetchBoardNotes,
+  isPendingNote,
+  pendingNoteUrl,
+  submitBoardNoteLink,
+  type BoardNote,
+} from "../lib/boardNotes"
 import {
   bookInterview,
   cancelInterview,
@@ -253,6 +259,14 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   // Board meeting minutes, fetched from the server rather than bundled: they
   // name candidates alongside rejection reasons and a scholar's diagnosis.
   const [boardNotes, setBoardNotes] = useState<BoardNote[]>([])
+  // The "drop a link" form on the Board notes tab: a member pastes a
+  // recording link against a date rather than writing minutes themselves.
+  const [noteLinkDate, setNoteLinkDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [noteLinkUrl, setNoteLinkUrl] = useState("")
+  const [noteLinkTitle, setNoteLinkTitle] = useState("")
+  const [noteLinkBusy, setNoteLinkBusy] = useState(false)
+  const [noteLinkSaved, setNoteLinkSaved] = useState(false)
+  const [noteLinkError, setNoteLinkError] = useState<string | null>(null)
   // Which of the non-core features failed to load. Keyed rather than a single
   // flag so one broken tab cannot make the others look broken too.
   const [featureErrors, setFeatureErrors] = useState<
@@ -491,6 +505,32 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
       else setBookWarnings([lang === "es" ? "No se pudo añadir." : "Could not add."])
     } finally {
       setBookBusy(false)
+    }
+  }
+
+  /** Drops a recording link onto a date for later extraction. */
+  const submitNoteLink = async () => {
+    const memberEntry = BOARD.find((m) => m.slug === member)
+    if (!noteLinkUrl.trim() || !noteLinkDate || noteLinkBusy) return
+    setNoteLinkBusy(true)
+    setNoteLinkError(null)
+    try {
+      await submitBoardNoteLink({
+        subject: noteLinkDate,
+        url: noteLinkUrl.trim(),
+        title: noteLinkTitle.trim(),
+        submittedBy: memberEntry?.name,
+      })
+      const notes = await fetchBoardNotes()
+      setBoardNotes(notes)
+      setNoteLinkUrl("")
+      setNoteLinkTitle("")
+      setNoteLinkSaved(true)
+    } catch (e) {
+      if (e instanceof SessionExpired) onSessionLost()
+      else setNoteLinkError(lang === "es" ? "No se pudo guardar. Intenta de nuevo." : "Could not save. Try again.")
+    } finally {
+      setNoteLinkBusy(false)
     }
   }
 
@@ -1962,6 +2002,103 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
       <FeatureError show={Boolean(featureErrors.notes)} lang={lang} />
 
+      {/* Dropping a link is how minutes get here at all: nobody on the board
+          writes these up by hand, someone drops the recording link against
+          the date and the real notes land in the same slot once they're
+          pulled out of it. Needs a name picked, same as adding an interview
+          candidate, so the "agregado por" credit means something. */}
+      <div className="mt-8 max-w-2xl bg-surface rounded-sm p-6 md:p-8">
+        <h3 className="text-meta uppercase tracking-widest text-muted">
+          {lang === "es" ? "Agregar notas de una reunión" : "Add notes from a meeting"}
+        </h3>
+        <p className="text-body text-ink/70 mt-2">
+          {lang === "es"
+            ? "Suelta el enlace de la grabación (Granola u otro) contra la fecha de la reunión. Las notas se extraen y se agregan aquí después."
+            : "Drop the recording link (Granola or otherwise) against the meeting date. Notes get pulled out and added here afterward."}
+        </p>
+
+        {!member ? (
+          <p className="text-body text-accent mt-4">
+            {lang === "es"
+              ? "Elige tu nombre arriba para agregar un enlace."
+              : "Pick your name above to add a link."}
+          </p>
+        ) : (
+          <div className="mt-5 flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-meta uppercase tracking-widest text-muted">
+                {lang === "es" ? "Fecha" : "Date"}
+              </span>
+              <input
+                type="date"
+                value={noteLinkDate}
+                onChange={(e) => {
+                  setNoteLinkDate(e.target.value)
+                  setNoteLinkSaved(false)
+                }}
+                className="bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink focus:outline-none focus:border-accent"
+              />
+            </label>
+            <label className="flex flex-col gap-1 flex-1 min-w-[16rem]">
+              <span className="text-meta uppercase tracking-widest text-muted">
+                {lang === "es" ? "Enlace de la grabación" : "Recording link"}
+              </span>
+              <input
+                type="url"
+                value={noteLinkUrl}
+                onChange={(e) => {
+                  setNoteLinkUrl(e.target.value)
+                  setNoteLinkSaved(false)
+                }}
+                placeholder="https://notes.granola.ai/..."
+                className="bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink focus:outline-none focus:border-accent"
+              />
+            </label>
+            <label className="flex flex-col gap-1 flex-1 min-w-[12rem]">
+              <span className="text-meta uppercase tracking-widest text-muted">
+                {lang === "es" ? "Título (opcional)" : "Title (optional)"}
+              </span>
+              <input
+                type="text"
+                value={noteLinkTitle}
+                onChange={(e) => {
+                  setNoteLinkTitle(e.target.value)
+                  setNoteLinkSaved(false)
+                }}
+                placeholder={lang === "es" ? "Reunión de junta" : "Board meeting"}
+                className="bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink focus:outline-none focus:border-accent"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={submitNoteLink}
+              disabled={!noteLinkUrl.trim() || !noteLinkDate || noteLinkBusy}
+              className="text-meta uppercase tracking-widest rounded-sm px-4 py-2.5 bg-primary text-white cursor-pointer transition-opacity duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {noteLinkBusy
+                ? lang === "es"
+                  ? "Guardando"
+                  : "Saving"
+                : lang === "es"
+                  ? "Agregar"
+                  : "Add"}
+            </button>
+          </div>
+        )}
+        {noteLinkError && (
+          <p role="alert" className="text-meta text-accent mt-3">
+            {noteLinkError}
+          </p>
+        )}
+        {noteLinkSaved && !noteLinkError && (
+          <p role="status" className="text-meta text-accent mt-3">
+            {lang === "es"
+              ? "Guardado. Aparece abajo como pendiente hasta que se extraigan las notas."
+              : "Saved. Shows below as pending until the notes are extracted."}
+          </p>
+        )}
+      </div>
+
       {boardNotes.length === 0 && !featureErrors.notes && (
         <p className="text-body text-muted mt-6 max-w-2xl">
           {lang === "es"
@@ -1971,21 +2108,46 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
       )}
 
       <div className="mt-10 space-y-10 max-w-3xl">
-        {boardNotes.map((note) => (
-          <div key={note.subject} className="bg-surface rounded-sm p-6 md:p-8">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <h3 className="text-h3 font-semibold text-primary">{note.title}</h3>
-              <div className="text-meta uppercase tracking-widest text-accent">
-                {new Date(`${note.subject}T12:00:00`).toLocaleDateString(lang, {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
+        {boardNotes.map((note) => {
+          const pending = isPendingNote(note.body)
+          return (
+            <div key={note.subject} className="bg-surface rounded-sm p-6 md:p-8">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <div className="flex items-baseline gap-3">
+                  <h3 className="text-h3 font-semibold text-primary">{note.title}</h3>
+                  {pending && (
+                    <span className="text-meta uppercase tracking-widest rounded-sm px-2 py-0.5 bg-accent/15 text-accent">
+                      {lang === "es" ? "Pendiente" : "Pending"}
+                    </span>
+                  )}
+                </div>
+                <div className="text-meta uppercase tracking-widest text-accent">
+                  {new Date(`${note.subject}T12:00:00`).toLocaleDateString(lang, {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </div>
               </div>
+              {pending ? (
+                <p className="text-body text-ink/70 mt-4">
+                  {lang === "es" ? "Notas pendientes de extracción a partir de " : "Notes pending extraction from "}
+                  <a
+                    href={pendingNoteUrl(note.body)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-accent underline underline-offset-2"
+                  >
+                    {lang === "es" ? "la grabación" : "the recording"}
+                  </a>
+                  .
+                </p>
+              ) : (
+                <Minutes text={note.body} />
+              )}
             </div>
-            <Minutes text={note.body} />
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

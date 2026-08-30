@@ -27,3 +27,35 @@ export async function fetchBoardNotes(): Promise<BoardNote[]> {
   // lexicographic sort on 'YYYY-MM-DD' is chronological.
   return (data.documents ?? []).sort((a, b) => b.subject.localeCompare(a.subject))
 }
+
+/**
+ * Marks a note body as a dropped link awaiting extraction rather than
+ * written-up minutes. Duplicated in api/documents.ts (an edge function
+ * can't import from src/) — keep both in sync if this ever changes.
+ */
+const PENDING_MARKER = "[PENDIENTE DE EXTRACCIÓN]"
+export const isPendingNote = (body: string) => body.startsWith(PENDING_MARKER)
+
+/** The dropped link itself, out of a pending note's first line. */
+export const pendingNoteUrl = (body: string) => body.split("\n")[0].slice(PENDING_MARKER.length).trim()
+
+/**
+ * Drops a meeting-recording link onto a date, rather than submitting written
+ * minutes directly. The server stores it as a placeholder note; someone
+ * (today, a person going through the recording) fills in the real body
+ * afterward via the same date, which the API upserts in place.
+ */
+export async function submitBoardNoteLink(opts: {
+  subject: string
+  url: string
+  title?: string
+  submittedBy?: string
+}): Promise<void> {
+  const res = await fetch("/api/documents", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ kind: "board-notes", ...opts }),
+  })
+  if (res.status === 401) throw new SessionExpired()
+  if (!res.ok) throw new Error(`board note link submit failed: ${res.status}`)
+}
