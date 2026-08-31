@@ -268,6 +268,24 @@ function RecordingLink({ url, lang }: { url: string; lang: Lang }) {
   )
 }
 
+/**
+ * The one board member who reads across everybody's interview notes.
+ *
+ * Every other member sees their own list and nothing else, so that a read
+ * written before an interview cannot be anchored by somebody else's. MPR runs
+ * the process and needs the read-across to run it.
+ *
+ * This is a curtain, not a lock, and it is deliberately not dressed up as one.
+ * The board shares a single BOARD_PASSCODE and the session cookie carries only
+ * `role:expires` (api/_session.ts), so the server cannot tell one member from
+ * another: `member` is a chip you click, kept in localStorage. Anyone who picks
+ * a different name in the header, or opens /api/interviews directly, sees
+ * everything. Real blinding needs per-member sign-in, which is a bigger change
+ * than this one and was deliberately deferred. Do not add copy anywhere
+ * promising a member that their notes are private, because they are not.
+ */
+const NOTES_READ_ACROSS = "maria-paz-rios"
+
 /** What the server currently holds for an interview, in draft shape. */
 const savedDraft = (iv: Interview) => ({
   text: iv.feedback_text,
@@ -2217,6 +2235,9 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
   const memberName = (slug: string) => BOARD.find((m) => m.slug === slug)?.name ?? slug
 
+  /** Whether the signed-in member gets the chip row and the consolidated read. */
+  const readsAcross = member === NOTES_READ_ACROSS
+
   /** "1 candidate" rather than "1 candidates", in either language. */
   const plural = (n: number, [one, many]: [string, string]) => (n === 1 ? one : many)
 
@@ -2690,65 +2711,82 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
       <h2 className="text-h3 font-semibold text-primary">
         {lang === "es" ? "Notas de entrevista." : "Interview notes."}
       </h2>
-      <p className="text-body text-muted mt-3 max-w-2xl">
-        {lang === "es"
-          ? "Cada miembro añade sus propios candidatos, escribe su nota, pega el enlace de la grabación (Granola u otra) y califica de 1 a 4. Al enviarla la tarjeta pasa a color crema y queda visible para toda la junta: cambia de vista abajo para leer a otro miembro, o el consolidado para ver a un candidato con todas las lecturas juntas."
-          : "Each member adds their own candidates, writes their note, drops in the recording link (Granola or otherwise) and rates 1 to 4. Submitting turns the card cream and makes it visible to the whole board: switch views below to read another member, or the consolidated view to see one candidate with every read together."}
+      <p className="text-body text-muted mt-3 max-w-[68ch]">
+        {readsAcross
+          ? lang === "es"
+            ? "Cada miembro añade sus propios candidatos, escribe su nota, pega el enlace de la grabación (Granola u otra) y califica de 1 a 4. Al enviarla la tarjeta pasa a color crema. Los demás miembros solo ven su propia lista; tú tienes además el consolidado y la lista de cada quien."
+            : "Each member adds their own candidates, writes their note, drops in the recording link (Granola or otherwise) and rates 1 to 4. Submitting turns the card cream. The other members only ever see their own list; you also get the consolidated read and each member's list."
+          : lang === "es"
+            ? "Añade los candidatos con los que hablaste, escribe tu nota, pega el enlace de la grabación (Granola u otra) y califica de 1 a 4. Al enviarla la tarjeta pasa a color crema y llega a Maria Paz para la lectura consolidada. Esta pestaña muestra tu propia lectura, no la de los demás."
+            : "Add the candidates you spoke with, write your note, drop in the recording link (Granola or otherwise) and rate 1 to 4. Submitting turns the card cream and sends it to Maria Paz for the consolidated read. This tab shows your own read, not other members'."}
       </p>
 
       <FeatureError show={Boolean(featureErrors.interviews)} lang={lang} />
 
-      {/* Without a name picked, every view below is read-only and there is
-          no add control anywhere, which reads as a broken tab rather than a
-          missing selection. Say so. */}
+      {/* Without a name picked there is no list to show and no add control
+          anywhere, which reads as a broken tab rather than a missing
+          selection. Say so. */}
       {!member && (
-        <p className="text-body text-accent mt-6 max-w-2xl">
+        <p className="text-body text-accent mt-6 max-w-[68ch]">
           {lang === "es"
             ? "Elige tu nombre arriba para añadir candidatos y escribir tus notas."
             : "Pick your name above to add candidates and write your own notes."}
         </p>
       )}
 
-      {/* One view at a time. Consolidated leads because it is the only view
-          that answers "what does the board think of this candidate"; the rest
-          are one member each, counted so an empty list is visible before you
-          click into it. */}
-      <div className="mt-8 flex flex-wrap gap-2">
-        {(
-          [
-            {
-              key: "consolidated",
-              label: lang === "es" ? "Consolidado" : "Consolidated",
-              count: null,
-            },
-            ...BOARD.map((m) => ({
-              key: m.slug,
-              label: m.slug === member ? `${m.name} · ${lang === "es" ? "tú" : "you"}` : m.name,
-              count: interviewCount(m.slug),
-            })),
-          ] as Array<{ key: string; label: string; count: number | null }>
-        ).map((v) => (
-          <button
-            key={v.key}
-            type="button"
-            aria-pressed={ivView === v.key}
-            onClick={() => setIvView(v.key)}
-            className={`text-meta uppercase tracking-widest rounded-sm px-4 py-2 border cursor-pointer transition-colors duration-200 ${
-              ivView === v.key
-                ? "bg-primary text-white border-primary font-semibold"
-                : "bg-white text-ink/70 border-ink/15 hover:border-primary/50"
-            }`}
-          >
-            {v.label}
-            {v.count != null && (
-              <span className={ivView === v.key ? "text-white/70" : "text-muted"}> {v.count}</span>
-            )}
-          </button>
-        ))}
-      </div>
+      {/* The chip row is the read-across, so it only exists for the member who
+          is allowed one. For everybody else the tab is their own list and
+          nothing else: no other names, and no per-member counts either, since
+          "Oscar 10, Cipriano 6" is itself a read on who has done the work. */}
+      {readsAcross && (
+        <div className="mt-8 flex flex-wrap gap-2">
+          {(
+            [
+              {
+                key: "consolidated",
+                label: lang === "es" ? "Consolidado" : "Consolidated",
+                count: null,
+              },
+              ...BOARD.map((m) => ({
+                key: m.slug,
+                label: m.slug === member ? `${m.name} · ${lang === "es" ? "tú" : "you"}` : m.name,
+                count: interviewCount(m.slug),
+              })),
+            ] as Array<{ key: string; label: string; count: number | null }>
+          ).map((v) => (
+            <button
+              key={v.key}
+              type="button"
+              aria-pressed={ivView === v.key}
+              onClick={() => setIvView(v.key)}
+              className={`text-meta uppercase tracking-widest rounded-sm px-4 py-2 border cursor-pointer transition-colors duration-200 ${
+                ivView === v.key
+                  ? "bg-primary text-white border-primary font-semibold"
+                  : "bg-white text-ink/70 border-ink/15 hover:border-primary/50"
+              }`}
+            >
+              {v.label}
+              {v.count != null && (
+                <span className={ivView === v.key ? "text-white/70" : "text-muted"}> {v.count}</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
+      {/* `ivView` is only meaningful for the read-across member. Everyone else
+          is pinned to their own list, whatever a stale localStorage value from
+          before this changed happens to say. */}
       <div className="mt-10">
-        {ivView === "consolidated" ? consolidatedInterviews : memberInterviews(ivView)}
+        {readsAcross ? (
+          ivView === "consolidated" ? (
+            consolidatedInterviews
+          ) : (
+            memberInterviews(ivView)
+          )
+        ) : (
+          member && memberInterviews(member)
+        )}
       </div>
     </div>
   )
