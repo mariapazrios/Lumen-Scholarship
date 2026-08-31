@@ -26,7 +26,7 @@ export default async function handler(req: Request): Promise<Response> {
   if (req.method === "GET") {
     const { rows } = await sql`
       SELECT id, candidate, member, scheduled_at, duration_min, location, status,
-             feedback_text, feedback_verdict, feedback_rating, created_by, updated_at
+             feedback_text, feedback_verdict, feedback_rating, recording_url, created_by, updated_at
       FROM lumen_interviews
       ORDER BY scheduled_at ASC
     `
@@ -89,7 +89,7 @@ export default async function handler(req: Request): Promise<Response> {
     // status='scheduled' keeps re-adding a removed candidate working.
     const { rows: live } = await sql`
       SELECT id, candidate, member, scheduled_at, duration_min, location, status,
-             feedback_text, feedback_verdict, feedback_rating, created_by, updated_at
+             feedback_text, feedback_verdict, feedback_rating, recording_url, created_by, updated_at
       FROM lumen_interviews
       WHERE candidate = ${candidate} AND member = ${member} AND status = 'scheduled'
       LIMIT 1
@@ -103,7 +103,7 @@ export default async function handler(req: Request): Promise<Response> {
         (${candidate}, ${member}, ${start.toISOString()}, ${durationMin}, ${location},
          ${createdBy ?? ""}, NOW())
       RETURNING id, candidate, member, scheduled_at, duration_min, location, status,
-                feedback_text, feedback_verdict, feedback_rating, created_by, updated_at
+                feedback_text, feedback_verdict, feedback_rating, recording_url, created_by, updated_at
     `
     const interview = inserted[0]
 
@@ -168,7 +168,12 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   if (req.method === "PATCH") {
-    let body: { id?: number; feedback_text?: string; feedback_rating?: number | null }
+    let body: {
+      id?: number
+      feedback_text?: string
+      feedback_rating?: number | null
+      recording_url?: string
+    }
     try {
       body = await req.json()
     } catch {
@@ -182,12 +187,25 @@ export default async function handler(req: Request): Promise<Response> {
     ) {
       return json({ error: "bad rating" }, { status: 400 })
     }
-    const feedbackText = (body.feedback_text ?? "").slice(0, 4000)
+    // Raised from 4000: Granola dumps a whole interview as nested bullets and
+    // the longest note on file is already 1.5k, so a member pasting the full
+    // transcript summary must not hit a silent truncation mid-sentence.
+    const feedbackText = (body.feedback_text ?? "").slice(0, 8000)
+    // Only http(s) links are stored. A member pasting something that is not
+    // a URL gets it dropped rather than rendered as a dead anchor for the
+    // rest of the board, and this is also what keeps `javascript:` out of an
+    // href the whole board clicks.
+    const raw = (body.recording_url ?? "").trim().slice(0, 500)
+    const recordingUrl = /^https?:\/\//i.test(raw) ? raw : ""
+    if (raw !== "" && recordingUrl === "") {
+      return json({ error: "bad recording url" }, { status: 400 })
+    }
 
     await sql`
       UPDATE lumen_interviews
       SET feedback_text = ${feedbackText},
           feedback_rating = ${body.feedback_rating ?? null},
+          recording_url = ${recordingUrl},
           updated_at = NOW()
       WHERE id = ${id}
     `

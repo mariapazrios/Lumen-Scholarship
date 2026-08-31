@@ -92,7 +92,13 @@ Documents are rows in `lumen_documents`, not files. `kind` controls access:
   set, a scholar's medical diagnosis, so they cannot live in `src/data/` for
   exactly the same reason the essays and grades left it: that directory
   compiles into the public bundle and this repository is public. The board-notes
-  tab in the portal fetches this kind.
+  tab in the portal fetches this kind. It is read-only in the UI: minutes are
+  written up from the meeting recording and loaded here. The portal used to
+  offer a form for dropping a recording link against a meeting date, but a
+  recording is of one member's interview with one candidate, so that field
+  moved to `lumen_interviews.recording_url` and the Interview notes tab. The
+  `POST` route and the `[PENDIENTE DE EXTRACCIÓN]` placeholder it writes still
+  work for seeding a pending row by hand.
 - `applicant-board-notes` — board only; the board's own discussion notes on a
   candidate (strengths flagged, open questions to confirm at interview), as
   opposed to anything the candidate submitted. One row per candidate,

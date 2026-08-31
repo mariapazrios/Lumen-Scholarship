@@ -113,6 +113,7 @@ CREATE TABLE IF NOT EXISTS lumen_interviews (
   feedback_text    TEXT        NOT NULL DEFAULT '',
   feedback_verdict TEXT,       -- 'yes' | 'no' | 'maybe' | NULL — legacy, unused by the UI
   feedback_rating  SMALLINT,   -- 1 to 4, or NULL (not yet given)
+  recording_url    TEXT        NOT NULL DEFAULT '', -- Granola (or other) recording of this interview
   created_by       TEXT        NOT NULL DEFAULT '',
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
