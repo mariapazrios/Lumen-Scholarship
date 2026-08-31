@@ -85,6 +85,7 @@ These come from accumulated decisions — don't relitigate without reason.
 5. **Imagery:** portrait-friendly only. No landscape crops that don't compose well.
 6. **Editorial line breaks:** use hard `<br>` in headings instead of relying on auto-wrap. (Pattern P10)
 7. **Carousel:** native `scroll-snap-x mandatory` + pointer-event drag. **Do not** add Swiper.
+8. **Interview notes are blind.** On the board portal's Interview notes tab, a member sees their own list and nothing else. Only `NOTES_READ_ACROSS` (MPR) gets the member chips and the consolidated read, so nobody's write-up is anchored by somebody else's. Do not restore the chip row for everyone. This is a curtain, not a lock: the board shares one `BOARD_PASSCODE`, the session cookie carries only `role:expires`, and `member` is a chip in localStorage, so anyone can pick another name or read `/api/interviews` directly. Real blinding needs per-member sign-in, deliberately deferred (MPR, 2026-08-31). **Never write copy telling a member their notes are private.** The tab says instead that a submitted note goes to MPR for the consolidated read, which is true.
 
 Full pattern library (P1–P10) is in [prd.md](prd.md) under *Inspiration Pattern Library*.
 
