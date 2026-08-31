@@ -28,7 +28,6 @@ import {
   fetchBoardNotes,
   isPendingNote,
   pendingNoteUrl,
-  submitBoardNoteLink,
   type BoardNote,
 } from "../lib/boardNotes"
 import {
@@ -188,6 +187,159 @@ function Minutes({ text }: { text: string }) {
   )
 }
 
+/**
+ * How deep a bullet is indented. Static classes, because Tailwind cannot see
+ * a computed one.
+ */
+const BULLET_INDENT = ["", "ml-5", "ml-10"] as const
+
+/**
+ * One member's interview note, as written.
+ *
+ * These arrive pasted straight out of Granola: "- " bullets, sub-bullets
+ * indented under them, and the member's own prose in a paragraph underneath,
+ * often switching between English and Spanish mid-note. Rendered as a single
+ * `whitespace-pre-wrap` block, every bullet character sat there as literal
+ * text and a 1,500 character note ran the full width of the card, which made
+ * the most thorough notes on the board the hardest ones to read.
+ *
+ * Same minimal grammar as `Minutes` (no Markdown dependency), plus the one
+ * thing Granola emits that board minutes never did: indentation. Two spaces
+ * is one level, capped at two levels so a deeply nested dump still lands
+ * inside the card. Anything unrecognised renders as the literal text it is,
+ * so a note typed by hand with no bullets at all still comes out right.
+ */
+function NoteBody({ text }: { text: string }) {
+  const lines = text.split("\n").filter((l) => l.trim() !== "")
+  return (
+    <div className="max-w-[68ch]">
+      {lines.map((raw, i) => {
+        const line = raw.trim()
+        const key = `${i}-${line.slice(0, 24)}`
+        const heading = /^#{2,4}\s+(.*)$/.exec(line)
+        if (heading) {
+          return (
+            <div
+              key={key}
+              className="text-meta uppercase tracking-widest text-accent mt-5 mb-2 first:mt-0"
+            >
+              {heading[1]}
+            </div>
+          )
+        }
+        const bullet = /^[-*•]\s+(.*)$/.exec(line)
+        if (bullet) {
+          const indent = raw.length - raw.trimStart().length
+          const depth = Math.min(2, Math.floor(indent / 2))
+          return (
+            <div
+              key={key}
+              className={`flex gap-2.5 mt-1.5 first:mt-0 ${BULLET_INDENT[depth]}`}
+            >
+              <span aria-hidden className="text-accent select-none">
+                ·
+              </span>
+              <p className="text-body text-ink/80">{bullet[1]}</p>
+            </div>
+          )
+        }
+        return (
+          <p key={key} className="text-body text-ink/80 mt-3 first:mt-0">
+            {line}
+          </p>
+        )
+      })}
+    </div>
+  )
+}
+
+/** The recording a note was written from, wherever a note is displayed. */
+function RecordingLink({ url, lang }: { url: string; lang: Lang }) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-baseline gap-2 mt-4 text-meta uppercase tracking-widest text-accent hover:text-ink transition-colors duration-200"
+    >
+      {lang === "es" ? "Abrir la grabación" : "Open the recording"}
+      <span aria-hidden>→</span>
+    </a>
+  )
+}
+
+/** What the server currently holds for an interview, in draft shape. */
+const savedDraft = (iv: Interview) => ({
+  text: iv.feedback_text,
+  rating: iv.feedback_rating,
+  url: iv.recording_url,
+})
+
+/** Has this note actually been submitted, as opposed to merely paired? */
+const isSubmitted = (iv: Interview) =>
+  iv.feedback_text.trim() !== "" || iv.feedback_rating != null
+
+/**
+ * A link is either empty or http(s). Checked here as well as on the server so
+ * a member finds out before pressing Submit, not from a rejected request.
+ */
+const badRecordingUrl = (url: string) => {
+  const u = url.trim()
+  return u !== "" && !/^https?:\/\//i.test(u)
+}
+
+/** Floor for the note field, in px: about six lines of `text-body`. */
+const MIN_NOTE_HEIGHT = 168
+
+/**
+ * The note field, sized to what is actually written in it.
+ *
+ * It was three rows. Every real note on the board is 600 to 1,500 characters,
+ * so a member could see about a third of their own writing at a time and had
+ * to scroll a box nested inside a scrolling page to read the rest of it. It
+ * now grows to fit, with a floor deep enough that an empty one reads as
+ * "write a few lines here" rather than as a search field, and it is still
+ * hand-resizable for anyone who wants it smaller.
+ */
+function NoteTextarea({
+  value,
+  onChange,
+  placeholder,
+  label,
+}: {
+  value: string
+  onChange: (value: string) => void
+  placeholder: string
+  label: string
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  const fit = useCallback(() => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = "auto"
+    el.style.height = `${Math.max(el.scrollHeight, MIN_NOTE_HEIGHT)}px`
+  }, [])
+  // Also on mount and whenever the saved value comes back from the server,
+  // not only on input: a note that already exists has to open at full height.
+  useEffect(fit, [fit, value])
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      aria-label={label}
+      onChange={(e) => onChange(e.target.value)}
+      onInput={fit}
+      placeholder={placeholder}
+      // `block` is load-bearing: `overflow-hidden` (which is what
+      // hides the scrollbar while the field auto-grows) moves an
+      // inline-block's baseline to its bottom edge, which put the
+      // field's own label alongside its last line and indented the
+      // box by the width of that label.
+      className="mt-2 block w-full max-w-[80ch] resize-y overflow-hidden bg-white border border-ink/15 rounded-sm px-4 py-3 text-body text-ink leading-[1.6] focus:outline-none focus:border-accent"
+    />
+  )
+}
+
 function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const { lang } = useLang()
   const [member, setMember] = useState(loadMember)
@@ -239,12 +391,16 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   const [bookCandidate, setBookCandidate] = useState("")
   const [bookWarnings, setBookWarnings] = useState<string[]>([])
   const [bookBusy, setBookBusy] = useState(false)
-  // Per-interview feedback drafts, keyed by interview id, so editing one
-  // card's textarea can't bleed into another's before either is saved.
+  // Per-interview note drafts, keyed by interview id, so editing one card
+  // can't bleed into another's before either is submitted. All three fields
+  // travel together because they are one submission: the write-up, the 1-4
+  // read, and the link to the recording it was written from.
   const [feedbackDrafts, setFeedbackDrafts] = useState<
-    Record<string, { text: string; rating: number | null }>
+    Record<string, { text: string; rating: number | null; url: string }>
   >({})
   const [feedbackSavedId, setFeedbackSavedId] = useState<string | null>(null)
+  const [feedbackSavingId, setFeedbackSavingId] = useState<string | null>(null)
+  const [feedbackErrorId, setFeedbackErrorId] = useState<string | null>(null)
   // Which slice of the interview notes is on screen: "consolidated", or a
   // board member's slug. Opens on your own list when a name is already
   // remembered, since writing your notes is what you came for; otherwise on
@@ -259,14 +415,6 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   // Board meeting minutes, fetched from the server rather than bundled: they
   // name candidates alongside rejection reasons and a scholar's diagnosis.
   const [boardNotes, setBoardNotes] = useState<BoardNote[]>([])
-  // The "drop a link" form on the Board notes tab: a member pastes a
-  // recording link against a date rather than writing minutes themselves.
-  const [noteLinkDate, setNoteLinkDate] = useState(() => new Date().toISOString().slice(0, 10))
-  const [noteLinkUrl, setNoteLinkUrl] = useState("")
-  const [noteLinkTitle, setNoteLinkTitle] = useState("")
-  const [noteLinkBusy, setNoteLinkBusy] = useState(false)
-  const [noteLinkSaved, setNoteLinkSaved] = useState(false)
-  const [noteLinkError, setNoteLinkError] = useState<string | null>(null)
   // Which of the non-core features failed to load. Keyed rather than a single
   // flag so one broken tab cannot make the others look broken too.
   const [featureErrors, setFeatureErrors] = useState<
@@ -332,11 +480,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
       .then((ivs) => {
         if (!live) return
         setInterviews(ivs)
-        setFeedbackDrafts(
-          Object.fromEntries(
-            ivs.map((iv) => [iv.id, { text: iv.feedback_text, rating: iv.feedback_rating }]),
-          ),
-        )
+        setFeedbackDrafts(Object.fromEntries(ivs.map((iv) => [iv.id, savedDraft(iv)])))
       })
       .catch((e) => {
         if (!live) return
@@ -478,7 +622,7 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     setFeedbackDrafts((prev) => {
       const next = { ...prev }
       for (const iv of ivs) {
-        next[iv.id] ??= { text: iv.feedback_text, rating: iv.feedback_rating }
+        next[iv.id] ??= savedDraft(iv)
       }
       return next
     })
@@ -508,42 +652,30 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
     }
   }
 
-  /** Drops a recording link onto a date for later extraction. */
-  const submitNoteLink = async () => {
-    const memberEntry = BOARD.find((m) => m.slug === member)
-    if (!noteLinkUrl.trim() || !noteLinkDate || noteLinkBusy) return
-    setNoteLinkBusy(true)
-    setNoteLinkError(null)
-    try {
-      await submitBoardNoteLink({
-        subject: noteLinkDate,
-        url: noteLinkUrl.trim(),
-        title: noteLinkTitle.trim(),
-        submittedBy: memberEntry?.name,
-      })
-      const notes = await fetchBoardNotes()
-      setBoardNotes(notes)
-      setNoteLinkUrl("")
-      setNoteLinkTitle("")
-      setNoteLinkSaved(true)
-    } catch (e) {
-      if (e instanceof SessionExpired) onSessionLost()
-      else setNoteLinkError(lang === "es" ? "No se pudo guardar. Intenta de nuevo." : "Could not save. Try again.")
-    } finally {
-      setNoteLinkBusy(false)
-    }
-  }
-
+  /**
+   * Submits one interview note. The URL is trimmed here rather than as the
+   * member types, so a pasted link with a trailing space doesn't read as
+   * invalid under their cursor.
+   *
+   * A failure used to be swallowed silently unless the session had expired,
+   * which meant a note could look submitted and not be. It now surfaces on
+   * the card it belongs to.
+   */
   const commitFeedback = async (id: string) => {
     const draft = feedbackDrafts[id]
-    if (!draft) return
+    if (!draft || feedbackSavingId === id) return
     setFeedbackSavedId(null)
+    setFeedbackErrorId(null)
+    setFeedbackSavingId(id)
     try {
-      await saveInterviewFeedback(id, draft.text, draft.rating)
+      await saveInterviewFeedback(id, draft.text, draft.rating, draft.url.trim())
       await refreshInterviews()
       setFeedbackSavedId(id)
     } catch (e) {
       if (e instanceof SessionExpired) onSessionLost()
+      else setFeedbackErrorId(id)
+    } finally {
+      setFeedbackSavingId(null)
     }
   }
 
@@ -2002,102 +2134,18 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
       <FeatureError show={Boolean(featureErrors.notes)} lang={lang} />
 
-      {/* Dropping a link is how minutes get here at all: nobody on the board
-          writes these up by hand, someone drops the recording link against
-          the date and the real notes land in the same slot once they're
-          pulled out of it. Needs a name picked, same as adding an interview
-          candidate, so the "agregado por" credit means something. */}
-      <div className="mt-8 max-w-2xl bg-surface rounded-sm p-6 md:p-8">
-        <h3 className="text-meta uppercase tracking-widest text-muted">
-          {lang === "es" ? "Agregar notas de una reunión" : "Add notes from a meeting"}
-        </h3>
-        <p className="text-body text-ink/70 mt-2">
-          {lang === "es"
-            ? "Suelta el enlace de la grabación (Granola u otro) contra la fecha de la reunión. Las notas se extraen y se agregan aquí después."
-            : "Drop the recording link (Granola or otherwise) against the meeting date. Notes get pulled out and added here afterward."}
-        </p>
-
-        {!member ? (
-          <p className="text-body text-accent mt-4">
-            {lang === "es"
-              ? "Elige tu nombre arriba para agregar un enlace."
-              : "Pick your name above to add a link."}
-          </p>
-        ) : (
-          <div className="mt-5 flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1">
-              <span className="text-meta uppercase tracking-widest text-muted">
-                {lang === "es" ? "Fecha" : "Date"}
-              </span>
-              <input
-                type="date"
-                value={noteLinkDate}
-                onChange={(e) => {
-                  setNoteLinkDate(e.target.value)
-                  setNoteLinkSaved(false)
-                }}
-                className="bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink focus:outline-none focus:border-accent"
-              />
-            </label>
-            <label className="flex flex-col gap-1 flex-1 min-w-[16rem]">
-              <span className="text-meta uppercase tracking-widest text-muted">
-                {lang === "es" ? "Enlace de la grabación" : "Recording link"}
-              </span>
-              <input
-                type="url"
-                value={noteLinkUrl}
-                onChange={(e) => {
-                  setNoteLinkUrl(e.target.value)
-                  setNoteLinkSaved(false)
-                }}
-                placeholder="https://notes.granola.ai/..."
-                className="bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink focus:outline-none focus:border-accent"
-              />
-            </label>
-            <label className="flex flex-col gap-1 flex-1 min-w-[12rem]">
-              <span className="text-meta uppercase tracking-widest text-muted">
-                {lang === "es" ? "Título (opcional)" : "Title (optional)"}
-              </span>
-              <input
-                type="text"
-                value={noteLinkTitle}
-                onChange={(e) => {
-                  setNoteLinkTitle(e.target.value)
-                  setNoteLinkSaved(false)
-                }}
-                placeholder={lang === "es" ? "Reunión de junta" : "Board meeting"}
-                className="bg-white border border-ink/15 rounded-sm px-3 py-2 text-meta text-ink focus:outline-none focus:border-accent"
-              />
-            </label>
-            <button
-              type="button"
-              onClick={submitNoteLink}
-              disabled={!noteLinkUrl.trim() || !noteLinkDate || noteLinkBusy}
-              className="text-meta uppercase tracking-widest rounded-sm px-4 py-2.5 bg-primary text-white cursor-pointer transition-opacity duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {noteLinkBusy
-                ? lang === "es"
-                  ? "Guardando"
-                  : "Saving"
-                : lang === "es"
-                  ? "Agregar"
-                  : "Add"}
-            </button>
-          </div>
-        )}
-        {noteLinkError && (
-          <p role="alert" className="text-meta text-accent mt-3">
-            {noteLinkError}
-          </p>
-        )}
-        {noteLinkSaved && !noteLinkError && (
-          <p role="status" className="text-meta text-accent mt-3">
-            {lang === "es"
-              ? "Guardado. Aparece abajo como pendiente hasta que se extraigan las notas."
-              : "Saved. Shows below as pending until the notes are extracted."}
-          </p>
-        )}
-      </div>
+      {/* The recording link used to be collected here, against a meeting
+          date. It moved to the Interview notes tab, where it belongs: what
+          gets recorded in Granola is one board member speaking with one
+          candidate, so the link hangs off that note and not off the
+          minutes of a meeting it was never part of. Minutes themselves
+          are written up from the recording and loaded straight into
+          `lumen_documents` (see api/README.md). */}
+      <p className="text-body text-muted mt-3 max-w-[68ch]">
+        {lang === "es"
+          ? "Las actas se redactan a partir de la grabación de cada reunión y se cargan aquí. El enlace de la grabación de una entrevista va en la pestaña de notas de entrevista, no aquí."
+          : "Minutes are written up from the recording of each meeting and loaded here. The recording link for an interview goes on the Interview notes tab, not here."}
+      </p>
 
       {boardNotes.length === 0 && !featureErrors.notes && (
         <p className="text-body text-muted mt-6 max-w-2xl">
@@ -2283,13 +2331,67 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
           </p>
         )}
 
-        <div className="mt-6 grid grid-cols-1 gap-4">
+        <div className="mt-6 grid grid-cols-1 gap-5">
           {rows.map((iv) => {
-            const draft = feedbackDrafts[iv.id] ?? { text: iv.feedback_text, rating: iv.feedback_rating }
+            const d = feedbackDrafts[iv.id] ?? savedDraft(iv)
+            const submitted = isSubmitted(iv)
+            // Dirty against what the server holds, not against a blank card:
+            // this is what the Submit button and the cream ground both key
+            // off, so it has to mean "there is something here that has not
+            // been sent" and nothing else.
+            const dirty =
+              d.text !== iv.feedback_text ||
+              d.rating !== iv.feedback_rating ||
+              d.url.trim() !== iv.recording_url
+            const saving = feedbackSavingId === iv.id
+            const urlInvalid = badRecordingUrl(d.url)
+            // Light brown means submitted and nothing else: a member scanning
+            // ten cards can see at a glance which candidates they still owe a
+            // note on. It reverts to white the moment the box is edited, so
+            // the colour never claims the board has something it doesn't.
+            const settled = submitted && !dirty
+
+            const patch = (next: Partial<typeof d>) => {
+              setFeedbackDrafts((prev) => ({ ...prev, [iv.id]: { ...d, ...next } }))
+              setFeedbackSavedId(null)
+              setFeedbackErrorId(null)
+            }
+
             return (
-              <div key={iv.id} className="bg-white border border-ink/10 rounded-sm px-6 py-5">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <div className="text-body font-semibold text-primary">{nameOf(iv.candidate)}</div>
+              <div
+                key={iv.id}
+                className={`rounded-sm border px-6 py-5 transition-colors duration-300 ${
+                  settled ? "bg-surface border-surface" : "bg-white border-ink/10"
+                }`}
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <div className="text-body font-semibold text-primary">
+                      {nameOf(iv.candidate)}
+                    </div>
+                    {/* The state in words next to the colour, because the
+                        colour alone carries it for nobody reading with a
+                        screen reader, and because "submitted when?" is the
+                        first thing anyone asks of a shared note. */}
+                    {settled ? (
+                      <span className="text-meta uppercase tracking-widest text-primary/60">
+                        {lang === "es" ? "Enviada" : "Submitted"}
+                        {iv.updated_at &&
+                          ` · ${new Date(iv.updated_at).toLocaleDateString(lang, {
+                            day: "numeric",
+                            month: "short",
+                          })}`}
+                      </span>
+                    ) : dirty ? (
+                      <span className="text-meta uppercase tracking-widest text-accent font-semibold">
+                        {lang === "es" ? "Sin enviar" : "Not submitted"}
+                      </span>
+                    ) : (
+                      <span className="text-meta uppercase tracking-widest text-muted">
+                        {lang === "es" ? "Pendiente" : "Pending"}
+                      </span>
+                    )}
+                  </div>
                   {mine && (
                     <button
                       type="button"
@@ -2315,25 +2417,62 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
 
                 {mine ? (
                   <>
-                    <textarea
-                      value={draft.text}
-                      onChange={(e) => {
-                        const text = e.target.value
-                        setFeedbackDrafts((prev) => ({ ...prev, [iv.id]: { ...draft, text } }))
-                        setFeedbackSavedId(null)
-                      }}
-                      rows={3}
-                      placeholder={
-                        lang === "es" ? "Cómo le fue en la entrevista." : "How the interview went."
-                      }
-                      className="mt-3 w-full bg-white border border-ink/15 rounded-sm px-4 py-3 text-body text-ink focus:outline-none focus:border-accent"
-                    />
-                    <div className="flex flex-wrap items-center gap-3 mt-4">
+                    <label className="block mt-4">
+                      <span className="text-meta uppercase tracking-widest text-muted">
+                        {lang === "es" ? "Tu nota" : "Your note"}
+                      </span>
+                      <NoteTextarea
+                        value={d.text}
+                        onChange={(text) => patch({ text })}
+                        label={
+                          lang === "es"
+                            ? `Nota de entrevista sobre ${nameOf(iv.candidate)}`
+                            : `Interview note on ${nameOf(iv.candidate)}`
+                        }
+                        placeholder={
+                          lang === "es"
+                            ? "Cómo le fue en la entrevista. Pega las notas de la grabación si las tienes: las viñetas se formatean solas."
+                            : "How the interview went. Paste the notes from the recording if you have them, bullets get formatted for you."
+                        }
+                      />
+                    </label>
+
+                    {/* The recording link belongs to the interview, which is
+                        the thing that was actually recorded. It used to be
+                        collected on the Board notes tab against a meeting
+                        date, where it described the wrong event entirely. */}
+                    <label className="block mt-5 max-w-[40rem]">
+                      <span className="text-meta uppercase tracking-widest text-muted">
+                        {lang === "es"
+                          ? "Enlace de la grabación (opcional)"
+                          : "Recording link (optional)"}
+                      </span>
+                      <input
+                        type="url"
+                        inputMode="url"
+                        value={d.url}
+                        onChange={(e) => patch({ url: e.target.value })}
+                        placeholder="https://notes.granola.ai/..."
+                        aria-invalid={urlInvalid}
+                        className={`mt-2 w-full bg-white border rounded-sm px-4 py-2.5 text-meta text-ink focus:outline-none focus:border-accent ${
+                          urlInvalid ? "border-accent" : "border-ink/15"
+                        }`}
+                      />
+                    </label>
+                    {urlInvalid && (
+                      <p role="alert" className="text-meta text-accent mt-2">
+                        {lang === "es"
+                          ? "El enlace tiene que empezar por https://"
+                          : "The link has to start with https://"}
+                      </p>
+                    )}
+
+                    <div className="mt-5 pt-5 border-t border-ink/10 flex flex-wrap items-center gap-x-3 gap-y-4">
                       <span className="text-meta uppercase tracking-widest text-muted">
                         {lang === "es" ? "Calificación" : "Rating"}
                       </span>
                       {[1, 2, 3, 4].map((n) => {
-                        const on = draft.rating === n
+                        const on = d.rating === n
                         return (
                           <button
                             key={n}
@@ -2347,36 +2486,70 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                                 ? `Calificar ${n} de 4 a ${nameOf(iv.candidate)}`
                                 : `Rate ${nameOf(iv.candidate)} ${n} out of 4`
                             }
-                            onClick={() => {
-                              setFeedbackDrafts((prev) => ({
-                                ...prev,
-                                [iv.id]: { ...draft, rating: on ? null : n },
-                              }))
-                              setFeedbackSavedId(null)
-                            }}
+                            onClick={() => patch({ rating: on ? null : n })}
                             className={`text-body rounded-sm w-10 h-10 border cursor-pointer transition-colors duration-200 ${
                               on
                                 ? "bg-primary text-white border-primary font-semibold"
-                                : "border-ink/15 text-ink/70 hover:border-primary/50"
+                                : "border-ink/15 bg-white text-ink/70 hover:border-primary/50"
                             }`}
                           >
                             {n}
                           </button>
                         )
                       })}
-                      <button
-                        type="button"
-                        onClick={() => commitFeedback(iv.id)}
-                        className="ml-auto text-meta uppercase tracking-widest text-accent hover:text-ink transition-colors duration-200 cursor-pointer"
-                      >
-                        {lang === "es" ? "Guardar" : "Save"}
-                      </button>
-                      {feedbackSavedId === iv.id && (
-                        <span role="status" className="text-meta text-accent">
-                          {lang === "es" ? "Guardado." : "Saved."}
-                        </span>
-                      )}
+
+                      {/* A real button rather than the text link this used to
+                          be: it is the one control on the card that writes to
+                          the database, it matches Save rating on the scoring
+                          tab, and greyed-out-with-nothing-to-send is how a
+                          member can tell the card is already saved. */}
+                      <div className="ml-auto flex flex-wrap items-center gap-3">
+                        {feedbackSavedId === iv.id && !dirty && (
+                          <span role="status" className="text-meta text-accent">
+                            {lang === "es"
+                              ? "Enviada a toda la junta."
+                              : "Submitted for the whole board."}
+                          </span>
+                        )}
+                        {feedbackErrorId === iv.id && (
+                          <span role="alert" className="text-meta text-accent">
+                            {lang === "es"
+                              ? "No se pudo enviar. Intenta de nuevo."
+                              : "Could not submit. Try again."}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => commitFeedback(iv.id)}
+                          disabled={!dirty || urlInvalid || saving}
+                          className="text-body font-semibold rounded-sm px-6 py-3 bg-primary text-white cursor-pointer transition-opacity duration-200 hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {saving
+                            ? lang === "es"
+                              ? "Enviando"
+                              : "Submitting"
+                            : submitted
+                              ? lang === "es"
+                                ? "Actualizar nota"
+                                : "Update note"
+                              : lang === "es"
+                                ? "Enviar nota"
+                                : "Submit note"}
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Whatever link is in the box right now, not only the
+                        saved one: opening the recording while writing the
+                        note up from it is the whole point of having it here,
+                        and a member who just pasted a link wants to check it
+                        goes where they think before submitting. */}
+                    {(urlInvalid ? iv.recording_url : d.url.trim()) && (
+                      <RecordingLink
+                        url={urlInvalid ? iv.recording_url : d.url.trim()}
+                        lang={lang}
+                      />
+                    )}
                   </>
                 ) : (
                   <div className="mt-3">
@@ -2386,14 +2559,15 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                       </span>
                     )}
                     {iv.feedback_text ? (
-                      <p className="text-body text-ink/80 mt-2 whitespace-pre-wrap">
-                        {iv.feedback_text}
-                      </p>
+                      <div className="mt-2">
+                        <NoteBody text={iv.feedback_text} />
+                      </div>
                     ) : (
                       <p className="text-body text-muted mt-2">
                         {lang === "es" ? "Sin notas todavía." : "No notes yet."}
                       </p>
                     )}
+                    {iv.recording_url && <RecordingLink url={iv.recording_url} lang={lang} />}
                   </div>
                 )}
               </div>
@@ -2494,10 +2668,11 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                       )}
                     </div>
                     {iv.feedback_text && (
-                      <p className="text-body text-ink/80 mt-2 whitespace-pre-wrap">
-                        {iv.feedback_text}
-                      </p>
+                      <div className="mt-2">
+                        <NoteBody text={iv.feedback_text} />
+                      </div>
                     )}
+                    {iv.recording_url && <RecordingLink url={iv.recording_url} lang={lang} />}
                   </div>
                 ))}
             </div>
@@ -2517,8 +2692,8 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
       </h2>
       <p className="text-body text-muted mt-3 max-w-2xl">
         {lang === "es"
-          ? "Cada miembro añade sus propios candidatos, escribe su nota y califica de 1 a 4. Todo queda guardado y visible para toda la junta: cambia de vista abajo para leer a otro miembro, o el consolidado para ver a un candidato con todas las lecturas juntas."
-          : "Each member adds their own candidates, writes their note and rates 1 to 4. Everything is saved and visible to the whole board: switch views below to read another member, or the consolidated view to see one candidate with every read together."}
+          ? "Cada miembro añade sus propios candidatos, escribe su nota, pega el enlace de la grabación (Granola u otra) y califica de 1 a 4. Al enviarla la tarjeta pasa a color crema y queda visible para toda la junta: cambia de vista abajo para leer a otro miembro, o el consolidado para ver a un candidato con todas las lecturas juntas."
+          : "Each member adds their own candidates, writes their note, drops in the recording link (Granola or otherwise) and rates 1 to 4. Submitting turns the card cream and makes it visible to the whole board: switch views below to read another member, or the consolidated view to see one candidate with every read together."}
       </p>
 
       <FeatureError show={Boolean(featureErrors.interviews)} lang={lang} />

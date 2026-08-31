@@ -39,23 +39,9 @@ export const isPendingNote = (body: string) => body.startsWith(PENDING_MARKER)
 /** The dropped link itself, out of a pending note's first line. */
 export const pendingNoteUrl = (body: string) => body.split("\n")[0].slice(PENDING_MARKER.length).trim()
 
-/**
- * Drops a meeting-recording link onto a date, rather than submitting written
- * minutes directly. The server stores it as a placeholder note; someone
- * (today, a person going through the recording) fills in the real body
- * afterward via the same date, which the API upserts in place.
- */
-export async function submitBoardNoteLink(opts: {
-  subject: string
-  url: string
-  title?: string
-  submittedBy?: string
-}): Promise<void> {
-  const res = await fetch("/api/documents", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ kind: "board-notes", ...opts }),
-  })
-  if (res.status === 401) throw new SessionExpired()
-  if (!res.ok) throw new Error(`board note link submit failed: ${res.status}`)
-}
+// The board portal no longer offers a form for dropping a meeting-recording
+// link against a date: a recording is of an interview, not of the minutes, so
+// that field now lives on the Interview notes tab as the interview's own
+// `recording_url`. `POST /api/documents` still accepts a pending board-notes
+// row (see api/README.md) and `isPendingNote` above still renders one, so a
+// row seeded that way keeps working; there is just no UI that creates it.

@@ -58,4 +58,10 @@ export const ensureInterviewsTable = once(async () => {
   // IF NOT EXISTS rather than a one-time migration script, same reasoning as
   // the CREATE TABLE above — a no-op on every cold start after the first.
   await sql`ALTER TABLE lumen_interviews ADD COLUMN IF NOT EXISTS feedback_rating SMALLINT`
+  // The recording link belongs to the interview, not to a board meeting. It
+  // used to be collected on the Board notes tab, against a meeting date,
+  // which is the wrong subject entirely: what gets recorded in Granola is one
+  // member's conversation with one candidate, and that is the note the link
+  // should hang off so whoever writes the note up can open the source.
+  await sql`ALTER TABLE lumen_interviews ADD COLUMN IF NOT EXISTS recording_url TEXT NOT NULL DEFAULT ''`
 })

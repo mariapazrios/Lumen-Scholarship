@@ -22,6 +22,16 @@ export type Interview = {
   feedback_text: string
   /** 1 to 4, or null when the member hasn't rated the interview yet. */
   feedback_rating: number | null
+  /**
+   * Link to the recording this note came out of (Granola or otherwise), or
+   * '' when there isn't one. It hangs off the interview rather than off a
+   * board-meeting date, which is where it used to be collected: what gets
+   * recorded is one member's conversation with one candidate.
+   *
+   * Guaranteed http(s) or empty — the server drops anything else rather than
+   * handing the board an href it should not click.
+   */
+  recording_url: string
   created_by: string
   updated_at: string
 }
@@ -65,15 +75,26 @@ export async function bookInterview(input: {
   return { interview: data.interview, warnings: data.warnings ?? [] }
 }
 
+/**
+ * Submits one member's note on one interview: the write-up, the 1-4 read, and
+ * the recording link, in a single PATCH. They go together because they are one
+ * submission in the UI — a member fills in the card and presses Submit once.
+ */
 export async function saveInterviewFeedback(
   id: string,
   feedbackText: string,
   feedbackRating: number | null,
+  recordingUrl: string,
 ) {
   const res = await fetch("/api/interviews", {
     method: "PATCH",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ id, feedback_text: feedbackText, feedback_rating: feedbackRating }),
+    body: JSON.stringify({
+      id,
+      feedback_text: feedbackText,
+      feedback_rating: feedbackRating,
+      recording_url: recordingUrl,
+    }),
   })
   if (res.status === 401) throw new SessionExpired()
   if (!res.ok) throw new Error(`feedback save failed: ${res.status}`)
