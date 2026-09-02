@@ -30,6 +30,11 @@ import {
   pendingNoteUrl,
   type BoardNote,
 } from "../lib/boardNotes"
+import ConsolidatedRead from "../components/ConsolidatedRead"
+import {
+  fetchInterviewConsolidated,
+  type ConsolidatedBySlug,
+} from "../lib/interviewConsolidated"
 import {
   bookInterview,
   cancelInterview,
@@ -433,10 +438,15 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
   // Board meeting minutes, fetched from the server rather than bundled: they
   // name candidates alongside rejection reasons and a scholar's diagnosis.
   const [boardNotes, setBoardNotes] = useState<BoardNote[]>([])
+  // The board's own consolidated read of each candidate's interviews, derived
+  // from the notes rather than written by a member. Same reasoning as the
+  // minutes: it names candidates and quotes judgements, so it is fetched, not
+  // bundled.
+  const [ivSummaries, setIvSummaries] = useState<ConsolidatedBySlug>({})
   // Which of the non-core features failed to load. Keyed rather than a single
   // flag so one broken tab cannot make the others look broken too.
   const [featureErrors, setFeatureErrors] = useState<
-    Partial<Record<"availability" | "interviews" | "notes", boolean>>
+    Partial<Record<"availability" | "interviews" | "notes" | "ivSummaries", boolean>>
   >({})
 
   const refresh = useCallback(async () => {
@@ -512,6 +522,15 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
       .catch((e) => {
         if (!live) return
         if (!sessionLost(e)) setFeatureErrors((p) => ({ ...p, notes: true }))
+      })
+
+    fetchInterviewConsolidated()
+      .then((summaries) => {
+        if (live) setIvSummaries(summaries)
+      })
+      .catch((e) => {
+        if (!live) return
+        if (!sessionLost(e)) setFeatureErrors((p) => ({ ...p, ivSummaries: true }))
       })
 
     return () => {
@@ -2618,6 +2637,8 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
         </span>
       </div>
 
+      <FeatureError show={Boolean(featureErrors.ivSummaries)} lang={lang} />
+
       {interviewsByCandidate.length === 0 && (
         <p className="text-body text-muted mt-5">
           {lang === "es"
@@ -2659,6 +2680,12 @@ function Portal({ onSessionLost }: { onSessionLost: () => void }) {
                 )}
               </div>
             </div>
+
+            <ConsolidatedRead
+              summary={ivSummaries[c.candidate]}
+              rows={c.rows}
+              lang={lang}
+            />
 
             {/* Rated reads first: a member who wrote something is the reason
                 to open this card, and a run of pending pairings above them
