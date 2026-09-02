@@ -2,9 +2,14 @@ import Reveal from "../primitives/Reveal"
 import Watermark from "../primitives/Watermark"
 import { useLang, type L } from "../../lib/i18n"
 
-/** GPA and retention across financial aid programs (Lumen annual report 2025). */
+/**
+ * GPA and retention across financial aid programs (Lumen annual report 2025),
+ * except Lumen's own retention, which is current: 16 of the 17 scholars
+ * selected across the 2024, 2025 and 2026 generations are still in the
+ * programme, so 94%. The comparison figures stay on the report's basis.
+ */
 const PROGRAMS: Array<{ name: L; sub?: L; gpa: number; retention: number; lumen?: boolean }> = [
-  { name: { en: "Lumen", es: "Lumen" }, gpa: 4.3, retention: 100, lumen: true },
+  { name: { en: "Lumen", es: "Lumen" }, gpa: 4.3, retention: 94, lumen: true },
   {
     name: { en: "Quiero Estudiar", es: "Quiero Estudiar" },
     sub: { en: "(Andes flagship financial aid)", es: "(programa insignia de Los Andes)" },
@@ -23,7 +28,6 @@ const MAJORS: Array<{ name: L; lumen: number; avg: number; total?: boolean }> = 
   { name: { en: "Electronic Engineering", es: "Ing. Electrónica" }, lumen: 4.2, avg: 3.8 },
   { name: { en: "Systems & Computing Eng.", es: "Ing. de Sistemas" }, lumen: 4.1, avg: 3.9 },
   { name: { en: "Chemistry", es: "Química" }, lumen: 4.1, avg: 3.8 },
-  { name: { en: "Industrial Engineering", es: "Ing. Industrial" }, lumen: 3.9, avg: 3.9 },
   { name: { en: "Total", es: "Total" }, lumen: 4.3, avg: 3.9, total: true },
 ]
 
@@ -348,6 +352,11 @@ export default function Stats() {
             {lang === "es"
               ? "Promedios en la escala colombiana de 5.0."
               : "GPA on Colombia's 5.0 scale."}
+          </p>
+          <p className="text-meta text-muted mt-2">
+            {lang === "es"
+              ? "Retención Lumen: 16 de los 17 estudiantes seleccionados en las generaciones 2024, 2025 y 2026 siguen en el programa. Un estudiante de la generación 2024 se retiró."
+              : "Lumen retention: 16 of the 17 scholars selected across the 2024, 2025 and 2026 generations are still in the program. One 2024 scholar has left."}
           </p>
         </Reveal>
       </div>

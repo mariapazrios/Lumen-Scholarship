@@ -73,9 +73,9 @@ export type ScholarJournal = {
   body: string
   achievements: AchievementTerm[]
   /**
-   * Set when the achievements need a caveat rather than a silent gap: José
-   * Maturana has none because he says so outright, which is a different fact
-   * from nobody having asked him.
+   * Set when the achievements need a caveat rather than a silent gap: a
+   * scholar saying outright that they have none is a different fact from
+   * nobody having asked them.
    */
   achievementsNote: { es: string; en: string } | null
   /** Whether the achievements came from the journal itself or the covering email. */

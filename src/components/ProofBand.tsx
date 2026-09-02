@@ -7,13 +7,14 @@ import { useLang, type L } from "../lib/i18n"
  * are, what they scored coming in, and how they perform once they are here.
  *
  * Denominator is applications to Los Andes across the two generations already
- * selected (2024-10 and 2025-10). 2026-20 is still in process.
+ * selected (2024-10 and 2025-10). 2026-20 is still in process. The numerator
+ * is the scholars currently in the programme, so it moves when one leaves.
  */
 const PROOF: Array<{ value: L; label: L; sub: L }> = [
   {
-    value: { en: "0.09%", es: "0,09%" },
+    value: { en: "0.08%", es: "0,08%" },
     label: { en: "Acceptance rate", es: "Tasa de admisión" },
-    sub: { en: "11 selected from 12,088", es: "11 seleccionados de 12.088" },
+    sub: { en: "10 selected from 12,088", es: "10 seleccionados de 12.088" },
   },
   {
     value: { en: "Top 1%", es: "Top 1%" },

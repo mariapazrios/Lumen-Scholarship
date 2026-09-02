@@ -86,11 +86,11 @@ export default function Generations() {
                 {lang === "es" ? "Generación 2026" : "2026 Generation"}
               </div>
               <div className="text-meta uppercase tracking-widest text-primary-foreground/60">
-                {lang === "es" ? "5 nuevos Lumens en camino" : "5 incoming new students"}
+                {lang === "es" ? "6 nuevos Lumens en camino" : "6 incoming new students"}
               </div>
             </div>
             <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-px-6 lg:scroll-px-16 px-6 md:px-10 lg:px-16 pb-4 no-scrollbar">
-              {[1, 2, 3, 4, 5].map((n) => (
+              {[1, 2, 3, 4, 5, 6].map((n) => (
                 <div
                   key={n}
                   aria-hidden="true"

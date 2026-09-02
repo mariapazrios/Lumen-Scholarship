@@ -274,44 +274,6 @@ export const SCHOLARS: Scholar[] = [
     },
   },
   {
-    slug: "jose-maturana",
-    name: "José Maturana",
-    generation: "2024",
-    major: { en: "Industrial Engineering", es: "Ingeniería Industrial" },
-    hometown: "Cartagena",
-    department: "Bolívar",
-    short: {
-      en: "A scout, a student-body president, and the author of ten science-fiction stories before he finished school, José came to Los Andes to study the place where engineering meets business.",
-      es: "Scout, presidente estudiantil y autor de diez historias de ciencia ficción antes de terminar el colegio, José llegó a Los Andes a estudiar el punto donde la ingeniería se encuentra con los negocios.",
-    },
-    quote: {
-      en: "Lumen seemed really cool to me, because it's not just a scholarship: it's a program that pushes you professionally and supports you in different aspects of life.",
-      es: "Lumen me pareció muy chévere ya que no solo es una beca, sino también un programa que busca impulsarte a nivel profesional y apoyarte en diferentes aspectos de la vida.",
-    },
-    essay: {
-      en: "I consider myself an individual under construction, driven by curiosity, a passion for learning, and the desire to make a difference in the world.",
-      es: "Me considero un individuo en construcción, impulsado por la curiosidad, la pasión por el aprendizaje y el deseo de marcar una diferencia en el mundo.",
-    },
-    story: {
-      en: [
-        "José grew up in Cartagena, where, as he wrote in his admissions essay, joy is part of the essence. He filled his school years to the brim: scouting, a week as a naval cadet, his church's media team, the winning campaign in the student-body elections, and at least ten science-fiction and fantasy works written for the school's literary fairs. When he reached the final of the Math Olympiads at Universidad Tecnológica de Bolívar, it confirmed what he already suspected: he wanted a career where engineering meets mathematics, finance, and business.",
-        "The day after missing another scholarship, an email invited him to apply to Lumen. Now in Bogotá he is weighing a double major in business, and at ExpoAndes his wine made from exotic Colombian fruits earned an honorable mention: a nod to the biodiversity of the country he wants his work to serve.",
-      ],
-      es: [
-        "José creció en Cartagena, donde, como escribió en su ensayo de admisión, la alegría es parte de la esencia. Llenó sus años de colegio hasta el borde: el escultismo, una semana como cadete naval, el equipo de medios de su iglesia, la campaña ganadora en las elecciones estudiantiles y al menos diez obras de ciencia ficción y fantasía escritas para las ferias literarias. Cuando llegó a la final de las Olimpiadas de Matemáticas de la Universidad Tecnológica de Bolívar, se confirmó lo que ya intuía: quería una carrera donde la ingeniería se encontrara con las matemáticas, las finanzas y los negocios.",
-        "Un día después de no quedar en otra beca, un correo lo invitó a aplicar a Lumen. Hoy, en Bogotá, considera una doble titulación con Administración, y en ExpoAndes su vino de frutas exóticas colombianas ganó una mención de honor: un homenaje a la biodiversidad del país al que quiere servir con su trabajo.",
-      ],
-    },
-    highlights: {
-      en: [
-        "Weighing a double major with Business Administration",
-      ],
-      es: [
-        "Considera una doble titulación con Administración",
-      ],
-    },
-  },
-  {
     slug: "julian-rodriguez",
     video: true,
     name: "Julián Rodríguez",
@@ -489,10 +451,9 @@ export type MapCity = {
   scholars: string[] // slugs
 }
 
-/** Where the Lumens come from: 7 hometowns across 6 departments. */
+/** Where the Lumens come from: 6 hometowns across 5 departments. */
 export const MAP_CITIES: MapCity[] = [
   { city: "Galapa", department: "Atlántico", x: 203, y: 76, labelSide: "right", scholars: ["daniel-alzate"] },
-  { city: "Cartagena", department: "Bolívar", x: 172, y: 101, labelSide: "left", scholars: ["jose-maturana"] },
   { city: "Montería", department: "Córdoba", x: 154, y: 183, labelSide: "left", scholars: ["juan-angel-aicardy"] },
   { city: "Duitama", department: "Boyacá", x: 295, y: 328, labelSide: "right", scholars: ["juan-daniel-gonzalo", "sebastian-martinez"] },
   { city: "Cajicá", department: "Cundinamarca", x: 246, y: 373, labelSide: "right", scholars: ["julian-rodriguez"] },

@@ -2,7 +2,7 @@ import type { L } from "../lib/i18n"
 
 /**
  * Board member responsible for each scholar. First names on the chips match
- * how the board talks about each other. José Maturana is not on this list yet.
+ * how the board talks about each other.
  */
 export const SCHOLAR_DRI: Record<string, string> = {
   "juan-angel-aicardy": "christopher-weisz",

@@ -67,8 +67,8 @@ const REPORTS: Array<{ year: string; title: L; note: L; pages: number; size: L }
     year: "2025",
     title: { en: "Annual report 2025", es: "Informe anual 2025" },
     note: {
-      en: "Both generations: eleven scholars, GPA against program averages, retention against every other aid route, the admissions funnel, and the board.",
-      es: "Ambas generaciones: once estudiantes, promedios frente a sus carreras, retención frente a las demás vías de financiación, el embudo de admisión y la junta.",
+      en: "Both generations: ten scholars, GPA against program averages, retention against every other aid route, the admissions funnel, and the board.",
+      es: "Ambas generaciones: diez estudiantes, promedios frente a sus carreras, retención frente a las demás vías de financiación, el embudo de admisión y la junta.",
     },
     pages: 17,
     size: { en: "PDF · 3.8 MB", es: "PDF · 3,8 MB" },

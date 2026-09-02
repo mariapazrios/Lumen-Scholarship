@@ -36,7 +36,6 @@ export const COHORT_AVERAGES: Record<string, number[]> = {
  */
 export const SCHOLAR_COHORT: Record<string, keyof typeof COHORT_AVERAGES> = {
   "julian-rodriguez": "ing-electronica",
-  "jose-maturana": "ing-industrial",
   "juan-pablo-contreras": "economia",
   "valerie-suarez": "quimica",
   "sebastian-martinez": "ing-sistemas",

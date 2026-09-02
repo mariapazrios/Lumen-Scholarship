@@ -14,12 +14,21 @@ const DISPLAY_POS: Record<string, { x: number; y: number }> = {
   Cajicá: { x: 252, y: 356 },
 }
 
+/**
+ * Derived from the roster rather than typed in: these six counters went stale
+ * the first time a scholar left the programme, still reading 11 while the map
+ * beside them drew 10. Men and women stay literals because `Scholar` carries
+ * no gender field; keep them in step by hand.
+ */
 const COHORT_STATS: Array<{ value: string; label: L }> = [
-  { value: "11", label: { en: "Scholars", es: "Estudiantes" } },
-  { value: "7", label: { en: "Hometowns", es: "Ciudades de origen" } },
-  { value: "6", label: { en: "Departments", es: "Departamentos" } },
+  { value: String(SCHOLARS.length), label: { en: "Scholars", es: "Estudiantes" } },
+  { value: String(MAP_CITIES.length), label: { en: "Hometowns", es: "Ciudades de origen" } },
+  {
+    value: String(new Set(MAP_CITIES.map((c) => c.department)).size),
+    label: { en: "Departments", es: "Departamentos" },
+  },
   { value: "7", label: { en: "Majors", es: "Carreras" } },
-  { value: "9", label: { en: "Men", es: "Hombres" } },
+  { value: "8", label: { en: "Men", es: "Hombres" } },
   { value: "2", label: { en: "Women", es: "Mujeres" } },
 ]
 

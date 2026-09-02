@@ -21,7 +21,7 @@ The project lives at `/Users/bensonyan/dev/lumen` — Vite + React 19 + TypeScri
 | Folder | What's in it | Use |
 |---|---|---|
 | [src/assets/NUEVAS/](src/assets/NUEVAS/) | `11 ESTUDIANTES LUMEN.JPG` (official 11-scholar group portrait), `.psd` source (84 MB — do **not** ship), `DSC00093/106/110.JPG` candids | Hero image is the 11-scholar group portrait. Candids fill atmospheric slots |
-| [src/assets/Primera/Nuevos/](src/assets/Primera/Nuevos/) | Generación 2024 headshots: Jose Maturana, Juan Ángel Aicardy, Juan Pablo Contreras, Julian Rodriguez, Sebastián Martínez, Valerie Suárez | Scholars tabbed carousel — use the `Nuevos/` (higher-res) versions |
+| [src/assets/Primera/Nuevos/](src/assets/Primera/Nuevos/) | Generación 2024 headshots: Juan Ángel Aicardy, Juan Pablo Contreras, Julian Rodriguez, Sebastián Martínez, Valerie Suárez | Scholars tabbed carousel — use the `Nuevos/` (higher-res) versions |
 | [src/assets/Segunda/Nuevos/](src/assets/Segunda/Nuevos/) | Generación 2025 headshots: Daniel Álzate, Juan Daniel Gonzalo, Mateo Arcila, Santiago Rubiano, Valentina Salgado | Scholars tabbed carousel |
 | [src/assets/anexo/](src/assets/anexo/) | Event/travel photos (scholars at KFUPM, Saudi Arabia) | Reinforces "education-based social mobility" via mobility imagery — use sparingly |
 
